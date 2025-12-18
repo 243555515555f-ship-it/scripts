@@ -159,8 +159,7 @@ function GeminiLib:CreateWindow(title, themeName)
         Callbacks = {}
     }
 
-    -- Создаем ScreenGui
-   local ScreenGui = Instance.new("ScreenGui")
+    local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "GeminiLib_UI_" .. HttpService:GenerateGUID(false):sub(1, 8)
     ScreenGui.Parent = CoreGui
     WindowObj.ScreenGui = ScreenGui
@@ -211,12 +210,12 @@ function GeminiLib:CreateWindow(title, themeName)
     
     CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
-    -- Список вкладок (Sidebar)
+    -- === ОБНОВЛЕННЫЙ SIDEBAR (Ширина 170) ===
     local TabList = Instance.new("Frame")
-    TabList.Size = UDim2.new(0, 140, 1, -60)
+    TabList.Size = UDim2.new(0, 170, 1, -60) -- Увеличено со 140 до 170
     TabList.Position = UDim2.new(0, 10, 0, 50)
     TabList.BackgroundColor3 = theme.Section
-    TabList.BackgroundTransparency = 0.5
+    TabList.BackgroundTransparency = 0.6
     TabList.ZIndex = 11
     TabList.Parent = Main
     
@@ -225,7 +224,7 @@ function GeminiLib:CreateWindow(title, themeName)
     tabListCorner.Parent = TabList
     
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, -10, 1, -65) -- Оставили место снизу для профиля
+    TabScroll.Size = UDim2.new(1, -10, 1, -75) -- Оставили чуть больше места для профиля
     TabScroll.Position = UDim2.new(0, 5, 0, 5)
     TabScroll.BackgroundTransparency = 1
     TabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -237,23 +236,30 @@ function GeminiLib:CreateWindow(title, themeName)
     TabL.Padding = UDim.new(0, 5)
     TabL.Parent = TabScroll
 
-    -- === БЛОК ПРОФИЛЯ ИГРОКА ===
+    -- === ОБНОВЛЕННЫЙ БЛОК ПРОФИЛЯ (Расширенный) ===
     local UserProfile = Instance.new("Frame")
     UserProfile.Name = "UserProfile"
-    UserProfile.Size = UDim2.new(1, -10, 0, 50)
-    UserProfile.Position = UDim2.new(0, 5, 1, -55)
+    UserProfile.Size = UDim2.new(1, -12, 0, 60) -- Увеличена высота и ширина
+    UserProfile.Position = UDim2.new(0, 6, 1, -66)
     UserProfile.BackgroundColor3 = theme.Element
-    UserProfile.BackgroundTransparency = 0.5
+    UserProfile.BackgroundTransparency = 0.4
     UserProfile.ZIndex = 13
     UserProfile.Parent = TabList
 
     local profileCorner = Instance.new("UICorner")
-    profileCorner.CornerRadius = UDim.new(0, 8)
+    profileCorner.CornerRadius = UDim.new(0, 10)
     profileCorner.Parent = UserProfile
+    
+    -- Добавим тонкую обводку профиля
+    local profileStroke = Instance.new("UIStroke")
+    profileStroke.Color = theme.Accent
+    profileStroke.Thickness = 1.2
+    profileStroke.Transparency = 0.6
+    profileStroke.Parent = UserProfile
 
     local AvatarImg = Instance.new("ImageLabel")
-    AvatarImg.Size = UDim2.new(0, 36, 0, 36)
-    AvatarImg.Position = UDim2.new(0, 7, 0.5, -18)
+    AvatarImg.Size = UDim2.new(0, 42, 0, 42) -- Увеличен аватар
+    AvatarImg.Position = UDim2.new(0, 9, 0.5, -21)
     AvatarImg.BackgroundColor3 = theme.Main
     AvatarImg.ZIndex = 14
     AvatarImg.Parent = UserProfile
@@ -262,29 +268,27 @@ function GeminiLib:CreateWindow(title, themeName)
     avatarCorner.CornerRadius = UDim.new(1, 0)
     avatarCorner.Parent = AvatarImg
 
-    -- Загрузка аватара
     local userId = game.Players.LocalPlayer.UserId
-    local thumbType = Enum.ThumbnailType.HeadShot
-    local thumbSize = Enum.ThumbnailSize.Size100x100
-    local content, isReady = game.Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+    local content, isReady = game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
     AvatarImg.Image = content
 
     local UserName = Instance.new("TextLabel")
     UserName.Text = game.Players.LocalPlayer.Name
-    UserName.Size = UDim2.new(1, -50, 1, 0)
-    UserName.Position = UDim2.new(0, 48, 0, 0)
+    UserName.Size = UDim2.new(1, -60, 1, 0)
+    UserName.Position = UDim2.new(0, 58, 0, 0)
     UserName.TextColor3 = theme.Text
-    UserName.Font = Enum.Font.GothamMedium
-    UserName.TextSize = 12
+    UserName.Font = Enum.Font.GothamBold -- Сделал жирным
+    UserName.TextSize = 13 -- Чуть увеличил текст
     UserName.TextXAlignment = Enum.TextXAlignment.Left
     UserName.BackgroundTransparency = 1
+    UserName.TextTruncate = Enum.TextTruncate.AtEnd -- Обрезает ник точками, если слишком длинный
     UserName.ZIndex = 14
     UserName.Parent = UserProfile
-    -- ===========================
 
+    -- === ОБНОВЛЕННЫЙ КОНТЕЙНЕР (Сдвинут вправо) ===
     local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, -170, 1, -60)
-    Container.Position = UDim2.new(0, 160, 0, 50)
+    Container.Size = UDim2.new(1, -200, 1, -60) -- Ширина изменена с -170 на -200
+    Container.Position = UDim2.new(0, 190, 0, 50) -- Позиция изменена с 160 на 190
     Container.BackgroundColor3 = theme.Section
     Container.BackgroundTransparency = 0.8
     Container.ZIndex = 11
