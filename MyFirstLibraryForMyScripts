@@ -76,7 +76,7 @@ GeminiLib.Config = {
     WindowHeight = 450,
     MinWidth = 400,    -- Минимальная ширина
     MaxWidth = 800,    -- Максимальная ширина
-    AspectRatio = 450/600, -- Соотношение высоты к ширине (0.727)
+    AspectRatio = 0, -- Будет рассчитана ниже
     AnimationSpeed = 0.2,
     Roundness = 12,
     EnableShadows = true,
@@ -84,6 +84,7 @@ GeminiLib.Config = {
     DefaultTheme = "Dark",
     CustomIcons = true
 }
+GeminiLib.Config.AspectRatio = GeminiLib.Config.WindowHeight / GeminiLib.Config.WindowWidth
 
 -- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ ТЕНИ
 local function createShadow(parent, color, transparency)
