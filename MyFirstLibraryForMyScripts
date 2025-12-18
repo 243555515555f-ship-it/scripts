@@ -160,12 +160,11 @@ function GeminiLib:CreateWindow(title, themeName)
     }
 
     -- Создаем ScreenGui
-    local ScreenGui = Instance.new("ScreenGui")
+   local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "GeminiLib_UI_" .. HttpService:GenerateGUID(false):sub(1, 8)
     ScreenGui.Parent = CoreGui
     WindowObj.ScreenGui = ScreenGui
 
-    -- Основной фрейм
     local Main = Instance.new("Frame")
     Main.Size = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight)
     Main.Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
@@ -181,7 +180,6 @@ function GeminiLib:CreateWindow(title, themeName)
     
     createShadow(Main, theme.Shadow, 0.3)
 
-    -- Верхняя панель
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = theme.Section
@@ -189,10 +187,9 @@ function GeminiLib:CreateWindow(title, themeName)
     TopBar.Parent = Main
     makeDraggable(Main, TopBar)
 
-    -- Заголовок
     local Title = Instance.new("TextLabel")
-    Title.Text = title
-    Title.Size = UDim2.new(1, 0, 1, 0)
+    Title.Text = "  " .. title
+    Title.Size = UDim2.new(1, -40, 1, 0)
     Title.TextColor3 = theme.Text
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
@@ -201,29 +198,25 @@ function GeminiLib:CreateWindow(title, themeName)
     Title.ZIndex = 12
     Title.Parent = TopBar
 
-    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
     CloseBtn.Text = "×"
     CloseBtn.TextColor3 = theme.Text
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    CloseBtn.BackgroundTransparency = 0.5
+    CloseBtn.BackgroundTransparency = 1
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.TextSize = 24
     CloseBtn.ZIndex = 12
     CloseBtn.Parent = TopBar
     
-    CloseBtn.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
+    CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
-    -- Список вкладок
+    -- Список вкладок (Sidebar)
     local TabList = Instance.new("Frame")
     TabList.Size = UDim2.new(0, 140, 1, -60)
     TabList.Position = UDim2.new(0, 10, 0, 50)
     TabList.BackgroundColor3 = theme.Section
-    TabList.BackgroundTransparency = 0.8
+    TabList.BackgroundTransparency = 0.5
     TabList.ZIndex = 11
     TabList.Parent = Main
     
@@ -232,25 +225,68 @@ function GeminiLib:CreateWindow(title, themeName)
     tabListCorner.Parent = TabList
     
     local TabScroll = Instance.new("ScrollingFrame")
-    TabScroll.Size = UDim2.new(1, -10, 1, -10)
+    TabScroll.Size = UDim2.new(1, -10, 1, -65) -- Оставили место снизу для профиля
     TabScroll.Position = UDim2.new(0, 5, 0, 5)
     TabScroll.BackgroundTransparency = 1
     TabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     TabScroll.ScrollBarThickness = 0
-    TabScroll.ScrollingDirection = Enum.ScrollingDirection.Y
     TabScroll.ZIndex = 12
     TabScroll.Parent = TabList
     
     local TabL = Instance.new("UIListLayout")
-    TabL.Padding = UDim.new(0, 8)
+    TabL.Padding = UDim.new(0, 5)
     TabL.Parent = TabScroll
 
-    -- Контейнер для страниц
+    -- === БЛОК ПРОФИЛЯ ИГРОКА ===
+    local UserProfile = Instance.new("Frame")
+    UserProfile.Name = "UserProfile"
+    UserProfile.Size = UDim2.new(1, -10, 0, 50)
+    UserProfile.Position = UDim2.new(0, 5, 1, -55)
+    UserProfile.BackgroundColor3 = theme.Element
+    UserProfile.BackgroundTransparency = 0.5
+    UserProfile.ZIndex = 13
+    UserProfile.Parent = TabList
+
+    local profileCorner = Instance.new("UICorner")
+    profileCorner.CornerRadius = UDim.new(0, 8)
+    profileCorner.Parent = UserProfile
+
+    local AvatarImg = Instance.new("ImageLabel")
+    AvatarImg.Size = UDim2.new(0, 36, 0, 36)
+    AvatarImg.Position = UDim2.new(0, 7, 0.5, -18)
+    AvatarImg.BackgroundColor3 = theme.Main
+    AvatarImg.ZIndex = 14
+    AvatarImg.Parent = UserProfile
+    
+    local avatarCorner = Instance.new("UICorner")
+    avatarCorner.CornerRadius = UDim.new(1, 0)
+    avatarCorner.Parent = AvatarImg
+
+    -- Загрузка аватара
+    local userId = game.Players.LocalPlayer.UserId
+    local thumbType = Enum.ThumbnailType.HeadShot
+    local thumbSize = Enum.ThumbnailSize.Size100x100
+    local content, isReady = game.Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+    AvatarImg.Image = content
+
+    local UserName = Instance.new("TextLabel")
+    UserName.Text = game.Players.LocalPlayer.Name
+    UserName.Size = UDim2.new(1, -50, 1, 0)
+    UserName.Position = UDim2.new(0, 48, 0, 0)
+    UserName.TextColor3 = theme.Text
+    UserName.Font = Enum.Font.GothamMedium
+    UserName.TextSize = 12
+    UserName.TextXAlignment = Enum.TextXAlignment.Left
+    UserName.BackgroundTransparency = 1
+    UserName.ZIndex = 14
+    UserName.Parent = UserProfile
+    -- ===========================
+
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, -170, 1, -60)
     Container.Position = UDim2.new(0, 160, 0, 50)
     Container.BackgroundColor3 = theme.Section
-    Container.BackgroundTransparency = 0.9
+    Container.BackgroundTransparency = 0.8
     Container.ZIndex = 11
     Container.Parent = Main
     
