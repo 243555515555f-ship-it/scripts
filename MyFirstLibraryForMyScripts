@@ -616,7 +616,7 @@ function GeminiLib:CreateWindow(title, themeName)
             Btn.Text = (Tab.Style == 6 and "✨ " or "") .. text .. (Tab.Style == 6 and " ✨" or "")
             Btn.TextColor3 = theme.Text
             Btn.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.GothamMedium
-            Btn.TextSize = Tab.Style == 6 and 13 : 14
+            Btn.TextSize = Tab.Style == 6 and 13 or 14
             Btn.ZIndex = 13
             Btn.Parent = Page
             
@@ -689,7 +689,7 @@ function GeminiLib:CreateWindow(title, themeName)
             TogFrame.TextColor3 = theme.Text
             TogFrame.TextXAlignment = Enum.TextXAlignment.Left
             TogFrame.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            TogFrame.TextSize = Tab.Style == 6 and 13 : 14
+            TogFrame.TextSize = Tab.Style == 6 and 13 or 14
             TogFrame.ZIndex = 13
             TogFrame.Parent = Page
             
@@ -824,7 +824,7 @@ function GeminiLib:CreateWindow(title, themeName)
             Label.TextColor3 = theme.Text
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            Label.TextSize = Tab.Style == 6 and 12 : 13
+            Label.TextSize = Tab.Style == 6 and 12 or 13
             Label.ZIndex = 14
             Label.Parent = SliderFrame
 
@@ -943,7 +943,7 @@ function GeminiLib:CreateWindow(title, themeName)
             Btn.TextColor3 = theme.Text
             Btn.TextXAlignment = Enum.TextXAlignment.Left
             Btn.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            Btn.TextSize = Tab.Style == 6 and 13 : 14
+            Btn.TextSize = Tab.Style == 6 and 13 or 14
             Btn.ZIndex = 14
             Btn.Parent = DropFrame
             
@@ -967,7 +967,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 opt.TextColor3 = theme.Text
                 opt.BorderSizePixel = 0
                 opt.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-                opt.TextSize = Tab.Style == 6 and 12 : 12
+                opt.TextSize = Tab.Style == 6 and 12 or 12
                 opt.ZIndex = 14
                 opt.Parent = DropFrame
                 
