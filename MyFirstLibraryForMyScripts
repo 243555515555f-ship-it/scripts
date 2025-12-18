@@ -1,3 +1,4 @@
+-- GeminiLib (Очищенная версия без NekoGirl)
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -66,174 +67,30 @@ GeminiLib.Themes = {
         Element = Color3.fromRGB(20, 40, 60),
         Border = Color3.fromRGB(0, 100, 200),
         Shadow = Color3.fromRGB(0, 50, 150, 0.3)
-    },
-    -- НОВАЯ ТЕМА: НЕКО-ДЕВОЧКА (КОШКО-ДЕВОЧКА ИЗ АНИМЕ)
-    NekoGirl = {
-        Name = "NekoGirl",
-        Main = Color3.fromRGB(255, 220, 245),  -- Розовато-белый фон
-        Accent = Color3.fromRGB(255, 100, 175), -- Розовый акцент
-        Text = Color3.fromRGB(40, 20, 30),      -- Темно-розовый текст
-        Section = Color3.fromRGB(255, 200, 230), -- Светло-розовые секции
-        Element = Color3.fromRGB(255, 240, 250), -- Очень светлые элементы
-        Border = Color3.fromRGB(255, 150, 200),  -- Ярко-розовые границы
-        Shadow = Color3.fromRGB(255, 120, 180, 0.2), -- Розовая тень
-        BackgroundImage = "rbxassetid://13003873159", -- Аниме фоновое изображение
-        IconColor = Color3.fromRGB(255, 100, 175),
-        SpecialAccent = Color3.fromRGB(255, 150, 200)
     }
 }
 
 -- КОНФИГУРАЦИЯ
 GeminiLib.Config = {
-    WindowWidth = 550,  -- Немного шире для красоты
-    WindowHeight = 400, -- Немного выше
+    WindowWidth = 550,
+    WindowHeight = 400,
     AnimationSpeed = 0.2,
-    Roundness = 12,     -- Более скругленные углы
+    Roundness = 12,
     EnableShadows = true,
-    EnableBlur = true,  -- Эффект размытия для аниме темы
     AutoSaveSettings = true,
-    DefaultTheme = "NekoGirl", -- По умолчанию новая тема
-    CustomIcons = true  -- Кастомные иконки для тем
+    DefaultTheme = "Dark",
+    CustomIcons = true
 }
 
--- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ АНИМАЦИОННОГО ФОНА
-local function createAnimeBackground(parent, theme)
-    if theme.Name ~= "NekoGirl" then return end
-    
-    -- Основной фоновый контейнер
-    local BackgroundContainer = Instance.new("Frame")
-    BackgroundContainer.Name = "AnimeBackground"
-    BackgroundContainer.Size = UDim2.new(1, 0, 1, 0)
-    BackgroundContainer.BackgroundTransparency = 1
-    BackgroundContainer.ZIndex = 0
-    BackgroundContainer.Parent = parent
-    
-    -- Размытый фон (если включено)
-    if GeminiLib.Config.EnableBlur then
-        local blur = Instance.new("ImageLabel")
-        blur.Name = "BackgroundBlur"
-        blur.Image = "rbxassetid://13003873159" -- Красивая аниме картинка
-        blur.Size = UDim2.new(1, 100, 1, 100)
-        blur.Position = UDim2.new(-0.1, 0, -0.1, 0)
-        blur.BackgroundTransparency = 1
-        blur.ImageTransparency = 0.7
-        blur.ScaleType = Enum.ScaleType.Crop
-        blur.ZIndex = 0
-        blur.Parent = BackgroundContainer
-        
-        -- Эффект размытия через GaussianBlur
-        local blurEffect = Instance.new("BlurEffect")
-        blurEffect.Size = 10
-        blurEffect.Parent = blur
-    end
-    
-    -- Декоративные элементы (сакуры)
-    for i = 1, 15 do
-        local sakura = Instance.new("ImageLabel")
-        sakura.Name = "Sakura_" .. i
-        sakura.Image = "rbxassetid://6031075938" -- Лепесток сакуры
-        sakura.Size = UDim2.new(0, math.random(20, 40), 0, math.random(20, 40))
-        sakura.Position = UDim2.new(
-            math.random() * 0.8 + 0.1,
-            0,
-            math.random() * 0.8 + 0.1,
-            0
-        )
-        sakura.BackgroundTransparency = 1
-        sakura.ImageTransparency = 0.3
-        sakura.ImageColor3 = Color3.fromRGB(255, 200, 220)
-        sakura.Rotation = math.random(0, 360)
-        sakura.ZIndex = 1
-        sakura.Parent = BackgroundContainer
-        
-        -- Анимация парящих лепестков
-        task.spawn(function()
-            while sakura and sakura.Parent do
-                local duration = math.random(3, 7)
-                local startPos = sakura.Position
-                local endPos = UDim2.new(
-                    startPos.X.Scale + (math.random() * 0.2 - 0.1),
-                    startPos.X.Offset,
-                    startPos.Y.Scale + (math.random() * 0.2 - 0.1),
-                    startPos.Y.Offset
-                )
-                
-                TweenService:Create(sakura, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                    Position = endPos,
-                    Rotation = sakura.Rotation + math.random(-180, 180)
-                }):Play()
-                
-                task.wait(duration)
-                
-                if sakura and sakura.Parent then
-                    TweenService:Create(sakura, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                        Position = startPos,
-                        Rotation = sakura.Rotation + math.random(-180, 180)
-                    }):Play()
-                    
-                    task.wait(duration)
-                end
-            end
-        end)
-    end
-    
-    -- НЕКО-ИКОНКИ (ушки кошки)
-    local nekoEars = Instance.new("ImageLabel")
-    nekoEars.Name = "NekoEars"
-    nekoEars.Image = "rbxassetid://11312868599" -- Ушки кошки
-    nekoEars.Size = UDim2.new(0, 60, 0, 40)
-    nekoEars.Position = UDim2.new(0.5, -30, 0.1, 0)
-    nekoEars.BackgroundTransparency = 1
-    nekoEars.ImageTransparency = 0.3
-    nekoEars.ImageColor3 = theme.SpecialAccent
-    nekoEars.ZIndex = 1
-    nekoEars.Parent = BackgroundContainer
-    
-    -- Анимация ушек
-    task.spawn(function()
-        while nekoEars and nekoEars.Parent do
-            TweenService:Create(nekoEars, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                Rotation = 5
-            }):Play()
-            task.wait(0.5)
-            
-            if nekoEars and nekoEars.Parent then
-                TweenService:Create(nekoEars, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-                    Rotation = -5
-                }):Play()
-                task.wait(0.5)
-            end
-        end
-    end)
-    
-    return BackgroundContainer
-end
-
--- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ ТЕНИ С ЭФФЕКТОМ СВЕЧЕНИЯ
-local function createGlowShadow(parent, color, transparency, glowIntensity)
+-- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ ТЕНИ
+local function createShadow(parent, color, transparency)
     if not GeminiLib.Config.EnableShadows then return end
     
     local shadow = Instance.new("ImageLabel")
-    shadow.Name = "GlowShadow"
+    shadow.Name = "Shadow"
     shadow.Image = "rbxassetid://5554237735"
     shadow.ImageColor3 = color
     shadow.ImageTransparency = transparency or 0.5
-    
-    if glowIntensity then
-        local glow = Instance.new("UIGradient")
-        glow.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, color),
-            ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(1, color)
-        }
-        glow.Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, transparency),
-            NumberSequenceKeypoint.new(0.5, transparency * 0.5),
-            NumberSequenceKeypoint.new(1, transparency)
-        }
-        glow.Rotation = 45
-        glow.Parent = shadow
-    end
     
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceScale = 0.05
@@ -299,8 +156,7 @@ function GeminiLib:CreateWindow(title, themeName)
         CurrentTab = nil,
         Theme = theme,
         Elements = {},
-        Callbacks = {},
-        Background = nil
+        Callbacks = {}
     }
 
     -- Создаем ScreenGui
@@ -309,113 +165,65 @@ function GeminiLib:CreateWindow(title, themeName)
     ScreenGui.Parent = CoreGui
     WindowObj.ScreenGui = ScreenGui
 
-    -- Основной фрейм с эффектом размытия
+    -- Основной фрейм
     local Main = Instance.new("Frame")
     Main.Size = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight)
     Main.Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
     Main.BackgroundColor3 = theme.Main
-    Main.BackgroundTransparency = theme.Name == "NekoGirl" and 0.7 or 0
     Main.BorderSizePixel = 0
     Main.ClipsDescendants = true
     Main.ZIndex = 10
     Main.Parent = ScreenGui
     
-    -- Добавляем аниме-фон для темы NekoGirl
-    if theme.Name == "NekoGirl" then
-        WindowObj.Background = createAnimeBackground(ScreenGui, theme)
-    end
-    
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness)
     corner.Parent = Main
     
-    -- Создаем красивую тень со свечением для аниме темы
-    if theme.Name == "NekoGirl" then
-        createGlowShadow(Main, theme.Shadow, 0.3, true)
-    else
-        createGlowShadow(Main, theme.Shadow, 0.3)
-    end
+    createShadow(Main, theme.Shadow, 0.3)
 
-    -- Верхняя панель с градиентом для аниме темы
+    -- Верхняя панель
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = theme.Section
-    TopBar.BackgroundTransparency = theme.Name == "NekoGirl" and 0.8 or 0
     TopBar.ZIndex = 11
     TopBar.Parent = Main
     makeDraggable(Main, TopBar)
-    
-    -- Градиент для верхней панели в аниме теме
-    if theme.Name == "NekoGirl" then
-        local gradient = Instance.new("UIGradient")
-        gradient.Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, theme.Accent),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 220, 240))
-        }
-        gradient.Rotation = 90
-        gradient.Transparency = NumberSequence.new(0.7)
-        gradient.Parent = TopBar
-        
-        local topCorner = Instance.new("UICorner")
-        topCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness)
-        topCorner.Parent = TopBar
-    end
 
-    -- Заголовок с иконкой для аниме темы
+    -- Заголовок
     local Title = Instance.new("TextLabel")
-    Title.Text = (theme.Name == "NekoGirl" and "🐱  " or "") .. title .. (theme.Name == "NekoGirl" and "  🎀" or "")
+    Title.Text = title
     Title.Size = UDim2.new(1, 0, 1, 0)
     Title.TextColor3 = theme.Text
-    Title.Font = theme.Name == "NekoGirl" and Enum.Font.GothamSemibold or Enum.Font.GothamBold
-    Title.TextSize = theme.Name == "NekoGirl" and 16 or 18
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.ZIndex = 12
     Title.Parent = TopBar
 
-    -- Кнопка закрытия с аниме стилем
+    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
-    CloseBtn.Text = theme.Name == "NekoGirl" and "✕" or "×"
+    CloseBtn.Text = "×"
     CloseBtn.TextColor3 = theme.Text
-    CloseBtn.BackgroundColor3 = theme.Name == "NekoGirl" and theme.Accent or Color3.fromRGB(60, 60, 60)
-    CloseBtn.BackgroundTransparency = theme.Name == "NekoGirl" and 0.7 or 0.5
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    CloseBtn.BackgroundTransparency = 0.5
     CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = theme.Name == "NekoGirl" and 20 or 24
+    CloseBtn.TextSize = 24
     CloseBtn.ZIndex = 12
     CloseBtn.Parent = TopBar
-    
-    if theme.Name == "NekoGirl" then
-        local closeCorner = Instance.new("UICorner")
-        closeCorner.CornerRadius = UDim.new(1, 0)
-        closeCorner.Parent = CloseBtn
-        
-        CloseBtn.MouseEnter:Connect(function()
-            TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.3,
-                Rotation = 90
-            }):Play()
-        end)
-        
-        CloseBtn.MouseLeave:Connect(function()
-            TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.7,
-                Rotation = 0
-            }):Play()
-        end)
-    end
     
     CloseBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
     end)
 
-    -- Список вкладок с аниме стилем
+    -- Список вкладок
     local TabList = Instance.new("Frame")
     TabList.Size = UDim2.new(0, 140, 1, -60)
     TabList.Position = UDim2.new(0, 10, 0, 50)
     TabList.BackgroundColor3 = theme.Section
-    TabList.BackgroundTransparency = theme.Name == "NekoGirl" and 0.9 or 0.8
+    TabList.BackgroundTransparency = 0.8
     TabList.ZIndex = 11
     TabList.Parent = Main
     
@@ -437,82 +245,53 @@ function GeminiLib:CreateWindow(title, themeName)
     TabL.Padding = UDim.new(0, 8)
     TabL.Parent = TabScroll
 
-    -- Контейнер для страниц с эффектом стекла для аниме темы
+    -- Контейнер для страниц
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, -170, 1, -60)
     Container.Position = UDim2.new(0, 160, 0, 50)
     Container.BackgroundColor3 = theme.Section
-    Container.BackgroundTransparency = theme.Name == "NekoGirl" and 0.85 or 0.9
+    Container.BackgroundTransparency = 0.9
     Container.ZIndex = 11
     Container.Parent = Main
     
     local containerCorner = Instance.new("UICorner")
     containerCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2)
     containerCorner.Parent = Container
-    
-    -- Эффект стекла для аниме темы
-    if theme.Name == "NekoGirl" then
-        local glassEffect = Instance.new("Frame")
-        glassEffect.Size = UDim2.new(1, 0, 1, 0)
-        glassEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        glassEffect.BackgroundTransparency = 0.95
-        glassEffect.BorderSizePixel = 0
-        glassEffect.ZIndex = 12
-        glassEffect.Parent = Container
-        
-        local glassCorner = Instance.new("UICorner")
-        glassCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2)
-        glassCorner.Parent = glassEffect
-    end
 
     -- ФУНКЦИЯ СОЗДАНИЯ ВКЛАДКИ
-    function WindowObj:CreateTab(name, style) -- Style: 1 (Classic), 2 (Iconic), 3 (Minimal), 4 (Bordered), 5 (Gradient), 6 (Anime)
+    function WindowObj:CreateTab(name, style) -- Style: 1 (Classic), 2 (Iconic), 3 (Minimal), 4 (Bordered), 5 (Gradient)
         local icon = ""
-        if style == 2 or style == 6 then
-            -- Иконки для аниме темы
-            if theme.Name == "NekoGirl" then
-                local icons = {"🌸", "🐱", "🎀", "✨", "💖", "🎮", "⚙️", "🎨"}
-                icon = icons[math.random(1, #icons)] .. " "
-            else
-                icon = "🔘 "
-            end
+        if style == 2 then
+            icon = "🔘 "
         end
         
         local TabBtn = Instance.new("TextButton")
         TabBtn.Name = "TabBtn_" .. name
         TabBtn.Size = UDim2.new(1, 0, 0, 38)
-        TabBtn.BackgroundColor3 = style == 6 and theme.SpecialAccent or theme.Section
+        TabBtn.BackgroundColor3 = theme.Section
         
         if style == 4 then
             TabBtn.BackgroundColor3 = theme.Accent
-        elseif style == 5 or style == 6 then
-            -- Градиентный стиль с аниме цветами
+        elseif style == 5 then
+            -- Градиентный стиль
             local gradient = Instance.new("UIGradient")
-            if style == 6 and theme.Name == "NekoGirl" then
-                gradient.Color = ColorSequence.new{
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 220)),
-                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 200)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 180))
-                }
-            else
-                gradient.Color = ColorSequence.new{
-                    ColorSequenceKeypoint.new(0, theme.Accent),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(
-                        math.floor(theme.Accent.R * 255 * 0.7),
-                        math.floor(theme.Accent.G * 255 * 0.7),
-                        math.floor(theme.Accent.B * 255 * 0.7)
-                    ))
-                }
-            end
-            gradient.Rotation = style == 6 and 0 or 45
+            gradient.Color = ColorSequence.new{
+                ColorSequenceKeypoint.new(0, theme.Accent),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(
+                    math.floor(theme.Accent.R * 255 * 0.7),
+                    math.floor(theme.Accent.G * 255 * 0.7),
+                    math.floor(theme.Accent.B * 255 * 0.7)
+                ))
+            }
+            gradient.Rotation = 45
             gradient.Parent = TabBtn
         end
         
         TabBtn.BackgroundTransparency = (style == 3 or style == 2) and 0.8 or 0.5
         TabBtn.Text = icon .. name
         TabBtn.TextColor3 = theme.Text
-        TabBtn.Font = style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-        TabBtn.TextSize = style == 6 and 13 or 14
+        TabBtn.Font = Enum.Font.Gotham
+        TabBtn.TextSize = 14
         TabBtn.ZIndex = 12
         TabBtn.Parent = TabScroll
         
@@ -520,27 +299,13 @@ function GeminiLib:CreateWindow(title, themeName)
         btnCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 4)
         btnCorner.Parent = TabBtn
         
-        -- Эффект при наведении для аниме темы
+        -- Эффект при наведении
         TabBtn.MouseEnter:Connect(function()
-            if style == 6 and theme.Name == "NekoGirl" then
-                TweenService:Create(TabBtn, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.2,
-                    Size = UDim2.new(1, 5, 0, 40)
-                }):Play()
-            else
-                TweenService:Create(TabBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
-            end
+            TweenService:Create(TabBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
         end)
         
         TabBtn.MouseLeave:Connect(function()
-            if style == 6 and theme.Name == "NekoGirl" then
-                TweenService:Create(TabBtn, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.5,
-                    Size = UDim2.new(1, 0, 0, 38)
-                }):Play()
-            else
-                TweenService:Create(TabBtn, TweenInfo.new(0.1), {BackgroundTransparency = (style == 3 or style == 2) and 0.8 or 0.5}):Play()
-            end
+            TweenService:Create(TabBtn, TweenInfo.new(0.1), {BackgroundTransparency = (style == 3 or style == 2) and 0.8 or 0.5}):Play()
         end)
 
         -- Страница вкладки
@@ -551,7 +316,7 @@ function GeminiLib:CreateWindow(title, themeName)
         Page.BackgroundTransparency = 1
         Page.Visible = false
         Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-        Page.ScrollBarThickness = style == 6 and 3 or 2
+        Page.ScrollBarThickness = 2
         Page.ScrollBarImageColor3 = theme.Accent
         Page.ZIndex = 12
         Page.Parent = Container
@@ -580,43 +345,28 @@ function GeminiLib:CreateWindow(title, themeName)
             Page.Visible = true
             WindowObj.CurrentTab = name
             
-            -- Анимация выделения с эффектом для аниме темы
+            -- Анимация выделения
             for _, btn in pairs(TabScroll:GetChildren()) do
                 if btn:IsA("TextButton") then
-                    if Tab.Style == 6 and theme.Name == "NekoGirl" then
-                        TweenService:Create(btn, TweenInfo.new(0.3), {
-                            BackgroundTransparency = 0.7,
-                            TextColor3 = Color3.fromRGB(150, 150, 150)
-                        }):Play()
-                    else
-                        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8}):Play()
-                    end
+                    TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8}):Play()
                 end
             end
             
-            if Tab.Style == 6 and theme.Name == "NekoGirl" then
-                TweenService:Create(TabBtn, TweenInfo.new(0.3), {
-                    BackgroundTransparency = 0.2,
-                    TextColor3 = theme.Text,
-                    Size = UDim2.new(1, 5, 0, 42)
-                }):Play()
-            else
-                TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
-            end
+            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
         end
 
         -- Обработчик клика по вкладке
         TabBtn.MouseButton1Click:Connect(activateTab)
 
-        -- ФУНКЦИЯ КНОПКИ С АНИМЕ СТИЛЕМ
-        function Tab:Button(text, callback, tooltip)
+        -- ФУНКЦИЯ КНОПКИ
+        function Tab:Button(text, callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, -20, 0, 38)
-            Btn.BackgroundColor3 = Tab.Style == 6 and theme.SpecialAccent or theme.Element
-            Btn.Text = (Tab.Style == 6 and "✨ " or "") .. text .. (Tab.Style == 6 and " ✨" or "")
+            Btn.BackgroundColor3 = theme.Element
+            Btn.Text = text
             Btn.TextColor3 = theme.Text
-            Btn.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.GothamMedium
-            Btn.TextSize = Tab.Style == 6 and 13 or 14
+            Btn.Font = Enum.Font.GothamMedium
+            Btn.TextSize = 14
             Btn.ZIndex = 13
             Btn.Parent = Page
             
@@ -624,48 +374,17 @@ function GeminiLib:CreateWindow(title, themeName)
             btnCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 4)
             btnCorner.Parent = Btn
             
-            -- Эффекты для аниме кнопок
+            -- Эффекты
             Btn.MouseEnter:Connect(function()
-                if Tab.Style == 6 then
-                    TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(255, 120, 190),
-                        Size = UDim2.new(1, -15, 0, 40),
-                        Rotation = 1
-                    }):Play()
-                else
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Accent}):Play()
-                end
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Accent}):Play()
             end)
             
             Btn.MouseLeave:Connect(function()
-                if Tab.Style == 6 then
-                    TweenService:Create(Btn, TweenInfo.new(0.2), {
-                        BackgroundColor3 = theme.SpecialAccent,
-                        Size = UDim2.new(1, -20, 0, 38),
-                        Rotation = 0
-                    }):Play()
-                else
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Element}):Play()
-                end
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Element}):Play()
             end)
             
             -- Обработчик клика
             Btn.MouseButton1Click:Connect(function()
-                if Tab.Style == 6 then
-                    -- Анимация нажатия для аниме стиля
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        Size = UDim2.new(1, -25, 0, 36),
-                        BackgroundTransparency = 0.3
-                    }):Play()
-                    
-                    task.wait(0.1)
-                    
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        Size = UDim2.new(1, -20, 0, 38),
-                        BackgroundTransparency = 0
-                    }):Play()
-                end
-                
                 if callback then
                     local success, err = pcall(callback)
                     if not success then
@@ -679,17 +398,17 @@ function GeminiLib:CreateWindow(title, themeName)
             return Btn
         end
 
-        -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ С АНИМЕ СТИЛЕМ
+        -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ
         function Tab:Toggle(text, default, callback)
             local state = default or false
             local TogFrame = Instance.new("TextButton")
             TogFrame.Size = UDim2.new(1, -20, 0, 38)
-            TogFrame.BackgroundColor3 = Tab.Style == 6 and theme.SpecialAccent or theme.Element
-            TogFrame.Text = "  " .. (Tab.Style == 6 and "🎀 " or "") .. text
+            TogFrame.BackgroundColor3 = theme.Element
+            TogFrame.Text = "  " .. text
             TogFrame.TextColor3 = theme.Text
             TogFrame.TextXAlignment = Enum.TextXAlignment.Left
-            TogFrame.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            TogFrame.TextSize = Tab.Style == 6 and 13 or 14
+            TogFrame.Font = Enum.Font.Gotham
+            TogFrame.TextSize = 14
             TogFrame.ZIndex = 13
             TogFrame.Parent = Page
             
@@ -700,92 +419,35 @@ function GeminiLib:CreateWindow(title, themeName)
             local Indicator = Instance.new("Frame")
             Indicator.Size = UDim2.new(0, 24, 0, 24)
             Indicator.Position = UDim2.new(1, -32, 0.5, -12)
-            Indicator.BackgroundColor3 = state and (Tab.Style == 6 and Color3.fromRGB(255, 120, 200) or theme.Accent) or Color3.fromRGB(100, 100, 100)
+            Indicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(100, 100, 100)
             Indicator.ZIndex = 14
             Indicator.Parent = TogFrame
             
             local indicatorCorner = Instance.new("UICorner")
-            indicatorCorner.CornerRadius = Tab.Style == 6 and UDim.new(0, 8) or UDim.new(1, 0)
+            indicatorCorner.CornerRadius = UDim.new(1, 0)
             indicatorCorner.Parent = Indicator
 
-            -- Анимация для аниме темы
-            if Tab.Style == 6 then
-                local innerDot = Instance.new("Frame")
-                innerDot.Size = UDim2.new(0, 12, 0, 12)
-                innerDot.Position = UDim2.new(0.5, -6, 0.5, -6)
-                innerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                innerDot.BackgroundTransparency = state and 0 or 1
-                innerDot.ZIndex = 15
-                local innerCorner = Instance.new("UICorner")
-                innerCorner.CornerRadius = UDim.new(1, 0)
-                innerCorner.Parent = innerDot
-                innerDot.Parent = Indicator
+            TogFrame.MouseButton1Click:Connect(function()
+                state = not state
+                TweenService:Create(Indicator, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
+                    BackgroundColor3 = state and theme.Accent or Color3.fromRGB(100, 100, 100)
+                }):Play()
                 
-                TogFrame.MouseButton1Click:Connect(function()
-                    state = not state
-                    
-                    if state then
-                        TweenService:Create(Indicator, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
-                            BackgroundColor3 = Color3.fromRGB(255, 120, 200)
-                        }):Play()
-                        TweenService:Create(innerDot, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
-                            BackgroundTransparency = 0,
-                            Size = UDim2.new(0, 12, 0, 12)
-                        }):Play()
-                    else
-                        TweenService:Create(Indicator, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
-                            BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-                        }):Play()
-                        TweenService:Create(innerDot, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
-                            BackgroundTransparency = 1,
-                            Size = UDim2.new(0, 0, 0, 0)
-                        }):Play()
+                if callback then
+                    local success, err = pcall(callback, state)
+                    if not success then
+                        warn("Toggle callback error:", err)
                     end
-                    
-                    if callback then
-                        local success, err = pcall(callback, state)
-                        if not success then
-                            warn("Toggle callback error:", err)
-                        end
-                    end
-                end)
-            else
-                TogFrame.MouseButton1Click:Connect(function()
-                    state = not state
-                    TweenService:Create(Indicator, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
-                        BackgroundColor3 = state and theme.Accent or Color3.fromRGB(100, 100, 100)
-                    }):Play()
-                    
-                    if callback then
-                        local success, err = pcall(callback, state)
-                        if not success then
-                            warn("Toggle callback error:", err)
-                        end
-                    end
-                end)
-            end
-            
-            -- Эффект при наведении
-            TogFrame.MouseEnter:Connect(function()
-                if Tab.Style == 6 then
-                    TweenService:Create(TogFrame, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 0.1,
-                        Size = UDim2.new(1, -15, 0, 40)
-                    }):Play()
-                else
-                    TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
                 end
             end)
             
+            -- Эффект при наведении
+            TogFrame.MouseEnter:Connect(function()
+                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
+            end)
+            
             TogFrame.MouseLeave:Connect(function()
-                if Tab.Style == 6 then
-                    TweenService:Create(TogFrame, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 0,
-                        Size = UDim2.new(1, -20, 0, 38)
-                    }):Play()
-                else
-                    TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
-                end
+                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
             end)
             
             table.insert(Tab.Elements, TogFrame)
@@ -794,22 +456,17 @@ function GeminiLib:CreateWindow(title, themeName)
             return {
                 Set = function(val) 
                     state = val
-                    if Tab.Style == 6 then
-                        Indicator.BackgroundColor3 = state and Color3.fromRGB(255, 120, 200) or Color3.fromRGB(100, 100, 100)
-                    else
-                        Indicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(100, 100, 100)
-                    end
+                    Indicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(100, 100, 100)
                 end, 
                 Get = function() return state end
             }
         end
 
-        -- ФУНКЦИЯ СЛАЙДЕРА С АНИМЕ СТИЛЕМ
+        -- ФУНКЦИЯ СЛАЙДЕРА
         function Tab:Slider(text, min, max, default, callback, showValue)
             local SliderFrame = Instance.new("Frame")
             SliderFrame.Size = UDim2.new(1, -20, 0, 55)
-            SliderFrame.BackgroundColor3 = Tab.Style == 6 and theme.SpecialAccent or theme.Element
-            SliderFrame.BackgroundTransparency = Tab.Style == 6 and 0.7 or 0
+            SliderFrame.BackgroundColor3 = theme.Element
             SliderFrame.ZIndex = 13
             SliderFrame.Parent = Page
             
@@ -818,20 +475,20 @@ function GeminiLib:CreateWindow(title, themeName)
             corner.Parent = SliderFrame
             
             local Label = Instance.new("TextLabel")
-            Label.Text = "  " .. (Tab.Style == 6 and "📊 " or "") .. text .. (showValue and (": " .. default) or "")
+            Label.Text = "  " .. text .. (showValue and (": " .. default) or "")
             Label.Size = UDim2.new(1, 0, 0, 22)
             Label.BackgroundTransparency = 1
             Label.TextColor3 = theme.Text
             Label.TextXAlignment = Enum.TextXAlignment.Left
-            Label.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            Label.TextSize = Tab.Style == 6 and 12 or 13
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 13
             Label.ZIndex = 14
             Label.Parent = SliderFrame
 
             local Bar = Instance.new("Frame")
             Bar.Size = UDim2.new(1, -30, 0, 8)
             Bar.Position = UDim2.new(0, 15, 0, 35)
-            Bar.BackgroundColor3 = Tab.Style == 6 and Color3.fromRGB(255, 200, 220) or Color3.fromRGB(60, 60, 60)
+            Bar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
             Bar.ZIndex = 14
             Bar.Parent = SliderFrame
             
@@ -841,40 +498,23 @@ function GeminiLib:CreateWindow(title, themeName)
             
             local Fill = Instance.new("Frame")
             Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-            Fill.BackgroundColor3 = Tab.Style == 6 and Color3.fromRGB(255, 120, 200) or theme.Accent
+            Fill.BackgroundColor3 = theme.Accent
             Fill.ZIndex = 15
             Fill.Parent = Bar
             
             local fillCorner = Instance.new("UICorner")
             fillCorner.CornerRadius = UDim.new(1, 0)
             fillCorner.Parent = Fill
-            
-            -- Декоративная точка для аниме темы
-            if Tab.Style == 6 then
-                local sliderDot = Instance.new("Frame")
-                sliderDot.Size = UDim2.new(0, 16, 0, 16)
-                sliderDot.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
-                sliderDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                sliderDot.ZIndex = 16
-                local dotCorner = Instance.new("UICorner")
-                dotCorner.CornerRadius = UDim.new(1, 0)
-                dotCorner.Parent = sliderDot
-                sliderDot.Parent = Bar
-            end
 
             local function update(input)
                 local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
                 local val = math.floor(min + (max - min) * pos)
                 Fill.Size = UDim2.new(pos, 0, 1, 0)
                 
-                if Tab.Style == 6 then
-                    sliderDot.Position = UDim2.new(pos, -8, 0.5, -8)
-                end
-                
                 if showValue then
-                    Label.Text = "  " .. (Tab.Style == 6 and "📊 " or "") .. text .. ": " .. val
+                    Label.Text = "  " .. text .. ": " .. val
                 else
-                    Label.Text = "  " .. (Tab.Style == 6 and "📊 " or "") .. text
+                    Label.Text = "  " .. text
                 end
                 
                 if callback then
@@ -912,22 +552,18 @@ function GeminiLib:CreateWindow(title, themeName)
                 Set = function(val) 
                     local pos = math.clamp((val - min) / (max - min), 0, 1)
                     Fill.Size = UDim2.new(pos, 0, 1, 0)
-                    if Tab.Style == 6 then
-                        sliderDot.Position = UDim2.new(pos, -8, 0.5, -8)
-                    end
                     if showValue then
-                        Label.Text = "  " .. (Tab.Style == 6 and "📊 " or "") .. text .. ": " .. val
+                        Label.Text = "  " .. text .. ": " .. val
                     end
                 end
             }
         end
 
-        -- ФУНКЦИЯ ВЫПАДАЮЩЕГО СПИСКА С АНИМЕ СТИЛЕМ
+        -- ФУНКЦИЯ ВЫПАДАЮЩЕГО СПИСКА
         function Tab:Dropdown(text, list, callback, multiSelect)
             local DropFrame = Instance.new("Frame")
             DropFrame.Size = UDim2.new(1, -20, 0, 38)
-            DropFrame.BackgroundColor3 = Tab.Style == 6 and theme.SpecialAccent or theme.Element
-            DropFrame.BackgroundTransparency = Tab.Style == 6 and 0.7 or 0
+            DropFrame.BackgroundColor3 = theme.Element
             DropFrame.ClipsDescendants = true
             DropFrame.ZIndex = 13
             DropFrame.Parent = Page
@@ -938,12 +574,12 @@ function GeminiLib:CreateWindow(title, themeName)
             
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 38)
-            Btn.Text = "  " .. (Tab.Style == 6 and "📁 " or "") .. text
+            Btn.Text = "  " .. text
             Btn.BackgroundTransparency = 1
             Btn.TextColor3 = theme.Text
             Btn.TextXAlignment = Enum.TextXAlignment.Left
-            Btn.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-            Btn.TextSize = Tab.Style == 6 and 13 or 14
+            Btn.Font = Enum.Font.Gotham
+            Btn.TextSize = 14
             Btn.ZIndex = 14
             Btn.Parent = DropFrame
             
@@ -961,23 +597,22 @@ function GeminiLib:CreateWindow(title, themeName)
                 local opt = Instance.new("TextButton")
                 opt.Size = UDim2.new(1, 0, 0, 32)
                 opt.Position = UDim2.new(0, 0, 0, 38 + ((i - 1) * 32))
-                opt.Text = (Tab.Style == 6 and "• " or "") .. v
+                opt.Text = "• " .. v
                 opt.BackgroundColor3 = theme.Section
-                opt.BackgroundTransparency = Tab.Style == 6 and 0.8 or 0
                 opt.TextColor3 = theme.Text
                 opt.BorderSizePixel = 0
-                opt.Font = Tab.Style == 6 and Enum.Font.GothamSemibold or Enum.Font.Gotham
-                opt.TextSize = Tab.Style == 6 and 12 or 12
+                opt.Font = Enum.Font.Gotham
+                opt.TextSize = 12
                 opt.ZIndex = 14
                 opt.Parent = DropFrame
                 
                 opt.MouseButton1Click:Connect(function()
                     if multiSelect then
                         selected[v] = not selected[v]
-                        opt.BackgroundColor3 = selected[v] and (Tab.Style == 6 and Color3.fromRGB(255, 120, 200) or theme.Accent) or theme.Section
+                        opt.BackgroundColor3 = selected[v] and theme.Accent or theme.Section
                         if callback then callback(selected) end
                     else
-                        Btn.Text = "  " .. (Tab.Style == 6 and "📁 " or "") .. text .. ": " .. v
+                        Btn.Text = "  " .. text .. ": " .. v
                         open = false
                         TweenService:Create(DropFrame, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
                             Size = UDim2.new(1, -20, 0, 38)
@@ -990,6 +625,55 @@ function GeminiLib:CreateWindow(title, themeName)
             table.insert(Tab.Elements, DropFrame)
             table.insert(WindowObj.Elements, DropFrame)
             return DropFrame
+        end
+
+        -- ФУНКЦИЯ ТЕКСТОВОГО ПОЛЯ
+        function Tab:TextBox(text, placeholder, callback)
+            local TextBoxFrame = Instance.new("Frame")
+            TextBoxFrame.Size = UDim2.new(1, -20, 0, 38)
+            TextBoxFrame.BackgroundColor3 = theme.Element
+            TextBoxFrame.ZIndex = 13
+            TextBoxFrame.Parent = Page
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 4)
+            corner.Parent = TextBoxFrame
+            
+            local Label = Instance.new("TextLabel")
+            Label.Text = "  " .. text
+            Label.Size = UDim2.new(1, 0, 0, 38)
+            Label.BackgroundTransparency = 1
+            Label.TextColor3 = theme.Text
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 14
+            Label.ZIndex = 14
+            Label.Parent = TextBoxFrame
+            
+            local InputBox = Instance.new("TextBox")
+            InputBox.Size = UDim2.new(1, -60, 1, -10)
+            InputBox.Position = UDim2.new(0, 60, 0, 5)
+            InputBox.BackgroundTransparency = 1
+            InputBox.Text = ""
+            InputBox.PlaceholderText = placeholder or ""
+            InputBox.TextColor3 = theme.Text
+            InputBox.Font = Enum.Font.Gotham
+            InputBox.TextSize = 14
+            InputBox.ZIndex = 14
+            InputBox.Parent = TextBoxFrame
+            
+            InputBox.FocusLost:Connect(function(enterPressed)
+                if enterPressed and callback then
+                    local success, err = pcall(callback, InputBox.Text)
+                    if not success then
+                        warn("TextBox callback error:", err)
+                    end
+                end
+            end)
+            
+            table.insert(Tab.Elements, TextBoxFrame)
+            table.insert(WindowObj.Elements, TextBoxFrame)
+            return TextBoxFrame
         end
 
         -- Добавляем вкладку в список
@@ -1010,23 +694,10 @@ function GeminiLib:CreateWindow(title, themeName)
         
         WindowObj.Theme = newTheme
         
-        -- Удаляем старый фон
-        if WindowObj.Background then
-            WindowObj.Background:Destroy()
-            WindowObj.Background = nil
-        end
-        
-        -- Создаем новый фон если нужно
-        if newTheme.Name == "NekoGirl" then
-            WindowObj.Background = createAnimeBackground(ScreenGui, newTheme)
-        end
-        
         -- Обновляем цвета всех элементов
         Main.BackgroundColor3 = newTheme.Main
-        Main.BackgroundTransparency = newTheme.Name == "NekoGirl" and 0.7 or 0
         Title.TextColor3 = newTheme.Text
         TopBar.BackgroundColor3 = newTheme.Section
-        TopBar.BackgroundTransparency = newTheme.Name == "NekoGirl" and 0.8 or 0
         
         for _, element in pairs(WindowObj.Elements) do
             if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
@@ -1040,25 +711,11 @@ function GeminiLib:CreateWindow(title, themeName)
     -- ФУНКЦИЯ ДЛЯ ПОКАЗА/СКРЫТИЯ ОКНА
     function WindowObj:ToggleVisibility()
         Main.Visible = not Main.Visible
-        if WindowObj.Background then
-            WindowObj.Background.Visible = Main.Visible
-        end
     end
 
     -- ФУНКЦИЯ ДЛЯ УНИЧТОЖЕНИЯ ОКНА
     function WindowObj:Destroy()
         ScreenGui:Destroy()
-    end
-
-    -- ФУНКЦИЯ ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА
-    function WindowObj:Resize(width, height)
-        GeminiLib.Config.WindowWidth = width or GeminiLib.Config.WindowWidth
-        GeminiLib.Config.WindowHeight = height or GeminiLib.Config.WindowHeight
-        
-        TweenService:Create(Main, TweenInfo.new(0.3), {
-            Size = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
-            Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
-        }):Play()
     end
 
     return WindowObj
