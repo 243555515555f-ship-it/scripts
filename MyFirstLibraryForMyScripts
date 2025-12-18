@@ -72,8 +72,11 @@ GeminiLib.Themes = {
 
 -- КОНФИГУРАЦИЯ
 GeminiLib.Config = {
-    WindowWidth = 550,
-    WindowHeight = 400,
+    WindowWidth = 600,
+    WindowHeight = 450,
+    MinWidth = 400,    -- Минимальная ширина
+    MaxWidth = 800,    -- Максимальная ширина
+    AspectRatio = WindowHeight/WindowWidth, -- Соотношение высоты к ширине (0.727)
     AnimationSpeed = 0.2,
     Roundness = 12,
     EnableShadows = true,
@@ -173,6 +176,48 @@ function GeminiLib:CreateWindow(title, themeName)
     Main.ZIndex = 10
     Main.Parent = ScreenGui
     
+    local ResizeBtn = Instance.new("ImageButton")
+    ResizeBtn.Name = "ResizeHandle"
+    ResizeBtn.Size = UDim2.new(0, 15, 0, 15)
+    ResizeBtn.Position = UDim2.new(1, -15, 1, -15)
+    ResizeBtn.BackgroundTransparency = 1
+    ResizeBtn.Image = "rbxassetid://6031305753" -- Иконка уголка
+    ResizeBtn.ImageColor3 = theme.Accent
+    ResizeBtn.ZIndex = 15
+    ResizeBtn.Parent = Main
+
+    local resizing = false
+    local resizeStartPos
+    local startSize
+
+    ResizeBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            resizeStartPos = input.Position
+            startSize = Main.Size
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStartPos
+            
+            -- Рассчитываем новую ширину
+            local newWidth = math.clamp(startSize.X.Offset + delta.X, GeminiLib.Config.MinWidth, GeminiLib.Config.MaxWidth)
+            
+            -- Пропорционально рассчитываем высоту на основе AspectRatio
+            local newHeight = newWidth * GeminiLib.Config.AspectRatio
+            
+            Main.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = false
+        end
+    end)
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness)
     corner.Parent = Main
