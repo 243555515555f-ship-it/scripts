@@ -1,4 +1,4 @@
--- GeminiLib (Очищенная версия)
+-- GeminiLib (Обновленная версия с тултипами)
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -16,7 +16,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(35, 35, 35),
         Element = Color3.fromRGB(45, 45, 45),
         Border = Color3.fromRGB(60, 60, 60),
-        Shadow = Color3.fromRGB(0, 0, 0, 0.3)
+        Shadow = Color3.fromRGB(0, 0, 0, 0.3),
+        Label = Color3.fromRGB(200, 200, 200)  -- Более контрастный цвет для лейблов
     },
     Midnight = {
         Name = "Midnight",
@@ -26,7 +27,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(20, 20, 30),
         Element = Color3.fromRGB(30, 30, 45),
         Border = Color3.fromRGB(80, 80, 120),
-        Shadow = Color3.fromRGB(0, 0, 0, 0.4)
+        Shadow = Color3.fromRGB(0, 0, 0, 0.4),
+        Label = Color3.fromRGB(180, 180, 220)
     },
     Sakura = {
         Name = "Sakura",
@@ -36,7 +38,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(255, 220, 235),
         Element = Color3.fromRGB(255, 255, 255),
         Border = Color3.fromRGB(255, 180, 200),
-        Shadow = Color3.fromRGB(255, 150, 180, 0.2)
+        Shadow = Color3.fromRGB(255, 150, 180, 0.2),
+        Label = Color3.fromRGB(100, 50, 70)
     },
     Cyberpunk = {
         Name = "Cyberpunk",
@@ -46,7 +49,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(10, 20, 30),
         Element = Color3.fromRGB(20, 30, 40),
         Border = Color3.fromRGB(0, 200, 200),
-        Shadow = Color3.fromRGB(0, 100, 255, 0.3)
+        Shadow = Color3.fromRGB(0, 100, 255, 0.3),
+        Label = Color3.fromRGB(200, 220, 255)
     },
     Forest = {
         Name = "Forest",
@@ -56,7 +60,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(20, 40, 25),
         Element = Color3.fromRGB(25, 50, 30),
         Border = Color3.fromRGB(0, 150, 80),
-        Shadow = Color3.fromRGB(0, 50, 0, 0.3)
+        Shadow = Color3.fromRGB(0, 50, 0, 0.3),
+        Label = Color3.fromRGB(180, 220, 180)
     },
     Ocean = {
         Name = "Ocean",
@@ -66,7 +71,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(15, 30, 50),
         Element = Color3.fromRGB(20, 40, 60),
         Border = Color3.fromRGB(0, 100, 200),
-        Shadow = Color3.fromRGB(0, 50, 150, 0.3)
+        Shadow = Color3.fromRGB(0, 50, 150, 0.3),
+        Label = Color3.fromRGB(180, 200, 255)
     }
 }
 
@@ -80,11 +86,137 @@ GeminiLib.Config = {
     AnimationSpeed = 0.2,
     Roundness = 12,
     EnableShadows = true,
+    EnableTooltips = true,  -- Включить/выключить тултипы
+    TooltipDelay = 0.5,     -- Задержка перед показом тултипа (секунды)
     AutoSaveSettings = true,
     DefaultTheme = "Dark",
     CustomIcons = true
 }
 GeminiLib.Config.AspectRatio = GeminiLib.Config.WindowHeight / GeminiLib.Config.WindowWidth
+
+-- СИСТЕМА ТУЛТИПОВ
+local tooltipInstance = nil
+local tooltipConnection = nil
+
+local function createTooltip(text, parent)
+    if not GeminiLib.Config.EnableTooltips then return end
+    
+    -- Удаляем старый тултип если есть
+    if tooltipInstance then
+        tooltipInstance:Destroy()
+        tooltipInstance = nil
+    end
+    
+    if tooltipConnection then
+        tooltipConnection:Disconnect()
+        tooltipConnection = nil
+    end
+    
+    local theme = GeminiLib.Themes.Dark  -- Базовый цвет для тултипов
+    
+    local Tooltip = Instance.new("Frame")
+    Tooltip.Name = "GeminiTooltip"
+    Tooltip.Size = UDim2.new(0, 200, 0, 0)  -- Авто-размер
+    Tooltip.BackgroundColor3 = theme.Main
+    Tooltip.BackgroundTransparency = 0.15
+    Tooltip.BorderSizePixel = 0
+    Tooltip.ZIndex = 999
+    Tooltip.Visible = false
+    Tooltip.Parent = CoreGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = Tooltip
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = theme.Accent
+    stroke.Thickness = 1
+    stroke.Transparency = 0.3
+    stroke.Parent = Tooltip
+    
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "TooltipShadow"
+    shadow.Image = "rbxassetid://5554237735"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.7
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceScale = 0.05
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.Size = UDim2.new(1, 10, 1, 10)
+    shadow.Position = UDim2.new(0, -5, 0, -5)
+    shadow.BackgroundTransparency = 1
+    shadow.ZIndex = 998
+    shadow.Parent = Tooltip
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Text = text
+    TextLabel.Size = UDim2.new(1, -20, 1, -20)
+    TextLabel.Position = UDim2.new(0, 10, 0, 10)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.TextColor3 = theme.Text
+    TextLabel.Font = Enum.Font.Gotham
+    TextLabel.TextSize = 13
+    TextLabel.TextWrapped = true
+    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel.ZIndex = 1000
+    TextLabel.Parent = Tooltip
+    
+    -- Авто-размер под текст
+    local textSize = TextLabel.TextBounds
+    Tooltip.Size = UDim2.new(0, math.min(250, textSize.X + 30), 0, textSize.Y + 20)
+    
+    tooltipInstance = Tooltip
+    return Tooltip
+end
+
+local function showTooltip(parent, text)
+    if not GeminiLib.Config.EnableTooltips or not text then return end
+    
+    local tooltip = createTooltip(text, parent)
+    if not tooltip then return end
+    
+    local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+    local offset = Vector2.new(15, 15)
+    
+    tooltipConnection = RunService.RenderStepped:Connect(function()
+        if tooltip and tooltip.Parent then
+            local mousePos = Vector2.new(mouse.X, mouse.Y)
+            local screenSize = workspace.CurrentCamera.ViewportSize
+            
+            -- Позиционируем рядом с курсором
+            local pos = mousePos + offset
+            
+            -- Проверяем, чтобы не выходил за экран
+            if pos.X + tooltip.AbsoluteSize.X > screenSize.X then
+                pos = Vector2.new(mousePos.X - tooltip.AbsoluteSize.X - offset.X, pos.Y)
+            end
+            if pos.Y + tooltip.AbsoluteSize.Y > screenSize.Y then
+                pos = Vector2.new(pos.X, mousePos.Y - tooltip.AbsoluteSize.Y - offset.Y)
+            end
+            
+            tooltip.Position = UDim2.new(0, pos.X, 0, pos.Y)
+        end
+    end)
+    
+    tooltip.Visible = true
+    TweenService:Create(tooltip, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+end
+
+local function hideTooltip()
+    if tooltipInstance then
+        TweenService:Create(tooltipInstance, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+        task.wait(0.2)
+        if tooltipInstance then
+            tooltipInstance:Destroy()
+            tooltipInstance = nil
+        end
+    end
+    
+    if tooltipConnection then
+        tooltipConnection:Disconnect()
+        tooltipConnection = nil
+    end
+end
 
 -- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ ТЕНИ
 local function createShadow(parent, color, transparency)
@@ -251,7 +383,10 @@ function GeminiLib:CreateWindow(title, themeName)
     CloseBtn.ZIndex = 12
     CloseBtn.Parent = TopBar
     
-    CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+    CloseBtn.MouseButton1Click:Connect(function() 
+        ScreenGui:Destroy()
+        hideTooltip()
+    end)
 
     local TabList = Instance.new("Frame")
     TabList.Size = UDim2.new(0, 170, 1, -60)
@@ -404,7 +539,7 @@ function GeminiLib:CreateWindow(title, themeName)
         local PageL = Instance.new("UIListLayout")
         PageL.Padding = UDim.new(0, 10)
         PageL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        PageL.SortOrder = Enum.SortOrder.LayoutOrder  -- ФИКС: сортировка по LayoutOrder
+        PageL.SortOrder = Enum.SortOrder.LayoutOrder
         PageL.Parent = Page
 
         -- Создаем таблицу для хранения элементов вкладки
@@ -414,7 +549,7 @@ function GeminiLib:CreateWindow(title, themeName)
             Button = TabBtn,
             Elements = {},
             Style = style,
-            ElementCount = 0  -- Счетчик элементов для LayoutOrder
+            ElementCount = 0
         }
 
         -- Функция для активации этой вкладки
@@ -438,7 +573,7 @@ function GeminiLib:CreateWindow(title, themeName)
 
         TabBtn.MouseButton1Click:Connect(activateTab)
 
-        -- ФУНКЦИЯ ЛЕЙБЛА (МЕТКА)
+        -- ФУНКЦИЯ ЛЕЙБЛА (МЕТКА) - С КОНТРАСТНЫМ ЦВЕТОМ
         function Tab:Label(text, align)
             Tab.ElementCount = Tab.ElementCount + 1
             
@@ -446,16 +581,16 @@ function GeminiLib:CreateWindow(title, themeName)
             LabelFrame.Size = UDim2.new(1, -20, 0, 30)
             LabelFrame.BackgroundTransparency = 1
             LabelFrame.ZIndex = 13
-            LabelFrame.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            LabelFrame.LayoutOrder = Tab.ElementCount
             LabelFrame.Parent = Page
             
             local LabelText = Instance.new("TextLabel")
             LabelText.Text = text
             LabelText.Size = UDim2.new(1, 0, 1, 0)
             LabelText.BackgroundTransparency = 1
-            LabelText.TextColor3 = theme.Text
+            LabelText.TextColor3 = theme.Label or theme.Text  -- Используем специальный цвет для лейблов
             LabelText.TextXAlignment = align or Enum.TextXAlignment.Left
-            LabelText.Font = Enum.Font.Gotham
+            LabelText.Font = Enum.Font.GothamSemibold  -- Более жирный шрифт для контраста
             LabelText.TextSize = 14
             LabelText.ZIndex = 14
             LabelText.Parent = LabelFrame
@@ -466,8 +601,8 @@ function GeminiLib:CreateWindow(title, themeName)
             return LabelFrame
         end
 
-        -- ФУНКЦИЯ КНОПКИ
-        function Tab:Button(text, callback)
+        -- ФУНКЦИЯ КНОПКИ С ПОДДЕРЖКОЙ ТУЛТИПОВ
+        function Tab:Button(text, callback, tooltipText)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local Btn = Instance.new("TextButton")
@@ -478,19 +613,45 @@ function GeminiLib:CreateWindow(title, themeName)
             Btn.Font = Enum.Font.GothamMedium
             Btn.TextSize = 14
             Btn.ZIndex = 13
-            Btn.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            Btn.LayoutOrder = Tab.ElementCount
             Btn.Parent = Page
             
             local btnCorner = Instance.new("UICorner")
             btnCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 4)
             btnCorner.Parent = Btn
             
+            -- Тултип
+            local tooltipTimer = nil
+            local isMouseOver = false
+            
+            local function startTooltipTimer()
+                if tooltipText and GeminiLib.Config.EnableTooltips then
+                    isMouseOver = true
+                    tooltipTimer = task.delay(GeminiLib.Config.TooltipDelay, function()
+                        if isMouseOver then
+                            showTooltip(Btn, tooltipText)
+                        end
+                    end)
+                end
+            end
+            
+            local function stopTooltipTimer()
+                isMouseOver = false
+                if tooltipTimer then
+                    task.cancel(tooltipTimer)
+                    tooltipTimer = nil
+                end
+                hideTooltip()
+            end
+            
             Btn.MouseEnter:Connect(function()
                 TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Accent}):Play()
+                startTooltipTimer()
             end)
             
             Btn.MouseLeave:Connect(function()
                 TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.Element}):Play()
+                stopTooltipTimer()
             end)
             
             Btn.MouseButton1Click:Connect(function()
@@ -500,6 +661,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         warn("Button callback error:", err)
                     end
                 end
+                hideTooltip()
             end)
             
             table.insert(Tab.Elements, Btn)
@@ -507,8 +669,8 @@ function GeminiLib:CreateWindow(title, themeName)
             return Btn
         end
 
-        -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ
-        function Tab:Toggle(text, default, callback)
+        -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ С ПОДДЕРЖКОЙ ТУЛТИПОВ
+        function Tab:Toggle(text, default, callback, tooltipText)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local state = default or false
@@ -521,7 +683,7 @@ function GeminiLib:CreateWindow(title, themeName)
             TogFrame.Font = Enum.Font.Gotham
             TogFrame.TextSize = 14
             TogFrame.ZIndex = 13
-            TogFrame.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            TogFrame.LayoutOrder = Tab.ElementCount
             TogFrame.Parent = Page
             
             local corner = Instance.new("UICorner")
@@ -539,6 +701,40 @@ function GeminiLib:CreateWindow(title, themeName)
             indicatorCorner.CornerRadius = UDim.new(1, 0)
             indicatorCorner.Parent = Indicator
 
+            -- Тултип для тоггла
+            local tooltipTimer = nil
+            local isMouseOver = false
+            
+            local function startTooltipTimer()
+                if tooltipText and GeminiLib.Config.EnableTooltips then
+                    isMouseOver = true
+                    tooltipTimer = task.delay(GeminiLib.Config.TooltipDelay, function()
+                        if isMouseOver then
+                            showTooltip(TogFrame, tooltipText)
+                        end
+                    end)
+                end
+            end
+            
+            local function stopTooltipTimer()
+                isMouseOver = false
+                if tooltipTimer then
+                    task.cancel(tooltipTimer)
+                    tooltipTimer = nil
+                end
+                hideTooltip()
+            end
+            
+            TogFrame.MouseEnter:Connect(function()
+                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
+                startTooltipTimer()
+            end)
+            
+            TogFrame.MouseLeave:Connect(function()
+                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
+                stopTooltipTimer()
+            end)
+            
             TogFrame.MouseButton1Click:Connect(function()
                 state = not state
                 TweenService:Create(Indicator, TweenInfo.new(GeminiLib.Config.AnimationSpeed), {
@@ -553,14 +749,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end)
             
-            TogFrame.MouseEnter:Connect(function()
-                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
-            end)
-            
-            TogFrame.MouseLeave:Connect(function()
-                TweenService:Create(TogFrame, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
-            end)
-            
             table.insert(Tab.Elements, TogFrame)
             table.insert(WindowObj.Elements, TogFrame)
             
@@ -573,15 +761,15 @@ function GeminiLib:CreateWindow(title, themeName)
             }
         end
 
-        -- ФУНКЦИЯ СЛАЙДЕРА
-        function Tab:Slider(text, min, max, default, callback, showValue)
+        -- ФУНКЦИЯ СЛАЙДЕРА С ПОДДЕРЖКОЙ ТУЛТИПОВ
+        function Tab:Slider(text, min, max, default, callback, showValue, tooltipText)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local SliderFrame = Instance.new("Frame")
             SliderFrame.Size = UDim2.new(1, -20, 0, 55)
             SliderFrame.BackgroundColor3 = theme.Element
             SliderFrame.ZIndex = 13
-            SliderFrame.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            SliderFrame.LayoutOrder = Tab.ElementCount
             SliderFrame.Parent = Page
             
             local corner = Instance.new("UICorner")
@@ -619,6 +807,33 @@ function GeminiLib:CreateWindow(title, themeName)
             local fillCorner = Instance.new("UICorner")
             fillCorner.CornerRadius = UDim.new(1, 0)
             fillCorner.Parent = Fill
+
+            -- Тултип для слайдера
+            local tooltipTimer = nil
+            local isMouseOver = false
+            
+            local function startTooltipTimer()
+                if tooltipText and GeminiLib.Config.EnableTooltips then
+                    isMouseOver = true
+                    tooltipTimer = task.delay(GeminiLib.Config.TooltipDelay, function()
+                        if isMouseOver then
+                            showTooltip(SliderFrame, tooltipText)
+                        end
+                    end)
+                end
+            end
+            
+            local function stopTooltipTimer()
+                isMouseOver = false
+                if tooltipTimer then
+                    task.cancel(tooltipTimer)
+                    tooltipTimer = nil
+                end
+                hideTooltip()
+            end
+            
+            SliderFrame.MouseEnter:Connect(startTooltipTimer)
+            SliderFrame.MouseLeave:Connect(stopTooltipTimer)
 
             local function update(input)
                 local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
@@ -673,8 +888,8 @@ function GeminiLib:CreateWindow(title, themeName)
             }
         end
 
-        -- ФУНКЦИЯ ВЫПАДАЮЩЕГО СПИСКА
-        function Tab:Dropdown(text, list, callback, multiSelect)
+        -- ФУНКЦИЯ ВЫПАДАЮЩЕГО СПИСКА С ПОДДЕРЖКОЙ ТУЛТИПОВ
+        function Tab:Dropdown(text, list, callback, multiSelect, tooltipText)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local DropFrame = Instance.new("Frame")
@@ -682,7 +897,7 @@ function GeminiLib:CreateWindow(title, themeName)
             DropFrame.BackgroundColor3 = theme.Element
             DropFrame.ClipsDescendants = true
             DropFrame.ZIndex = 13
-            DropFrame.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            DropFrame.LayoutOrder = Tab.ElementCount
             DropFrame.Parent = Page
             
             local corner = Instance.new("UICorner")
@@ -699,6 +914,33 @@ function GeminiLib:CreateWindow(title, themeName)
             Btn.TextSize = 14
             Btn.ZIndex = 14
             Btn.Parent = DropFrame
+            
+            -- Тултип для дропдауна
+            local tooltipTimer = nil
+            local isMouseOver = false
+            
+            local function startTooltipTimer()
+                if tooltipText and GeminiLib.Config.EnableTooltips then
+                    isMouseOver = true
+                    tooltipTimer = task.delay(GeminiLib.Config.TooltipDelay, function()
+                        if isMouseOver then
+                            showTooltip(DropFrame, tooltipText)
+                        end
+                    end)
+                end
+            end
+            
+            local function stopTooltipTimer()
+                isMouseOver = false
+                if tooltipTimer then
+                    task.cancel(tooltipTimer)
+                    tooltipTimer = nil
+                end
+                hideTooltip()
+            end
+            
+            DropFrame.MouseEnter:Connect(startTooltipTimer)
+            DropFrame.MouseLeave:Connect(stopTooltipTimer)
             
             local selected = {}
             local open = false
@@ -744,15 +986,15 @@ function GeminiLib:CreateWindow(title, themeName)
             return DropFrame
         end
 
-        -- ФУНКЦИЯ ТЕКСТОВОГО ПОЛЯ
-        function Tab:TextBox(text, placeholder, callback)
+        -- ФУНКЦИЯ ТЕКСТОВОГО ПОЛЯ С ПОДДЕРЖКОЙ ТУЛТИПОВ
+        function Tab:TextBox(text, placeholder, callback, tooltipText)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local TextBoxFrame = Instance.new("Frame")
             TextBoxFrame.Size = UDim2.new(1, -20, 0, 38)
             TextBoxFrame.BackgroundColor3 = theme.Element
             TextBoxFrame.ZIndex = 13
-            TextBoxFrame.LayoutOrder = Tab.ElementCount  -- ФИКС: устанавливаем порядок
+            TextBoxFrame.LayoutOrder = Tab.ElementCount
             TextBoxFrame.Parent = Page
             
             local corner = Instance.new("UICorner")
@@ -781,6 +1023,33 @@ function GeminiLib:CreateWindow(title, themeName)
             InputBox.TextSize = 14
             InputBox.ZIndex = 14
             InputBox.Parent = TextBoxFrame
+            
+            -- Тултип для текстбокса
+            local tooltipTimer = nil
+            local isMouseOver = false
+            
+            local function startTooltipTimer()
+                if tooltipText and GeminiLib.Config.EnableTooltips then
+                    isMouseOver = true
+                    tooltipTimer = task.delay(GeminiLib.Config.TooltipDelay, function()
+                        if isMouseOver then
+                            showTooltip(TextBoxFrame, tooltipText)
+                        end
+                    end)
+                end
+            end
+            
+            local function stopTooltipTimer()
+                isMouseOver = false
+                if tooltipTimer then
+                    task.cancel(tooltipTimer)
+                    tooltipTimer = nil
+                end
+                hideTooltip()
+            end
+            
+            TextBoxFrame.MouseEnter:Connect(startTooltipTimer)
+            TextBoxFrame.MouseLeave:Connect(stopTooltipTimer)
             
             InputBox.FocusLost:Connect(function(enterPressed)
                 if enterPressed and callback then
@@ -816,9 +1085,8 @@ function GeminiLib:CreateWindow(title, themeName)
             Page.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 10)
         end
 
-        -- Подключаем обновление размера при изменении элементов
         Page.ChildAdded:Connect(function()
-            task.wait(0.01) -- Небольшая задержка для корректного расчета
+            task.wait(0.01)
             updatePageSize()
         end)
         
@@ -827,7 +1095,6 @@ function GeminiLib:CreateWindow(title, themeName)
             updatePageSize()
         end)
 
-        -- Инициализируем размер
         task.spawn(function()
             task.wait(0.1)
             updatePageSize()
@@ -870,6 +1137,7 @@ function GeminiLib:CreateWindow(title, themeName)
     -- ФУНКЦИЯ ДЛЯ УНИЧТОЖЕНИЯ ОКНА
     function WindowObj:Destroy()
         ScreenGui:Destroy()
+        hideTooltip()
     end
 
     return WindowObj
