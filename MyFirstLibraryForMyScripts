@@ -713,27 +713,31 @@ function GeminiLib:CreateWindow(title, themeName)
             return DropFrame
         end
 
-        function Tab:Label(text, align) -- align: Enum.TextXAlignment (Left, Center, Right)
-            local Label = Instance.new("TextLabel")
-            Label.Size = UDim2.new(1, -20, 0, 25) -- Небольшая высота для меток
-            Label.BackgroundTransparency = 1
-            Label.Text = text
-            Label.TextColor3 = theme.Text
-            Label.Font = Enum.Font.GothamMedium
-            Label.TextSize = 13
-            Label.TextXAlignment = align or Enum.TextXAlignment.Left
-            Label.ZIndex = 13
-            Label.Parent = Page
-            
-            -- Добавляем небольшую прозрачность, чтобы текст не "кричал", если это просто описание
-            Label.TextTransparency = 0.2
+        -- В функции создания вкладки, добавьте метод :Label() после других методов:
 
-            table.insert(Tab.Elements, Label)
-            table.insert(WindowObj.Elements, Label)
+        -- ФУНКЦИЯ ЛЕЙБЛА (МЕТКА)
+        function Tab:Label(text)
+            local LabelFrame = Instance.new("Frame")
+            LabelFrame.Size = UDim2.new(1, -20, 0, 30)  -- Фиксированная высота для лейбла
+            LabelFrame.BackgroundTransparency = 1
+            LabelFrame.ZIndex = 13
+            LabelFrame.Parent = Page
             
-            return {
-                Set = function(newText) Label.Text = newText end
-            }
+            local LabelText = Instance.new("TextLabel")
+            LabelText.Text = text
+            LabelText.Size = UDim2.new(1, 0, 1, 0)
+            LabelText.BackgroundTransparency = 1
+            LabelText.TextColor3 = theme.Text
+            LabelText.TextXAlignment = align or Enum.TextXAlignment.Left
+            LabelText.Font = Enum.Font.Gotham
+            LabelText.TextSize = 14
+            LabelText.ZIndex = 14
+            LabelText.Parent = LabelFrame
+            
+            table.insert(Tab.Elements, LabelFrame)
+            table.insert(WindowObj.Elements, LabelFrame)
+            
+            return LabelFrame
         end
 
         -- ФУНКЦИЯ ТЕКСТОВОГО ПОЛЯ
