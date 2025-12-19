@@ -475,7 +475,7 @@ function GeminiLib:CreateWindow(title, themeName)
     containerCorner.Parent = Container
 
     -- ФУНКЦИЯ СОЗДАНИЯ ВКЛАДКИ
-    function WindowObj:CreateTab(name, style)
+    function WindowObj:CreateTab(name, style, order)
         local icon = ""
         if style == 2 then
             icon = "🔘 "
@@ -485,6 +485,8 @@ function GeminiLib:CreateWindow(title, themeName)
         TabBtn.Name = "TabBtn_" .. name
         TabBtn.Size = UDim2.new(1, 0, 0, 38)
         TabBtn.BackgroundColor3 = theme.Section
+        TabBtn.LayoutOrder = order or 9999
+        Order = order or 9999
         
         if style == 4 then
             TabBtn.BackgroundColor3 = theme.Accent
@@ -1100,11 +1102,24 @@ function GeminiLib:CreateWindow(title, themeName)
             updatePageSize()
         end)
 
-        table.insert(WindowObj.Tabs, Tab)
+        -- Сортируем вкладки по порядку
+        table.sort(WindowObj.Tabs, function(a, b)
+            return a.Order < b.Order
+        end)
         
+        -- Обновляем LayoutOrder для всех вкладок после сортировки
+        for i, tab in ipairs(WindowObj.Tabs) do
+            if tab.Button then
+                tab.Button.LayoutOrder = i
+            end
+        end
+        
+        -- Активируем первую вкладку
         if #WindowObj.Tabs == 1 then
             activateTab()
         end
+        
+        table.insert(WindowObj.Tabs, Tab)
 
         return Tab
     end
