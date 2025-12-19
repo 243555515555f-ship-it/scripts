@@ -5,6 +5,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
 -- УНИВЕРСАЛЬНАЯ СИСТЕМА ТЕМ
 GeminiLib.Themes = {
@@ -18,7 +19,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(35, 35, 35),
         Element = Color3.fromRGB(45, 45, 45),
         Border = Color3.fromRGB(60, 60, 60),
-        Shadow = Color3.fromRGB(0, 0, 0, 0.3),
+        Shadow = Color3.fromRGB(0, 0, 0),
+        ShadowAlpha = 0.3,
         Success = Color3.fromRGB(46, 204, 113),
         Warning = Color3.fromRGB(241, 196, 15),
         Error = Color3.fromRGB(231, 76, 60)
@@ -33,7 +35,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(25, 25, 35),
         Element = Color3.fromRGB(35, 35, 50),
         Border = Color3.fromRGB(80, 80, 120),
-        Shadow = Color3.fromRGB(0, 0, 0, 0.4),
+        Shadow = Color3.fromRGB(0, 0, 0),
+        ShadowAlpha = 0.4,
         Success = Color3.fromRGB(0, 200, 150),
         Warning = Color3.fromRGB(255, 165, 0),
         Error = Color3.fromRGB(255, 80, 80)
@@ -48,7 +51,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(10, 20, 40),
         Element = Color3.fromRGB(20, 30, 60),
         Border = Color3.fromRGB(0, 200, 200),
-        Shadow = Color3.fromRGB(0, 100, 255, 0.3),
+        Shadow = Color3.fromRGB(0, 100, 255),
+        ShadowAlpha = 0.3,
         Success = Color3.fromRGB(0, 255, 200),
         Warning = Color3.fromRGB(255, 255, 0),
         Error = Color3.fromRGB(255, 50, 50)
@@ -63,7 +67,8 @@ GeminiLib.Themes = {
         Section = Color3.fromRGB(20, 40, 25),
         Element = Color3.fromRGB(25, 50, 30),
         Border = Color3.fromRGB(0, 150, 80),
-        Shadow = Color3.fromRGB(0, 50, 0, 0.3),
+        Shadow = Color3.fromRGB(0, 50, 0),
+        ShadowAlpha = 0.3,
         Success = Color3.fromRGB(50, 220, 100),
         Warning = Color3.fromRGB(255, 200, 0),
         Error = Color3.fromRGB(220, 80, 60)
@@ -208,7 +213,7 @@ local function showTooltip(parent, text)
     local tooltip = createTooltip(text, parent)
     if not tooltip then return end
     
-    local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+    local mouse = Players.LocalPlayer:GetMouse()
     local offset = Vector2.new(20, 20)
     
     tooltipConnection = RunService.RenderStepped:Connect(function()
@@ -258,7 +263,8 @@ function GeminiLib:CreateWindow(title, themeName)
         Theme = theme,
         Elements = {},
         Callbacks = {},
-        Settings = {}
+        Settings = {},
+        TabButtons = {}
     }
 
     -- Создаем ScreenGui
@@ -290,7 +296,7 @@ function GeminiLib:CreateWindow(title, themeName)
     mainCorner.CornerRadius = UDim.new(0, GeminiLib.Config.Roundness)
     mainCorner.Parent = Main
     
-    createShadow(Main, theme.Shadow, 0.3, 20)
+    createShadow(Main, theme.Shadow, theme.ShadowAlpha, 20)
     
     if GeminiLib.Config.EnableRainbowAccent then
         local rainbowGlow = createGlowEffect(Main, theme.Accent, 0.3)
@@ -475,13 +481,19 @@ function GeminiLib:CreateWindow(title, themeName)
     avatarCorner.CornerRadius = UDim.new(1, 0)
     avatarCorner.Parent = Avatar
 
-    local userId = game.Players.LocalPlayer.UserId
-    local content = game.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-    Avatar.Image = content
+    local userId = Players.LocalPlayer.UserId
+    local success, content = pcall(function()
+        return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    end)
+    if success then
+        Avatar.Image = content
+    else
+        Avatar.Image = "rbxassetid://0"
+    end
 
     -- Имя пользователя
     local Username = Instance.new("TextLabel")
-    Username.Text = game.Players.LocalPlayer.Name
+    Username.Text = Players.LocalPlayer.Name
     Username.Size = UDim2.new(1, -70, 0, 24)
     Username.Position = UDim2.new(0, 68, 0, 12)
     Username.TextColor3 = theme.Text
@@ -525,6 +537,20 @@ function GeminiLib:CreateWindow(title, themeName)
     contentStroke.Transparency = 0.3
     contentStroke.Parent = ContentContainer
 
+    -- ФУНКЦИЯ ОБНОВЛЕНИЯ ПОРЯДКА ВКЛАДОК
+    local function updateTabOrder()
+        table.sort(WindowObj.Tabs, function(a, b)
+            return a.Order < b.Order
+        end)
+        
+        for i, tab in ipairs(WindowObj.Tabs) do
+            if tab.Button and tab.Button:IsA("GuiObject") then
+                tab.Button.LayoutOrder = i
+                WindowObj.TabButtons[tab.Name] = tab.Button
+            end
+        end
+    end
+
     -- ФУНКЦИЯ СОЗДАНИЯ ВКЛАДКИ
     function WindowObj:CreateTab(name, style, order)
         local icon = ""
@@ -537,6 +563,7 @@ function GeminiLib:CreateWindow(title, themeName)
             icon = "✨ "
         end
         
+        -- Создание кнопки вкладки
         local TabBtn = Instance.new("TextButton")
         TabBtn.Name = "TabBtn_" .. name
         TabBtn.Size = UDim2.new(1, 0, 0, 42)
@@ -618,11 +645,11 @@ function GeminiLib:CreateWindow(title, themeName)
         PagePadding.PaddingRight = UDim.new(0, 10)
         PagePadding.Parent = Page
 
-        -- Объект вкладки
+        -- Объект вкладки (ТАБЛИЦА, а не функция!)
         local Tab = {
             Name = name,
             Page = Page,
-            Button = TabBtn,
+            Button = TabBtn,  -- GUI объект
             Elements = {},
             Style = style,
             ElementCount = 0,
@@ -1323,18 +1350,7 @@ function GeminiLib:CreateWindow(title, themeName)
 
         -- Добавляем вкладку в список
         table.insert(WindowObj.Tabs, Tab)
-        
-        -- Сортируем по порядку
-        table.sort(WindowObj.Tabs, function(a, b)
-            return a.Order < b.Order
-        end)
-        
-        -- Обновляем LayoutOrder
-        for i, tab in ipairs(WindowObj.Tabs) do
-            if tab.Button then
-                tab.Button.LayoutOrder = i
-            end
-        end
+        updateTabOrder()
         
         -- Активируем первую вкладку
         if #WindowObj.Tabs == 1 then
@@ -1357,7 +1373,7 @@ function GeminiLib:CreateWindow(title, themeName)
         
         for _, element in pairs(WindowObj.Elements) do
             if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
-                if not element.BackgroundTransparency == 1 then
+                if element.BackgroundTransparency ~= 1 then
                     pcall(function() element.TextColor3 = newTheme.Text end)
                 end
             end
