@@ -713,6 +713,29 @@ function GeminiLib:CreateWindow(title, themeName)
             return DropFrame
         end
 
+        function Tab:Label(text, align) -- align: Enum.TextXAlignment (Left, Center, Right)
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 25) -- Небольшая высота для меток
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = theme.Text
+            Label.Font = Enum.Font.GothamMedium
+            Label.TextSize = 13
+            Label.TextXAlignment = align or Enum.TextXAlignment.Left
+            Label.ZIndex = 13
+            Label.Parent = Page
+            
+            -- Добавляем небольшую прозрачность, чтобы текст не "кричал", если это просто описание
+            Label.TextTransparency = 0.2
+
+            table.insert(Tab.Elements, Label)
+            table.insert(WindowObj.Elements, Label)
+            
+            return {
+                Set = function(newText) Label.Text = newText end
+            }
+        end
+
         -- ФУНКЦИЯ ТЕКСТОВОГО ПОЛЯ
         function Tab:TextBox(text, placeholder, callback)
             local TextBoxFrame = Instance.new("Frame")
