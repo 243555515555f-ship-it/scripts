@@ -544,6 +544,7 @@ function GeminiLib:CreateWindow(title, themeName)
         end)
         
         for i, tab in ipairs(WindowObj.Tabs) do
+            -- Правильно: IsA с буквой 'l', а не '1'
             if tab.Button and tab.Button:IsA("GuiObject") then
                 tab.Button.LayoutOrder = i
                 WindowObj.TabButtons[tab.Name] = tab.Button
