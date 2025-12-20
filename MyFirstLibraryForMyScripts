@@ -155,7 +155,8 @@ function GeminiLib:CreateWindow(title, themeName)
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new{
         ColorSequenceKeypoint.new(0, theme.Accent),
-        ColorSequenceKeypoint.new(0.3, theme.Section)
+        ColorSequenceKeypoint.new(0.5, theme.Section),
+        ColorSequenceKeypoint.new(1, theme.Section)
     }
     gradient.Transparency = NumberSequence.new(0.8)  -- Более прозрачный
     gradient.Rotation = 90
