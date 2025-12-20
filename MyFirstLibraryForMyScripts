@@ -1,4 +1,4 @@
--- GeminiLib V5
+-- GeminiLib V3 - Чистый, минималистичный дизайн
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -67,24 +67,10 @@ GeminiLib.Config = {
     AnimationSpeed = 0.15,                         -- Быстрее анимации
     Roundness = 12,                                -- Меньше скругление
     EnableShadows = true,
-    EnableSounds = true,
-    ClickSound = "rbxassetid://3570573615",
-    HoverSound = "rbxassetid://3570573453",
     DefaultTheme = "Dark",
     EnableRainbowAccent = false,
     RainbowSpeed = 2
 }
-
--- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-local function playSound(soundId)
-    if not GeminiLib.Config.EnableSounds then return end
-    local sound = Instance.new("Sound")
-    sound.SoundId = soundId
-    sound.Volume = 0.25                           -- Тише звуки
-    sound.Parent = workspace
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 2)
-end
 
 local function createShadow(parent, color, transparency, sizeMultiplier)
     if not GeminiLib.Config.EnableShadows then return end
@@ -119,7 +105,8 @@ function GeminiLib:CreateWindow(title, themeName)
         IsMinimized = false,
         OriginalSize = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
         OriginalPosition = nil,
-        StatsConnection = nil
+        StatsConnection = nil,
+        HiddenElements = {}
     }
 
     -- Создаем ScreenGui
@@ -177,7 +164,6 @@ function GeminiLib:CreateWindow(title, themeName)
             dragging = true
             dragStart = input.Position
             startPos = Main.Position
-            playSound(GeminiLib.Config.HoverSound)
         end
     end)
     
@@ -203,7 +189,7 @@ function GeminiLib:CreateWindow(title, themeName)
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
     Title.Text = "  " .. title
-    Title.Size = UDim2.new(1, -100, 1, 0)
+    Title.Size = UDim2.new(1, -280, 1, 0)  -- Уменьшил ширину чтобы освободить место для статистики
     Title.TextColor3 = theme.Text
     Title.Font = Enum.Font.GothamMedium  -- Более легкий шрифт
     Title.TextSize = 18                  -- Меньше размер
@@ -212,12 +198,12 @@ function GeminiLib:CreateWindow(title, themeName)
     Title.ZIndex = 13
     Title.Parent = TopBar
 
-    -- FPS и Ping индикаторы (справа в заголовке)
+    -- FPS и Ping индикаторы (справа в заголовке с отступом)
     local StatsLabel = Instance.new("TextLabel")
     StatsLabel.Name = "StatsLabel"
     StatsLabel.Text = "FPS: -- | Ping: --"
-    StatsLabel.Size = UDim2.new(0, 150, 1, 0)
-    StatsLabel.Position = UDim2.new(1, -160, 0, 0)
+    StatsLabel.Size = UDim2.new(0, 140, 1, 0)
+    StatsLabel.Position = UDim2.new(1, -200, 0, 0)  -- Сдвинул влево чтобы освободить место для кнопок
     StatsLabel.TextColor3 = theme.TextSecondary
     StatsLabel.Font = Enum.Font.Gotham
     StatsLabel.TextSize = 12
@@ -245,9 +231,6 @@ function GeminiLib:CreateWindow(title, themeName)
         else
             StatsLabel.TextColor3 = theme.Success
         end
-        
-        -- Для пинга цвет только текста (не меняем)
-        -- В более продвинутой версии можно сделать отдельные индикаторы для FPS и Ping
     end
     
     -- Запускаем обновление статистики
@@ -287,7 +270,6 @@ function GeminiLib:CreateWindow(title, themeName)
             ImageColor3 = theme.Accent,
             Size = UDim2.new(0, 30, 0, 30)
         }):Play()
-        playSound(GeminiLib.Config.HoverSound)
     end)
     
     MinimizeBtn.MouseLeave:Connect(function()
@@ -299,7 +281,6 @@ function GeminiLib:CreateWindow(title, themeName)
     
     MinimizeBtn.MouseButton1Click:Connect(function()
         WindowObj:ToggleMinimize()
-        playSound(GeminiLib.Config.ClickSound)
     end)
 
     -- Кнопка закрытия
@@ -318,7 +299,6 @@ function GeminiLib:CreateWindow(title, themeName)
             Rotation = 90,
             Size = UDim2.new(0, 30, 0, 30)
         }):Play()
-        playSound(GeminiLib.Config.HoverSound)
     end)
     
     CloseBtn.MouseLeave:Connect(function()
@@ -330,7 +310,6 @@ function GeminiLib:CreateWindow(title, themeName)
     end)
     
     CloseBtn.MouseButton1Click:Connect(function()
-        playSound(GeminiLib.Config.ClickSound)
         WindowObj:Destroy()
     end)
 
@@ -548,7 +527,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 TextColor3 = theme.Accent
             }):Play()
             
-            playSound(GeminiLib.Config.ClickSound)
         end
 
         -- Анимации кнопки
@@ -558,7 +536,6 @@ function GeminiLib:CreateWindow(title, themeName)
                     BackgroundTransparency = 0.4,
                     TextColor3 = theme.Text
                 }):Play()
-                playSound(GeminiLib.Config.HoverSound)
             end
         end)
         
@@ -685,7 +662,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 TweenService:Create(btnStroke, TweenInfo.new(0.15), {
                     Transparency = 0.6
                 }):Play()
-                playSound(GeminiLib.Config.HoverSound)
             end)
             
             Btn.MouseLeave:Connect(function()
@@ -716,7 +692,6 @@ function GeminiLib:CreateWindow(title, themeName)
                         warn("Button callback error:", err)
                     end
                 end
-                playSound(GeminiLib.Config.ClickSound)
             end)
             
             table.insert(Tab.Elements, Btn)
@@ -785,7 +760,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                     Transparency = 0.6
                 }):Play()
-                playSound(GeminiLib.Config.HoverSound)
             end)
             
             ToggleFrame.MouseLeave:Connect(function()
@@ -826,7 +800,6 @@ function GeminiLib:CreateWindow(title, themeName)
                         warn("Toggle callback error:", err)
                     end
                 end
-                playSound(GeminiLib.Config.ClickSound)
             end
             
             ToggleFrame.MouseButton1Click:Connect(toggleState)
@@ -950,7 +923,6 @@ function GeminiLib:CreateWindow(title, themeName)
             Bar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     update(input)
-                    playSound(GeminiLib.Config.HoverSound)
                     
                     local connection
                     connection = UIS.InputChanged:Connect(function(input)
@@ -964,7 +936,6 @@ function GeminiLib:CreateWindow(title, themeName)
                             if connection then
                                 connection:Disconnect()
                             end
-                            playSound(GeminiLib.Config.ClickSound)
                         end
                     end)
                 end
@@ -985,88 +956,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 end,
                 Get = function()
                     return tonumber(ValueLabel.Text) or default
-                end
-            }
-        end
-
-        -- ФУНКЦИЯ ВЫПАДАЮЩЕГО СПИСКА (DROPDOWN)
-        function Tab:Dropdown(text, options, default, callback)
-            Tab.ElementCount = Tab.ElementCount + 1
-            
-            local selected = default or options[1]
-            local open = false
-            
-            -- Главный контейнер
-            local DropFrame = Instance.new("Frame")
-            DropFrame.Name = "Dropdown_" .. text
-            DropFrame.Size = UDim2.new(1, -16, 0, 36)  -- Стандартная высота
-            DropFrame.BackgroundColor3 = theme.Element
-            DropFrame.BackgroundTransparency = 0.5
-            DropFrame.ClipsDescendants = true  -- Важно для анимации!
-            DropFrame.ZIndex = 14
-            DropFrame.LayoutOrder = Tab.ElementCount
-            DropFrame.Parent = Page
-            
-            -- ... (остальной код до функции Set) ...
-            
-            -- Возвращаем объект для управления
-            return {
-                Set = function(value)
-                    -- Безопасная проверка наличия значения в таблице
-                    local found = false
-                    for _, v in ipairs(options) do
-                        if v == value then
-                            found = true
-                            break
-                        end
-                    end
-                    
-                    if found then
-                        selected = value
-                        DropBtn.Text = "  ▼  " .. text .. ": " .. value
-                        
-                        -- Обновляем цвета опций
-                        for _, child in pairs(DropFrame:GetChildren()) do
-                            if child:IsA("TextButton") and child.Name:find("Option_") then
-                                local childOption = child.Text:sub(4)  -- Убираем "• "
-                                if childOption == value then
-                                    child.TextColor3 = theme.Accent
-                                    child.BackgroundTransparency = 0.5
-                                else
-                                    child.TextColor3 = theme.TextSecondary
-                                    child.BackgroundTransparency = 0.7
-                                end
-                            end
-                        end
-                    else
-                        warn("Dropdown: invalid value '" .. tostring(value) .. "'. Available:", options)
-                    end
-                end,
-                
-                Get = function()
-                    return selected
-                end,
-                
-                GetOptions = function()
-                    return options
-                end,
-                
-                AddOption = function(newOption)
-                    -- Безопасная проверка наличия значения
-                    local exists = false
-                    for _, v in ipairs(options) do
-                        if v == newOption then
-                            exists = true
-                            break
-                        end
-                    end
-                    
-                    if not exists then
-                        table.insert(options, newOption)
-                        -- Здесь можно добавить логику для динамического добавления новой опции
-                        warn("Dropdown: dynamic option addition not fully implemented. Refresh dropdown to see new option.")
-                    end
-                    return selected
                 end
             }
         end
@@ -1122,29 +1011,38 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Меняем иконку на "развернуть"
             MinimizeBtn.Image = "rbxassetid://6031094668"
             
-            -- Анимация сворачивания
-            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 300, 0, 45),  -- Только верхняя панель
-                Position = UDim2.new(
-                    Main.Position.X.Scale,
-                    Main.Position.X.Offset + (WindowObj.OriginalSize.X.Offset - 300) / 2,
-                    Main.Position.Y.Scale,
-                    Main.Position.Y.Offset
-                )
-            }):Play()
+            -- Скрываем статистику при сворачивании
+            StatsLabel.Visible = false
             
-            -- Скрываем все внутренние элементы
+            -- Скрываем все элементы кроме заголовка
             for _, child in pairs(Main:GetChildren()) do
                 if child.Name ~= "TopBar" then
                     child.Visible = false
+                    table.insert(WindowObj.HiddenElements, child)
                 end
             end
             
-            -- Корректируем заголовок и статистику
-            Title.Size = UDim2.new(1, -150, 1, 0)
+            -- Анимация сворачивания по высоте
+            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(Main.Size.X.Scale, Main.Size.X.Offset, 0, 45),  -- Только высота верхней панели
+                Position = UDim2.new(
+                    Main.Position.X.Scale,
+                    Main.Position.X.Offset,
+                    Main.Position.Y.Scale,
+                    Main.Position.Y.Offset + (WindowObj.OriginalSize.Y.Offset - 45) / 2  -- Сохраняем вертикальную позицию
+                )
+            }):Play()
+            
+            -- Корректируем заголовок
+            Title.Size = UDim2.new(1, -80, 1, 0)  -- Больше места для заголовка
+            Title.Text = "  " .. title  -- Только название окна
+            
         else
             -- Меняем иконку на "свернуть"
             MinimizeBtn.Image = "rbxassetid://6031094667"
+            
+            -- Показываем статистику при разворачивании
+            StatsLabel.Visible = true
             
             -- Анимация разворачивания
             TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -1152,16 +1050,17 @@ function GeminiLib:CreateWindow(title, themeName)
                 Position = WindowObj.OriginalPosition or UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
             }):Play()
             
-            -- Показываем все внутренние элементы
-            for _, child in pairs(Main:GetChildren()) do
+            -- Показываем все скрытые элементы
+            for _, child in pairs(WindowObj.HiddenElements) do
                 child.Visible = true
             end
+            WindowObj.HiddenElements = {}
             
             -- Восстанавливаем размер заголовка
-            Title.Size = UDim2.new(1, -100, 1, 0)
+            Title.Size = UDim2.new(1, -280, 1, 0)
+            Title.Text = "  " .. title  -- Оригинальный текст
         end
         
-        playSound(GeminiLib.Config.ClickSound)
     end
 
     -- Дополнительные функции окна
