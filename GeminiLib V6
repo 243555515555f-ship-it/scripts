@@ -1298,7 +1298,7 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Функция открытия/закрытия dropdown
             local function toggleDropdown()
                 isOpen = not isOpen
-                
+    
                 if isOpen then
                     -- Закрываем другие открытые dropdowns
                     for _, otherDropdown in pairs(WindowObj.OpenDropdowns) do
@@ -1310,7 +1310,23 @@ function GeminiLib:CreateWindow(title, themeName)
                     -- Создаем контейнер
                     createDropdownContainer()
                     
-                    -- Показываем и анимируем
+                    -- Рассчитываем позицию с учетом границ экрана
+                    local dropAbsPos = DropFrame.AbsolutePosition
+                    local dropAbsSize = DropFrame.AbsoluteSize
+                    local viewportSize = workspace.CurrentCamera.ViewportSize
+                    
+                    -- Пытаемся открыть снизу
+                    local relativeY = dropAbsPos.Y + dropAbsSize.Y + 5
+                    
+                    -- Если не помещается снизу, открываем сверху
+                    if relativeY + 180 > viewportSize.Y then
+                        relativeY = dropAbsPos.Y - 180 - 5
+                    end
+                    
+                    -- Ограничиваем позицию
+                    relativeY = math_clamp(relativeY, 10, viewportSize.Y - 180 - 10)
+                    
+                    dropdownContainer.Position = UDim2_new(0, dropAbsPos.X, 0, relativeY)
                     dropdownContainer.Visible = true
                     services.TweenService:Create(dropdownContainer, TweenInfo_new(0.2), {
                         Size = UDim2_new(0, DropFrame.AbsoluteSize.X, 0, 180)
