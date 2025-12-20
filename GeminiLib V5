@@ -946,13 +946,12 @@ function GeminiLib:CreateWindow(title, themeName)
         end
 
         -- ФУНКЦИЯ DROPDOWN
-        -- ФУНКЦИЯ DROPDOWN (исправленная и упрощенная)
-        -- ФУНКЦИЯ DROPDOWN (исправленная - показывает опции над элементом при недостатке места снизу)
         function Tab:Dropdown(text, options, default, callback)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local selected = default or options[1]
             local open = false
+            local OptionsContainer
             
             -- Главный контейнер
             local DropFrame = Instance.new("Frame")
@@ -960,8 +959,8 @@ function GeminiLib:CreateWindow(title, themeName)
             DropFrame.Size = UDim2.new(1, -16, 0, 36)
             DropFrame.BackgroundColor3 = theme.Element
             DropFrame.BackgroundTransparency = 0.5
-            DropFrame.ClipsDescendants = true
-            DropFrame.ZIndex = 14
+            DropFrame.ClipsDescendants = false  -- Важно: не обрезаем потомков
+            DropFrame.ZIndex = 30  -- Средний ZIndex
             DropFrame.LayoutOrder = Tab.ElementCount
             DropFrame.Parent = Page
             
@@ -985,7 +984,7 @@ function GeminiLib:CreateWindow(title, themeName)
             DropBtn.Font = Enum.Font.Gotham
             DropBtn.TextSize = 13
             DropBtn.TextXAlignment = Enum.TextXAlignment.Left
-            DropBtn.ZIndex = 15
+            DropBtn.ZIndex = 31
             DropBtn.Parent = DropFrame
             
             -- Стрелка
@@ -997,104 +996,101 @@ function GeminiLib:CreateWindow(title, themeName)
             Arrow.TextColor3 = theme.TextSecondary
             Arrow.Font = Enum.Font.GothamMedium
             Arrow.TextSize = 12
-            Arrow.ZIndex = 15
+            Arrow.ZIndex = 31
             Arrow.Parent = DropFrame
             
-            -- Контейнер для опций (будет создан при открытии)
-            local OptionsContainer
-            
-            -- Функция создания/обновления контейнера опций
+            -- Функция создания контейнера опций
             local function createOptionsContainer()
+                -- Уничтожаем старый контейнер если есть
                 if OptionsContainer then
                     OptionsContainer:Destroy()
                 end
                 
-                -- Определяем, где достаточно места - снизу или сверху
-                local dropAbsolutePos = DropFrame.AbsolutePosition
-                local dropAbsoluteSize = DropFrame.AbsoluteSize
-                local pageAbsolutePos = Page.AbsolutePosition
-                local pageAbsoluteSize = Page.AbsoluteSize
-                
-                -- Доступное пространство снизу и сверху
-                local spaceBelow = (pageAbsolutePos.Y + pageAbsoluteSize.Y) - (dropAbsolutePos.Y + dropAbsoluteSize.Y)
-                local spaceAbove = dropAbsolutePos.Y - pageAbsolutePos.Y
-                
-                -- Решаем, где открывать dropdown
-                local openUpwards = spaceBelow < (#options * 30) and spaceAbove > spaceBelow
-                
-                OptionsContainer = Instance.new("ScrollingFrame")
+                -- Создаем новый контейнер опций в ScreenGui (чтобы был поверх всего)
+                OptionsContainer = Instance.new("Frame")
                 OptionsContainer.Name = "DropdownOptions_" .. text
                 OptionsContainer.BackgroundColor3 = theme.Element
-                OptionsContainer.BackgroundTransparency = 0.3
+                OptionsContainer.BackgroundTransparency = 0.1
                 OptionsContainer.BorderSizePixel = 0
-                OptionsContainer.ClipsDescendants = true
-                OptionsContainer.ZIndex = 999
+                OptionsContainer.ClipsDescendants = false
+                OptionsContainer.ZIndex = 1000  -- Максимальный ZIndex
                 OptionsContainer.Visible = false
                 
-                -- Позиционируем контейнер
-                if openUpwards then
-                    -- Открываем сверху
-                    OptionsContainer.Size = UDim2.new(1, 0, 0, math.min(spaceAbove - 10, #options * 30))
-                    OptionsContainer.Position = UDim2.new(0, 0, 0, -OptionsContainer.Size.Y.Offset - 5)
-                else
-                    -- Открываем снизу
-                    OptionsContainer.Size = UDim2.new(1, 0, 0, math.min(spaceBelow - 10, #options * 30))
-                    OptionsContainer.Position = UDim2.new(0, 0, 1, 5)
-                end
-                
-                OptionsContainer.ScrollBarThickness = 3
-                OptionsContainer.ScrollBarImageColor3 = theme.Accent
-                OptionsContainer.CanvasSize = UDim2.new(0, 0, 0, #options * 30)
-                OptionsContainer.Parent = DropFrame
-                
                 local optionsCorner = Instance.new("UICorner")
-                optionsCorner.CornerRadius = UDim.new(0, 6)
+                optionsCorner.CornerRadius = UDim.new(0, 8)
                 optionsCorner.Parent = OptionsContainer
                 
                 local optionsStroke = Instance.new("UIStroke")
                 optionsStroke.Color = theme.Accent
                 optionsStroke.Thickness = 1
-                optionsStroke.Transparency = 0.7
+                optionsStroke.Transparency = 0.5
                 optionsStroke.Parent = OptionsContainer
+                
+                -- Добавляем тень
+                createShadow(OptionsContainer, theme.Shadow, 0.3, 6)
+                
+                -- Создаем список опций
+                local OptionsList = Instance.new("ScrollingFrame")
+                OptionsList.Name = "OptionsList"
+                OptionsList.Size = UDim2.new(1, 0, 1, 0)
+                OptionsList.BackgroundTransparency = 1
+                OptionsList.BorderSizePixel = 0
+                OptionsList.ScrollBarThickness = 4
+                OptionsList.ScrollBarImageColor3 = theme.Accent
+                OptionsList.CanvasSize = UDim2.new(0, 0, 0, #options * 32)
+                OptionsList.ZIndex = 1001
+                OptionsList.Parent = OptionsContainer
+                
+                local listLayout = Instance.new("UIListLayout")
+                listLayout.Padding = UDim.new(0, 2)
+                listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                listLayout.Parent = OptionsList
+                
+                local listPadding = Instance.new("UIPadding")
+                listPadding.PaddingLeft = UDim.new(0, 4)
+                listPadding.PaddingRight = UDim.new(0, 4)
+                listPadding.PaddingTop = UDim.new(0, 4)
+                listPadding.PaddingBottom = UDim.new(0, 4)
+                listPadding.Parent = OptionsList
                 
                 -- Создаем опции
                 for i, option in ipairs(options) do
                     local OptionBtn = Instance.new("TextButton")
                     OptionBtn.Name = "Option_" .. option
-                    OptionBtn.Size = UDim2.new(1, -6, 0, 28)
-                    OptionBtn.Position = UDim2.new(0, 3, 0, (i-1)*30)
+                    OptionBtn.Size = UDim2.new(1, -8, 0, 28)
+                    OptionBtn.LayoutOrder = i
                     OptionBtn.BackgroundColor3 = theme.Element
-                    OptionBtn.BackgroundTransparency = 0.7
-                    OptionBtn.Text = "• " .. option
+                    OptionBtn.BackgroundTransparency = option == selected and 0.3 or 0.6
+                    OptionBtn.Text = option
                     OptionBtn.TextColor3 = option == selected and theme.Accent or theme.TextSecondary
                     OptionBtn.Font = Enum.Font.Gotham
                     OptionBtn.TextSize = 12
                     OptionBtn.TextXAlignment = Enum.TextXAlignment.Left
-                    OptionBtn.ZIndex = 1000
-                    OptionBtn.Parent = OptionsContainer
+                    OptionBtn.ZIndex = 1002
+                    OptionBtn.Parent = OptionsList
                     
                     local optionPadding = Instance.new("UIPadding")
                     optionPadding.PaddingLeft = UDim.new(0, 10)
                     optionPadding.Parent = OptionBtn
                     
                     local optionCorner = Instance.new("UICorner")
-                    optionCorner.CornerRadius = UDim.new(0, 4)
+                    optionCorner.CornerRadius = UDim.new(0, 6)
                     optionCorner.Parent = OptionBtn
                     
                     -- Анимация при наведении
                     OptionBtn.MouseEnter:Connect(function()
-                        if OptionBtn.TextColor3 ~= theme.Accent then
+                        if option ~= selected then
                             TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                BackgroundTransparency = 0.5,
+                                BackgroundTransparency = 0.4,
                                 TextColor3 = theme.Text
                             }):Play()
                         end
                     end)
                     
                     OptionBtn.MouseLeave:Connect(function()
-                        if OptionBtn.Text ~= "• " .. selected then
+                        if option ~= selected then
                             TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                BackgroundTransparency = 0.7,
+                                BackgroundTransparency = 0.6,
                                 TextColor3 = theme.TextSecondary
                             }):Play()
                         end
@@ -1102,8 +1098,27 @@ function GeminiLib:CreateWindow(title, themeName)
                     
                     -- Выбор опции
                     OptionBtn.MouseButton1Click:Connect(function()
+                        -- Обновляем стиль предыдущей выбранной опции
+                        for _, btn in pairs(OptionsList:GetChildren()) do
+                            if btn:IsA("TextButton") then
+                                if btn.Text == selected then
+                                    TweenService:Create(btn, TweenInfo.new(0.15), {
+                                        BackgroundTransparency = 0.6,
+                                        TextColor3 = theme.TextSecondary
+                                    }):Play()
+                                end
+                            end
+                        end
+                        
+                        -- Обновляем выбранную опцию
                         selected = option
                         DropBtn.Text = "  " .. text .. ": " .. selected
+                        
+                        -- Подсвечиваем новую выбранную опцию
+                        TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
+                            BackgroundTransparency = 0.3,
+                            TextColor3 = theme.Accent
+                        }):Play()
                         
                         if callback then
                             local success, err = pcall(callback, selected)
@@ -1116,6 +1131,14 @@ function GeminiLib:CreateWindow(title, themeName)
                         toggleDropdown()
                     end)
                 end
+                
+                -- Размер контейнера (максимальная высота 200 пикселей)
+                local maxHeight = 200
+                local neededHeight = #options * 32 + 8
+                OptionsContainer.Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, math.min(neededHeight, maxHeight))
+                
+                -- Позиционируем контейнер относительно DropFrame
+                OptionsContainer.Parent = ScreenGui  -- Помещаем в ScreenGui, чтобы был поверх всего
             end
             
             -- Функция открытия/закрытия dropdown
@@ -1126,39 +1149,69 @@ function GeminiLib:CreateWindow(title, themeName)
                     -- Создаем контейнер опций
                     createOptionsContainer()
                     
-                    -- Показываем контейнер
+                    -- Рассчитываем позицию
+                    local dropAbsPos = DropFrame.AbsolutePosition
+                    local dropAbsSize = DropFrame.AbsoluteSize
+                    local mainAbsPos = Main.AbsolutePosition
+                    
+                    -- Доступное пространство снизу и сверху
+                    local spaceBelow = (mainAbsPos.Y + Main.AbsoluteSize.Y) - (dropAbsPos.Y + dropAbsSize.Y)
+                    local spaceAbove = dropAbsPos.Y - mainAbsPos.Y
+                    
+                    -- Решаем, где открывать dropdown
+                    local openUpwards = spaceBelow < OptionsContainer.Size.Y.Offset and spaceAbove > spaceBelow
+                    
+                    local relativeX = dropAbsPos.X - mainAbsPos.X
+                    local relativeY
+                    
+                    if openUpwards then
+                        -- Открываем сверху
+                        relativeY = dropAbsPos.Y - mainAbsPos.Y - OptionsContainer.Size.Y.Offset - 5
+                    else
+                        -- Открываем снизу
+                        relativeY = dropAbsPos.Y - mainAbsPos.Y + dropAbsSize.Y + 5
+                    end
+                    
+                    -- Ограничиваем позицию, чтобы dropdown не выходил за границы окна
+                    local maxY = Main.AbsoluteSize.Y - OptionsContainer.Size.Y.Offset - 10
+                    relativeY = math.clamp(relativeY, 10, maxY)
+                    
+                    -- Устанавливаем позицию и показываем
+                    OptionsContainer.Position = UDim2.new(0, relativeX, 0, relativeY)
                     OptionsContainer.Visible = true
                     
                     -- Анимация открытия
-                    OptionsContainer.Size = UDim2.new(1, 0, 0, 0)
+                    OptionsContainer.Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
                     TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
-                        Size = UDim2.new(1, 0, 0, math.min(#options * 30, OptionsContainer.Size.Y.Offset))
+                        Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, OptionsContainer.Size.Y.Offset)
                     }):Play()
                     
                     TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                        Rotation = 180
+                        Rotation = 180,
+                        TextColor3 = theme.Accent
                     }):Play()
                     
                     -- Анимация кнопки
                     TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.3,
+                        BackgroundTransparency = 0.2,
                         Size = UDim2.new(1, -12, 0, 38)
                     }):Play()
                     TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.6
+                        Transparency = 0.4
                     }):Play()
+                    
                 else
+                    -- Анимация закрытия
                     if OptionsContainer then
-                        -- Анимация закрытия
                         TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
-                            Size = UDim2.new(1, 0, 0, 0)
+                            Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
                         }):Play()
                         TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                            Rotation = 0
+                            Rotation = 0,
+                            TextColor3 = theme.TextSecondary
                         }):Play()
                         
                         task.wait(0.2)
-                        OptionsContainer.Visible = false
                         OptionsContainer:Destroy()
                         OptionsContainer = nil
                     end
@@ -1210,18 +1263,20 @@ function GeminiLib:CreateWindow(title, themeName)
                     local dropAbsPos = DropFrame.AbsolutePosition
                     local dropAbsSize = DropFrame.AbsoluteSize
                     
-                    -- Проверяем, был ли клик вне dropdown
-                    local clickedInsideDropdown = 
+                    -- Проверяем, был ли клик по dropdown кнопке
+                    local clickedInsideDropdownBtn = 
                         (mousePos.X >= dropAbsPos.X and mousePos.X <= dropAbsPos.X + dropAbsSize.X and
                         mousePos.Y >= dropAbsPos.Y and mousePos.Y <= dropAbsPos.Y + dropAbsSize.Y)
                     
+                    -- Проверяем, был ли клик по контейнеру опций
                     local optionsAbsPos = OptionsContainer.AbsolutePosition
                     local optionsAbsSize = OptionsContainer.AbsoluteSize
                     local clickedInsideOptions = 
                         (mousePos.X >= optionsAbsPos.X and mousePos.X <= optionsAbsPos.X + optionsAbsSize.X and
                         mousePos.Y >= optionsAbsPos.Y and mousePos.Y <= optionsAbsPos.Y + optionsAbsSize.Y)
                     
-                    if not clickedInsideDropdown and not clickedInsideOptions then
+                    -- Закрываем только если клик был вне обоих элементов
+                    if not clickedInsideDropdownBtn and not clickedInsideOptions then
                         toggleDropdown()
                     end
                 end
@@ -1233,12 +1288,26 @@ function GeminiLib:CreateWindow(title, themeName)
             end
             table.insert(WindowObj.Connections, closeDropdownConnection)
             
+            -- Очистка при уничтожении окна
+            local function onWindowDestroyed()
+                if closeDropdownConnection then
+                    closeDropdownConnection:Disconnect()
+                end
+                if OptionsContainer then
+                    OptionsContainer:Destroy()
+                end
+            end
+            
+            -- Подключаем очистку к уничтожению окна
+            ScreenGui.Destroying:Connect(onWindowDestroyed)
+            
             table.insert(Tab.Elements, DropFrame)
             table.insert(WindowObj.Elements, DropFrame)
             
             -- Возвращаем объект для управления
             return {
                 Set = function(value)
+                    -- Проверяем наличие значения в options
                     local found = false
                     for _, v in ipairs(options) do
                         if v == value then
@@ -1250,6 +1319,28 @@ function GeminiLib:CreateWindow(title, themeName)
                     if found then
                         selected = value
                         DropBtn.Text = "  " .. text .. ": " .. value
+                        
+                        -- Обновляем стиль в открытом dropdown если он открыт
+                        if OptionsContainer and open then
+                            local optionsList = OptionsContainer:FindFirstChild("OptionsList")
+                            if optionsList then
+                                for _, btn in pairs(optionsList:GetChildren()) do
+                                    if btn:IsA("TextButton") then
+                                        if btn.Text == value then
+                                            TweenService:Create(btn, TweenInfo.new(0.15), {
+                                                BackgroundTransparency = 0.3,
+                                                TextColor3 = theme.Accent
+                                            }):Play()
+                                        elseif btn.Text == selected then
+                                            TweenService:Create(btn, TweenInfo.new(0.15), {
+                                                BackgroundTransparency = 0.6,
+                                                TextColor3 = theme.TextSecondary
+                                            }):Play()
+                                        end
+                                    end
+                                end
+                            end
+                        end
                         
                         if callback then
                             pcall(callback, value)
@@ -1278,6 +1369,11 @@ function GeminiLib:CreateWindow(title, themeName)
                     
                     if not exists then
                         table.insert(options, newOption)
+                        if open then
+                            toggleDropdown()  -- Закрываем и пересоздаем с новыми опциями
+                            task.wait(0.25)
+                            toggleDropdown()
+                        end
                     end
                 end,
                 
@@ -1289,18 +1385,18 @@ function GeminiLib:CreateWindow(title, themeName)
                                 selected = options[1] or ""
                                 DropBtn.Text = "  " .. text .. ": " .. selected
                             end
+                            if open then
+                                toggleDropdown()  -- Закрываем и пересоздаем с новыми опциями
+                                task.wait(0.25)
+                                toggleDropdown()
+                            end
                             break
                         end
                     end
                 end,
                 
                 Destroy = function()
-                    if closeDropdownConnection then
-                        closeDropdownConnection:Disconnect()
-                    end
-                    if OptionsContainer then
-                        OptionsContainer:Destroy()
-                    end
+                    onWindowDestroyed()
                     DropFrame:Destroy()
                 end
             }
