@@ -1,5 +1,3 @@
-[file name]: myLib.lua
-[file content begin]
 -- GeminiLib V3 - Чистый, минималистичный дизайн
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
