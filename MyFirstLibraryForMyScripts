@@ -1,3 +1,5 @@
+[file name]: myLib.lua
+[file content begin]
 -- GeminiLib V3 - Чистый, минималистичный дизайн
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
@@ -6,6 +8,7 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local StatsService = game:GetService("Stats")
 
 -- УНИВЕРСАЛЬНАЯ СИСТЕМА ТЕМ (более мягкие цвета)
 GeminiLib.Themes = {
@@ -114,7 +117,11 @@ function GeminiLib:CreateWindow(title, themeName)
         CurrentTab = nil,
         Theme = theme,
         Elements = {},
-        Settings = {}
+        Settings = {},
+        IsMinimized = false,
+        StatsEnabled = false,
+        OriginalSize = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
+        OriginalPosition = nil
     }
 
     -- Создаем ScreenGui
@@ -138,6 +145,37 @@ function GeminiLib:CreateWindow(title, themeName)
     mainCorner.Parent = Main
     
     createShadow(Main, theme.Shadow, theme.ShadowAlpha, 15)
+
+    -- Кнопка сворачивания
+    local MinimizeBtn = Instance.new("ImageButton")
+    MinimizeBtn.Name = "MinimizeBtn"
+    MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+    MinimizeBtn.Position = UDim2.new(1, -72, 0.5, -14)
+    MinimizeBtn.Image = "rbxassetid://6031094667"  -- Иконка сворачивания
+    MinimizeBtn.ImageColor3 = theme.Text
+    MinimizeBtn.BackgroundTransparency = 1
+    MinimizeBtn.ZIndex = 13
+    MinimizeBtn.Parent = nil  -- Будет добавлен позже
+    
+    MinimizeBtn.MouseEnter:Connect(function()
+        TweenService:Create(MinimizeBtn, TweenInfo.new(0.15), {
+            ImageColor3 = theme.Accent,
+            Size = UDim2.new(0, 30, 0, 30)
+        }):Play()
+        playSound(GeminiLib.Config.HoverSound)
+    end)
+    
+    MinimizeBtn.MouseLeave:Connect(function()
+        TweenService:Create(MinimizeBtn, TweenInfo.new(0.15), {
+            ImageColor3 = theme.Text,
+            Size = UDim2.new(0, 28, 0, 28)
+        }):Play()
+    end)
+    
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        WindowObj:ToggleMinimize()
+        playSound(GeminiLib.Config.ClickSound)
+    end)
 
     -- Верхняя панель
     local TopBar = Instance.new("Frame")
@@ -207,7 +245,7 @@ function GeminiLib:CreateWindow(title, themeName)
 
     -- Кнопка закрытия
     local CloseBtn = Instance.new("ImageButton")
-    CloseBtn.Size = UDim2.new(0, 28, 0, 28)  -- Меньше
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
     CloseBtn.Position = UDim2.new(1, -36, 0.5, -14)
     CloseBtn.Image = "rbxassetid://6031094678"
     CloseBtn.ImageColor3 = theme.Text
@@ -236,6 +274,131 @@ function GeminiLib:CreateWindow(title, themeName)
         playSound(GeminiLib.Config.ClickSound)
         ScreenGui:Destroy()
     end)
+
+    -- Добавляем кнопку сворачивания
+    MinimizeBtn.Parent = TopBar
+
+    -- Информационный блок (статистика FPS и Ping)
+    local StatsFrame = Instance.new("Frame")
+    StatsFrame.Name = "StatsFrame"
+    StatsFrame.Size = UDim2.new(0, 140, 0, 60)
+    StatsFrame.Position = UDim2.new(0, 10, 0, 10)
+    StatsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    StatsFrame.BackgroundTransparency = 0.7
+    StatsFrame.ZIndex = 14
+    StatsFrame.Visible = false  -- По умолчанию скрыт
+    StatsFrame.Parent = Main
+    
+    local statsCorner = Instance.new("UICorner")
+    statsCorner.CornerRadius = UDim.new(0, 8)
+    statsCorner.Parent = StatsFrame
+    
+    -- Градиентная обводка снизу вверх
+    local statsStroke = Instance.new("UIStroke")
+    statsStroke.Color = theme.Accent
+    statsStroke.Thickness = 2
+    statsStroke.Transparency = 0.3
+    statsStroke.Parent = StatsFrame
+    
+    local gradientStroke = Instance.new("UIGradient")
+    gradientStroke.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, theme.Accent),
+        ColorSequenceKeypoint.new(1, theme.Secondary)
+    }
+    gradientStroke.Rotation = 90
+    gradientStroke.Parent = statsStroke
+    
+    -- Заголовок статистики
+    local statsTitle = Instance.new("TextLabel")
+    statsTitle.Name = "StatsTitle"
+    statsTitle.Text = "STATS"
+    statsTitle.Size = UDim2.new(1, 0, 0, 18)
+    statsTitle.Position = UDim2.new(0, 0, 0, 5)
+    statsTitle.BackgroundTransparency = 1
+    statsTitle.TextColor3 = theme.Accent
+    statsTitle.Font = Enum.Font.GothamBold
+    statsTitle.TextSize = 12
+    statsTitle.ZIndex = 15
+    statsTitle.Parent = StatsFrame
+    
+    -- FPS отображение
+    local fpsLabel = Instance.new("TextLabel")
+    fpsLabel.Name = "FPS"
+    fpsLabel.Text = "FPS: --"
+    fpsLabel.Size = UDim2.new(0.5, -5, 0, 18)
+    fpsLabel.Position = UDim2.new(0, 8, 0, 28)
+    fpsLabel.BackgroundTransparency = 1
+    fpsLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    fpsLabel.Font = Enum.Font.Gotham
+    fpsLabel.TextSize = 11
+    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fpsLabel.ZIndex = 15
+    fpsLabel.Parent = StatsFrame
+    
+    -- Ping отображение
+    local pingLabel = Instance.new("TextLabel")
+    pingLabel.Name = "Ping"
+    pingLabel.Text = "Ping: --"
+    pingLabel.Size = UDim2.new(0.5, -5, 0, 18)
+    pingLabel.Position = UDim2.new(0.5, 3, 0, 28)
+    pingLabel.BackgroundTransparency = 1
+    pingLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    pingLabel.Font = Enum.Font.Gotham
+    pingLabel.TextSize = 11
+    pingLabel.TextXAlignment = Enum.TextXAlignment.Left
+    pingLabel.ZIndex = 15
+    pingLabel.Parent = StatsFrame
+    
+    -- Функция обновления статистики
+    local function updateStats()
+        if not StatsFrame.Visible then return end
+        
+        -- Получаем FPS
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        
+        -- Получаем Ping (симуляция)
+        local ping = math.random(20, 80)  -- В реальном использовании замените на получение реального пинга
+        
+        -- Обновляем тексты
+        fpsLabel.Text = "FPS: " .. fps
+        pingLabel.Text = "Ping: " .. ping .. "ms"
+        
+        -- Динамически меняем цвет в зависимости от значений
+        if fps < 30 then
+            fpsLabel.TextColor3 = theme.Error
+        elseif fps < 60 then
+            fpsLabel.TextColor3 = theme.Warning
+        else
+            fpsLabel.TextColor3 = theme.Success
+        end
+        
+        if ping > 100 then
+            pingLabel.TextColor3 = theme.Error
+        elseif ping > 50 then
+            pingLabel.TextColor3 = theme.Warning
+        else
+            pingLabel.TextColor3 = theme.Success
+        end
+    end
+    
+    -- Запускаем обновление статистики
+    local statsConnection
+    local function startStatsUpdate()
+        if statsConnection then
+            statsConnection:Disconnect()
+        end
+        
+        statsConnection = RunService.RenderStepped:Connect(function()
+            updateStats()
+        end)
+    end
+    
+    local function stopStatsUpdate()
+        if statsConnection then
+            statsConnection:Disconnect()
+            statsConnection = nil
+        end
+    end
 
     -- Боковая панель для вкладок
     local SideBar = Instance.new("Frame")
@@ -1013,6 +1176,106 @@ function GeminiLib:CreateWindow(title, themeName)
         return Tab
     end
 
+    -- ФУНКЦИЯ СВОРАЧИВАНИЯ ОКНА
+    function WindowObj:ToggleMinimize()
+        WindowObj.IsMinimized = not WindowObj.IsMinimized
+        
+        if WindowObj.IsMinimized then
+            -- Сохраняем оригинальный размер и позицию
+            WindowObj.OriginalSize = Main.Size
+            WindowObj.OriginalPosition = Main.Position
+            
+            -- Меняем иконку на "развернуть"
+            MinimizeBtn.Image = "rbxassetid://6031094668"
+            
+            -- Анимация сворачивания
+            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 300, 0, 45),  -- Только верхняя панель
+                Position = UDim2.new(
+                    Main.Position.X.Scale,
+                    Main.Position.X.Offset + (WindowObj.OriginalSize.X.Offset - 300) / 2,
+                    Main.Position.Y.Scale,
+                    Main.Position.Y.Offset
+                )
+            }):Play()
+            
+            -- Скрываем все внутренние элементы
+            for _, child in pairs(Main:GetChildren()) do
+                if child ~= TopBar and child ~= StatsFrame then
+                    child.Visible = false
+                end
+            end
+            
+            -- Корректируем заголовок
+            Title.Size = UDim2.new(1, -150, 1, 0)
+        else
+            -- Меняем иконку на "свернуть"
+            MinimizeBtn.Image = "rbxassetid://6031094667"
+            
+            -- Анимация разворачивания
+            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = WindowObj.OriginalSize,
+                Position = WindowObj.OriginalPosition or UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
+            }):Play()
+            
+            -- Показываем все внутренние элементы
+            for _, child in pairs(Main:GetChildren()) do
+                if child ~= TopBar and child ~= StatsFrame then
+                    child.Visible = true
+                end
+            end
+            
+            -- Восстанавливаем размер заголовка
+            Title.Size = UDim2.new(1, -100, 1, 0)
+        end
+        
+        playSound(GeminiLib.Config.ClickSound)
+    end
+
+    -- ФУНКЦИЯ ВКЛЮЧЕНИЯ/ВЫКЛЮЧЕНИЯ СТАТИСТИКИ
+    function WindowObj:ToggleStats(enable)
+        if enable == nil then
+            enable = not WindowObj.StatsEnabled
+        end
+        
+        WindowObj.StatsEnabled = enable
+        
+        if enable then
+            StatsFrame.Visible = true
+            startStatsUpdate()
+        else
+            StatsFrame.Visible = false
+            stopStatsUpdate()
+        end
+    end
+
+    -- ФУНКЦИЯ НАСТРОЙКИ СТАТИСТИКИ
+    function WindowObj:ConfigureStats(config)
+        if config.position then
+            StatsFrame.Position = config.position
+        end
+        
+        if config.size then
+            StatsFrame.Size = config.size
+        end
+        
+        if config.title then
+            statsTitle.Text = config.title
+        end
+        
+        if config.showFPS ~= nil then
+            fpsLabel.Visible = config.showFPS
+        end
+        
+        if config.showPing ~= nil then
+            pingLabel.Visible = config.showPing
+        end
+        
+        if config.backgroundTransparency then
+            StatsFrame.BackgroundTransparency = config.backgroundTransparency
+        end
+    end
+
     -- Дополнительные функции окна
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
@@ -1024,6 +1287,19 @@ function GeminiLib:CreateWindow(title, themeName)
         Main.BackgroundColor3 = newTheme.Main
         Title.TextColor3 = newTheme.Text
         TopBar.BackgroundColor3 = newTheme.Section
+        
+        -- Обновляем статистику
+        statsTitle.TextColor3 = newTheme.Accent
+        statsStroke.Color = newTheme.Accent
+        
+        -- Обновляем градиент обводки статистики
+        local gradientStroke = statsStroke:FindFirstChildOfClass("UIGradient")
+        if gradientStroke then
+            gradientStroke.Color = ColorSequence.new{
+                ColorSequenceKeypoint.new(0, newTheme.Accent),
+                ColorSequenceKeypoint.new(1, newTheme.Secondary)
+            }
+        end
         
         -- Обновляем элементы
         for _, element in pairs(WindowObj.Elements) do
@@ -1039,9 +1315,16 @@ function GeminiLib:CreateWindow(title, themeName)
 
     function WindowObj:ToggleVisibility()
         Main.Visible = not Main.Visible
+        -- При скрытии окна также останавливаем обновление статистики
+        if not Main.Visible and WindowObj.StatsEnabled then
+            stopStatsUpdate()
+        elseif Main.Visible and WindowObj.StatsEnabled then
+            startStatsUpdate()
+        end
     end
 
     function WindowObj:Destroy()
+        stopStatsUpdate()
         ScreenGui:Destroy()
     end
 
@@ -1049,3 +1332,4 @@ function GeminiLib:CreateWindow(title, themeName)
 end
 
 return GeminiLib
+[file content end]
