@@ -1,4 +1,4 @@
--- GeminiLib V4.6
+-- GeminiLib V5
 local GeminiLib = {}
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -47,7 +47,7 @@ GeminiLib.Themes = {
         Main = Color3.fromRGB(10, 15, 25),
         Accent = Color3.fromRGB(0, 220, 220),       -- Циан
         Secondary = Color3.fromRGB(200, 0, 200),
-        Text = Color3.fromRGB(240, 245, 255),       -- Светло-голубоватыйв
+        Text = Color3.fromRGB(240, 245, 255),       -- Светло-голубоватый
         TextSecondary = Color3.fromRGB(180, 190, 220),
         Section = Color3.fromRGB(20, 25, 40),
         Element = Color3.fromRGB(30, 35, 55),
