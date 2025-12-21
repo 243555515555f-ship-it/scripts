@@ -325,33 +325,37 @@ function GeminiLib:CreateWindow(title, themeName)
     btnCorner.CornerRadius = UDim_new(0, 6)
     btnCorner.Parent = MinimizeBtn
 
-    -- Логика
+    -- [ ИСПРАВЛЕННАЯ ЛОГИКА СВОРАЧИВАНИЯ ] --
     local IsMinimized = false
-    -- Используем стандартные размеры из твоей либы
-    local normalHeight = 350
-    local minHeight = 35
-
+    
     MinimizeBtn.MouseButton1Click:Connect(function()
         IsMinimized = not IsMinimized
         
-        -- Смена иконки
+        -- Поиск контейнера напрямую, если переменная nil
+        local Container = ContentContainer or Main:FindFirstChild("ContentContainer") or Main:FindFirstChildOfClass("ScrollingFrame")
+        
+        -- Смена текста
         MinimizeBtn.Text = IsMinimized and "+" or "-"
         
-        -- 1. Скрываем контент
-        if IsMinimized then
-            ContentContainer.Visible = false
+        -- 1. Скрываем контент (если нашли его)
+        if Container then
+            if IsMinimized then
+                Container.Visible = false
+            end
         end
 
-        -- 2. Анимируем размер главного окна (Main)
-        local targetSize = IsMinimized and UDim2_new(0, 550, 0, minHeight) or UDim2_new(0, 550, 0, normalHeight)
+        -- 2. Анимация размера окна
+        -- Используем стандартные размеры: 350 - раскрыто, 35 - свернуто
+        local targetSize = IsMinimized and UDim2_new(0, 550, 0, 35) or UDim2_new(0, 550, 0, 350)
         
-        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        local tween = services.TweenService:Create(Main, TweenInfo_new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Size = targetSize
         })
         
         tween.Completed:Connect(function()
-            if not IsMinimized then
-                ContentContainer.Visible = true
+            -- Показываем контент только после того, как окно раскрылось
+            if not IsMinimized and Container then
+                Container.Visible = true
             end
         end)
         
