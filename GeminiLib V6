@@ -306,16 +306,50 @@ function GeminiLib:CreateWindow(title, themeName)
     startStatsUpdate()
 
     -- Кнопка сворачивания
-    local MinimizeBtn = UI:Create("ImageButton", {
-        Name = "MinimizeBtn",
-        Size = UDim2_new(0, 28, 0, 28),
-        Position = UDim2_new(1, -72, 0.5, -14),
-        Image = "rbxassetid://6031094667",
-        ImageColor3 = theme.Text,
-        BackgroundTransparency = 1,
-        ZIndex = 13,
-        Parent = TopBar
-    })
+    -- Полностью переделанная логика сворачивания
+    local MinimizeBtn = Instance.new("TextButton")
+    MinimizeBtn.Name = "MinimizeBtn"
+    MinimizeBtn.Parent = TopBar
+    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(45, 45, 50)
+    MinimizeBtn.Size = UDim2_new(0, 25, 0, 25)
+    MinimizeBtn.Position = UDim2_new(1, -30, 0.5, -12)
+    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.Text = "-"
+    MinimizeBtn.TextColor3 = theme.Text
+    MinimizeBtn.TextSize = 14
+    Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim_new(0, 4)
+
+    local IsMinimized = false
+    -- Запоминаем изначальный размер окна, который указан в библиотеке (350)
+    local OriginalSize = UDim2_new(0, 550, 0, 350) 
+    local MinimizedSize = UDim2_new(0, 550, 0, 35)
+
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        IsMinimized = not IsMinimized
+        
+        -- 1. Смена текста кнопки сразу
+        MinimizeBtn.Text = IsMinimized and "+" or "-"
+        
+        -- 2. Если сворачиваем - мгновенно скрываем контент, чтобы не "вылезал" за рамки
+        if IsMinimized then
+            ContentContainer.Visible = false
+        end
+
+        -- 3. Анимация изменения размера
+        local targetSize = IsMinimized and MinimizedSize or OriginalSize
+        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = targetSize
+        })
+        
+        tween.Completed:Connect(function()
+            -- Если развернули - показываем контент только ПОСЛЕ завершения анимации
+            if not IsMinimized then
+                ContentContainer.Visible = true
+            end
+        end)
+        
+        tween:Play()
+    end)
     
     table_insert(WindowObj.Connections, MinimizeBtn.MouseEnter:Connect(function()
         services.TweenService:Create(MinimizeBtn, TweenInfo_new(0.15), {
