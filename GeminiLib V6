@@ -327,28 +327,29 @@ function GeminiLib:CreateWindow(title, themeName)
     MinimizeBtn.MouseButton1Click:Connect(function()
         IsMinimized = not IsMinimized
         
-        -- 1. Смена текста кнопки сразу
+        -- Меняем текст
         MinimizeBtn.Text = IsMinimized and "+" or "-"
         
-        -- 2. Если сворачиваем - мгновенно скрываем контент, чтобы не "вылезал" за рамки
+        -- Настраиваем размеры
+        local targetSize = IsMinimized and UDim2_new(0, 550, 0, 35) or UDim2_new(0, 550, 0, 350)
+        
+        -- Если сворачиваем - скрываем контент сразу
         if IsMinimized then
             ContentContainer.Visible = false
         end
 
-        -- 3. Анимация изменения размера
-        local targetSize = IsMinimized and MinimizedSize or OriginalSize
-        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        -- Анимация только для свойств, которые ЕСТЬ у TextButton (Size, BackgroundColor3, TextColor3)
+        local mainTween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Size = targetSize
         })
         
-        tween.Completed:Connect(function()
-            -- Если развернули - показываем контент только ПОСЛЕ завершения анимации
+        mainTween.Completed:Connect(function()
             if not IsMinimized then
                 ContentContainer.Visible = true
             end
         end)
         
-        tween:Play()
+        mainTween:Play()
     end)
     
     table_insert(WindowObj.Connections, MinimizeBtn.MouseEnter:Connect(function()
