@@ -354,14 +354,14 @@ function GeminiLib:CreateWindow(title, themeName)
     
     table_insert(WindowObj.Connections, MinimizeBtn.MouseEnter:Connect(function()
         services.TweenService:Create(MinimizeBtn, TweenInfo_new(0.15), {
-            ImageColor3 = theme.Accent,
+            TextColor3 = theme.Accent,
             Size = UDim2_new(0, 30, 0, 30)
         }):Play()
     end))
     
     table_insert(WindowObj.Connections, MinimizeBtn.MouseLeave:Connect(function()
         services.TweenService:Create(MinimizeBtn, TweenInfo_new(0.15), {
-            ImageColor3 = theme.Text,
+            TextColor3 = theme.Text,
             Size = UDim2_new(0, 28, 0, 28)
         }):Play()
     end))
