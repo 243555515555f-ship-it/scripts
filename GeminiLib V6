@@ -387,6 +387,67 @@ function GeminiLib:CreateWindow(title, themeName)
         Parent = TopBar
     })
     
+    -- [ КНОПКА СВОРАЧИВАНИЯ ] --
+    local MinimizeBtn = Instance.new("TextButton")
+    MinimizeBtn.Name = "MinimizeBtn"
+    MinimizeBtn.Parent = TopBar
+    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(45, 45, 50)
+    MinimizeBtn.Size = UDim2_new(0, 25, 0, 25)
+    -- Смещаем её левее кнопки закрытия (кнопка закрытия обычно на -10, эта на -40)
+    MinimizeBtn.Position = UDim2_new(1, -65, 0.5, -12) 
+    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.Text = "-"
+    MinimizeBtn.TextColor3 = theme.Text
+    MinimizeBtn.TextSize = 14
+    Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim_new(0, 4)
+
+    local IsMinimized = false
+    -- Запоминаем текущий размер контента
+    local FullHeight = 350
+    local MinHeight = 35
+
+    MinimizeBtn.MouseButton1Click:Connect(function()
+        IsMinimized = not IsMinimized
+        
+        -- Меняем символ
+        MinimizeBtn.Text = IsMinimized and "+" or "-"
+        
+        -- 1. Управление контентом
+        -- Ищем контейнер через Main, чтобы избежать ошибки nil
+        local Container = Main:FindFirstChild("ContentContainer") or ContentContainer
+        
+        if IsMinimized then
+            if Container then Container.Visible = false end
+            -- Скрываем всё лишнее, кроме TopBar
+            for _, child in pairs(Main:GetChildren()) do
+                if child:IsA("Frame") and child ~= TopBar then
+                    child.Visible = false
+                end
+            end
+        end
+
+        -- 2. Анимация сворачивания
+        local targetSize = IsMinimized and UDim2_new(0, 550, 0, MinHeight) or UDim2_new(0, 550, 0, FullHeight)
+        
+        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = targetSize
+        })
+        
+        tween.Completed:Connect(function()
+            if not IsMinimized then
+                -- Показываем всё обратно после разворачивания
+                if Container then Container.Visible = true end
+                for _, child in pairs(Main:GetChildren()) do
+                    if child:IsA("Frame") and child ~= TopBar then
+                        child.Visible = true
+                    end
+                end
+            end
+        end)
+        
+        tween:Play()
+    end)
+
     table_insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
         services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
             ImageColor3 = theme.Error,
@@ -1598,84 +1659,6 @@ function GeminiLib:CreateWindow(title, themeName)
 
         return Tab
     end
-
-    -- ФУНКЦИЯ СВОРАЧИВАНИЯ ОКНА
-    function WindowObj:ToggleMinimize()
-        WindowObj.IsMinimized = not WindowObj.IsMinimized
-        
-        if WindowObj.IsMinimized then
-            -- Сохраняем оригинальный размер и позицию
-            WindowObj.OriginalSize = Main.Size
-            WindowObj.OriginalPosition = Main.Position
-            
-            -- Меняем иконку на "развернуть"
-            MinimizeBtn.Image = "rbxassetid://6031094668"
-            
-            -- Скрываем статистику
-            StatsLabel.Visible = false
-            
-            -- Собираем ВСЕ элементы для скрытия
-            WindowObj.HiddenElements = {}
-            for _, child in pairs(Main:GetChildren()) do
-                if child.Name ~= "TopBar" then
-                    table_insert(WindowObj.HiddenElements, child)
-                end
-            end
-            
-            -- Анимация сворачивания
-            services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = UDim2_new(Main.Size.X.Scale, Main.Size.X.Offset, 0, 45),
-                Position = UDim2_new(
-                    Main.Position.X.Scale,
-                    Main.Position.X.Offset,
-                    Main.Position.Y.Scale,
-                    Main.Position.Y.Offset + (WindowObj.OriginalSize.Y.Offset - 45) / 2
-                )
-            }):Play()
-            
-            -- После анимации скрываем элементы
-            task_wait(0.3)
-            for _, child in pairs(WindowObj.HiddenElements) do
-                child.Visible = false
-            end
-            
-            -- Корректируем заголовок
-            Title.Size = UDim2_new(1, -80, 1, 0)
-            Title.Text = "  " .. title
-            
-        else
-            -- Меняем иконку на "свернуть"
-            MinimizeBtn.Image = "rbxassetid://6031094667"
-            
-            -- Показываем скрытые элементы перед анимацией
-            for _, child in pairs(WindowObj.HiddenElements) do
-                child.Visible = true
-            end
-            
-            -- Анимация разворачивания
-            services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = WindowObj.OriginalSize,
-                Position = WindowObj.OriginalPosition or UDim2_new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
-            }):Play()
-            
-            -- Показываем статистику после анимации
-            task_wait(0.3)
-            StatsLabel.Visible = true
-            
-            -- Восстанавливаем размер заголовка
-            Title.Size = UDim2_new(1, -280, 1, 0)
-            Title.Text = "  " .. title
-            
-            -- Очищаем список
-            WindowObj.HiddenElements = {}
-        end
-    end
-    
-    -- Назначаем клик кнопке сворачивания
-    table_insert(WindowObj.Connections, MinimizeBtn.MouseButton1Click:Connect(function()
-        WindowObj:ToggleMinimize()
-    end))
-
     -- Дополнительные функции окна
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
