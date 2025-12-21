@@ -403,7 +403,7 @@ function GeminiLib:CreateWindow(title, themeName)
 
     local IsMinimized = false
     -- Запоминаем текущий размер контента
-    local FullHeight = 350
+    local FullHeight = WindowHeight
     local MinHeight = 35
 
     MinimizeBtn.MouseButton1Click:Connect(function()
