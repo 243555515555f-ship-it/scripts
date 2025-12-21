@@ -309,42 +309,47 @@ function GeminiLib:CreateWindow(title, themeName)
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Parent = TopBar
-    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(40, 40, 45)
-    MinimizeBtn.Size = UDim2_new(0, 30, 0, 22)
-    MinimizeBtn.Position = UDim2_new(1, -35, 0.5, -11)
+    MinimizeBtn.ZIndex = 100 -- Гарантирует, что кнопка будет поверх всего
+    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(35, 35, 40)
+    MinimizeBtn.BorderSizePixel = 0
+    -- Позиция: справа, с отступом 10 пикселей от края
+    MinimizeBtn.Size = UDim2_new(0, 24, 0, 24)
+    MinimizeBtn.Position = UDim2_new(1, -34, 0.5, -12)
+    
     MinimizeBtn.Font = Enum.Font.GothamBold
     MinimizeBtn.Text = "-"
-    MinimizeBtn.TextColor3 = theme.Text
+    MinimizeBtn.TextColor3 = Color3_new(1, 1, 1) -- Чисто белый
     MinimizeBtn.TextSize = 16
-    MinimizeBtn.AutoButtonColor = true
 
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim_new(0, 5)
+    btnCorner.CornerRadius = UDim_new(0, 6)
     btnCorner.Parent = MinimizeBtn
 
+    -- Логика
     local IsMinimized = false
-    local NormalSize = UDim2_new(0, 550, 0, 350)
-    local MinimizedSize = UDim2_new(0, 550, 0, 35)
+    -- Используем стандартные размеры из твоей либы
+    local normalHeight = 350
+    local minHeight = 35
 
     MinimizeBtn.MouseButton1Click:Connect(function()
         IsMinimized = not IsMinimized
         
-        -- Смена символа
+        -- Смена иконки
         MinimizeBtn.Text = IsMinimized and "+" or "-"
         
-        -- Управление видимостью контента
+        -- 1. Скрываем контент
         if IsMinimized then
-            -- Скрываем мгновенно, чтобы не торчало при уменьшении
             ContentContainer.Visible = false
         end
 
-        -- Анимация окна
-        local tween = services.TweenService:Create(Main, TweenInfo_new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = IsMinimized and MinimizedSize or NormalSize
+        -- 2. Анимируем размер главного окна (Main)
+        local targetSize = IsMinimized and UDim2_new(0, 550, 0, minHeight) or UDim2_new(0, 550, 0, normalHeight)
+        
+        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = targetSize
         })
         
         tween.Completed:Connect(function()
-            -- Показываем контент только когда окно полностью раскрылось
             if not IsMinimized then
                 ContentContainer.Visible = true
             end
