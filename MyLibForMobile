@@ -1,1 +1,812 @@
+-- GeminiLib V6 Mobile - Оптимизированная для мобильных устройств (исправленная версия)
+local GeminiLib = {}
 
+-- Кэшированные сервисы
+local services = {
+    UIS = game:GetService("UserInputService"),
+    TweenService = game:GetService("TweenService"),
+    RunService = game:GetService("RunService"),
+    CoreGui = game:GetService("CoreGui"),
+    HttpService = game:GetService("HttpService"),
+    Players = game:GetService("Players")
+}
+
+-- Конфигурация для мобильных устройств
+GeminiLib.Config = {
+    WindowWidth = 500,
+    WindowHeight = 600,
+    AnimationSpeed = 0.15,
+    Roundness = 10,
+    EnableShadows = false,
+    DefaultTheme = "Dark",
+    ButtonHeight = 44,
+    FontSize = 14,
+    TouchPadding = 5,
+    LongPressDuration = 0.5  -- Долгое нажатие
+}
+
+-- Темы
+GeminiLib.Themes = {
+    Dark = {
+        Name = "Dark",
+        Main = Color3.fromRGB(25, 25, 30),
+        Accent = Color3.fromRGB(0, 170, 255),
+        Text = Color3.fromRGB(240, 240, 245),
+        TextSecondary = Color3.fromRGB(180, 180, 190),
+        Section = Color3.fromRGB(35, 35, 40),
+        Element = Color3.fromRGB(45, 45, 50),
+        Border = Color3.fromRGB(60, 60, 70),
+        Success = Color3.fromRGB(70, 220, 130),
+        Warning = Color3.fromRGB(255, 190, 50),
+        Error = Color3.fromRGB(240, 90, 90)
+    },
+    Blue = {
+        Name = "Blue",
+        Main = Color3.fromRGB(20, 30, 45),
+        Accent = Color3.fromRGB(0, 150, 255),
+        Text = Color3.fromRGB(230, 240, 255),
+        TextSecondary = Color3.fromRGB(170, 190, 220),
+        Section = Color3.fromRGB(30, 40, 60),
+        Element = Color3.fromRGB(40, 50, 75),
+        Border = Color3.fromRGB(0, 120, 215),
+        Success = Color3.fromRGB(50, 200, 120),
+        Warning = Color3.fromRGB(255, 180, 40),
+        Error = Color3.fromRGB(230, 80, 80)
+    }
+}
+
+-- Вспомогательные функции
+local function createUI(class, properties)
+    local instance = Instance.new(class)
+    for prop, value in pairs(properties) do
+        if prop ~= "Parent" then
+            instance[prop] = value
+        end
+    end
+    if properties.Parent then
+        instance.Parent = properties.Parent
+    end
+    return instance
+end
+
+-- Функция для обработки тач-ввода
+local function setupTouchInput(element, onTap, onLongPress)
+    local touchStartTime = 0
+    local touchStartPosition = Vector2.new(0, 0)
+    local longPressTriggered = false
+    local longPressConnection
+    
+    element.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            touchStartTime = tick()
+            touchStartPosition = input.Position
+            longPressTriggered = false
+            
+            -- Запускаем проверку долгого нажатия
+            if onLongPress then
+                longPressConnection = services.RunService.Heartbeat:Connect(function()
+                    if tick() - touchStartTime >= GeminiLib.Config.LongPressDuration then
+                        longPressTriggered = true
+                        onLongPress()
+                        if longPressConnection then
+                            longPressConnection:Disconnect()
+                        end
+                    end
+                end)
+            end
+            
+            -- Визуальная обратная связь
+            services.TweenService:Create(element, TweenInfo.new(0.1), {
+                BackgroundTransparency = 0.3
+            }):Play()
+        end
+    end)
+    
+    element.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            -- Отключаем проверку долгого нажатия
+            if longPressConnection then
+                longPressConnection:Disconnect()
+                longPressConnection = nil
+            end
+            
+            -- Восстанавливаем прозрачность
+            services.TweenService:Create(element, TweenService.new(0.1), {
+                BackgroundTransparency = 0
+            }):Play()
+            
+            -- Проверяем, был ли это обычный тап (не долгое нажатие и не драг)
+            local touchEndTime = tick()
+            local touchDuration = touchEndTime - touchStartTime
+            local touchEndPosition = input.Position
+            local touchDistance = (touchEndPosition - touchStartPosition).Magnitude
+            
+            -- Если это был короткий тап и небольшое перемещение
+            if touchDuration < GeminiLib.Config.LongPressDuration and 
+               touchDistance < 10 and 
+               not longPressTriggered and 
+               onTap then
+                onTap()
+            end
+        end
+    end)
+end
+
+-- Основная функция создания окна
+function GeminiLib:CreateWindow(title, themeName)
+    local theme = GeminiLib.Themes[themeName] or GeminiLib.Themes["Dark"]
+    
+    local WindowObj = {
+        Tabs = {},
+        CurrentTab = nil,
+        Theme = theme,
+        Elements = {},
+        IsMinimized = false,
+        Connections = {}
+    }
+    
+    -- ScreenGui
+    local ScreenGui = createUI("ScreenGui", {
+        Name = "GeminiLibMobile_" .. math.random(1000, 9999),
+        Parent = services.CoreGui,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    })
+    WindowObj.ScreenGui = ScreenGui
+    
+    -- Главное окно
+    local Main = createUI("Frame", {
+        Size = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
+        Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2),
+        BackgroundColor3 = theme.Main,
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+        Parent = ScreenGui
+    })
+    
+    createUI("UICorner", {
+        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness),
+        Parent = Main
+    })
+    
+    -- Верхняя панель
+    local TopBar = createUI("Frame", {
+        Name = "TopBar",
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundColor3 = theme.Section,
+        Parent = Main
+    })
+    
+    -- Заголовок (с возможностью drag)
+    local Title = createUI("TextLabel", {
+        Text = title .. " 📱",
+        Size = UDim2.new(1, -100, 1, 0),
+        TextColor3 = theme.Text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 18,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BackgroundTransparency = 1,
+        Parent = TopBar
+    })
+    
+    -- Кнопка закрытия
+    local CloseBtn = createUI("TextButton", {
+        Text = "×",
+        Size = UDim2.new(0, 50, 1, 0),
+        Position = UDim2.new(1, -50, 0, 0),
+        BackgroundColor3 = theme.Error,
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 24,
+        Parent = TopBar
+    })
+    
+    createUI("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = CloseBtn
+    })
+    
+    -- Настраиваем тач для кнопки закрытия
+    setupTouchInput(CloseBtn, function()
+        WindowObj:Destroy()
+    end)
+    
+    -- Боковая панель для вкладок
+    local TabBar = createUI("Frame", {
+        Name = "TabBar",
+        Size = UDim2.new(1, 0, 0, 50),
+        Position = UDim2.new(0, 0, 0, 50),
+        BackgroundColor3 = theme.Section,
+        Parent = Main
+    })
+    
+    local TabList = createUI("ScrollingFrame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        CanvasSize = UDim2.new(2, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = theme.Accent,
+        ScrollingDirection = Enum.ScrollingDirection.X,
+        BackgroundTransparency = 1,
+        Parent = TabBar
+    })
+    
+    local TabListLayout = createUI("UIListLayout", {
+        Padding = UDim.new(0, 5),
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = TabList
+    })
+    
+    -- Контейнер контента
+    local ContentContainer = createUI("Frame", {
+        Size = UDim2.new(1, 0, 1, -100),
+        Position = UDim2.new(0, 0, 0, 100),
+        BackgroundColor3 = theme.Section,
+        BackgroundTransparency = 0.8,
+        Parent = Main
+    })
+    
+    local ContentScroll = createUI("ScrollingFrame", {
+        Name = "ContentScroll",
+        Size = UDim2.new(1, -10, 1, -10),
+        Position = UDim2.new(0, 5, 0, 5),
+        BackgroundTransparency = 1,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 5,
+        ScrollBarImageColor3 = theme.Accent,
+        Parent = ContentContainer
+    })
+    
+    createUI("UIListLayout", {
+        Padding = UDim.new(0, 10),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = ContentScroll
+    })
+    
+    -- Drag функционал для верхней панели
+    local dragging = false
+    local dragStart, startPos
+    
+    setupTouchInput(TopBar, nil, function()
+        -- Долгое нажатие для начала drag
+        dragging = true
+        dragStart = services.UIS:GetMouseLocation()
+        startPos = Main.Position
+    end)
+    
+    local function updateDrag(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end
+    
+    services.UIS.InputChanged:Connect(updateDrag)
+    
+    services.UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    -- Функция создания вкладки
+    function WindowObj:CreateTab(name, icon)
+        local Tab = {
+            Name = name,
+            Page = nil,
+            Button = nil,
+            Elements = {}
+        }
+        
+        -- Кнопка вкладки
+        local TabBtn = createUI("TextButton", {
+            Text = (icon or "📱") .. " " .. name,
+            Size = UDim2.new(0, 120, 1, -10),
+            BackgroundColor3 = theme.Element,
+            TextColor3 = theme.TextSecondary,
+            Font = Enum.Font.Gotham,
+            TextSize = GeminiLib.Config.FontSize,
+            Parent = TabList
+        })
+        
+        createUI("UICorner", {
+            CornerRadius = UDim.new(0, 8),
+            Parent = TabBtn
+        })
+        
+        Tab.Button = TabBtn
+        
+        -- Страница вкладки
+        local Page = createUI("Frame", {
+            Name = "Page_" .. name,
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Visible = false,
+            Parent = ContentScroll
+        })
+        
+        local PageList = createUI("UIListLayout", {
+            Padding = UDim.new(0, 8),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = Page
+        })
+        
+        Tab.Page = Page
+        
+        -- Активация вкладки
+        local function activateTab()
+            for _, tab in pairs(WindowObj.Tabs) do
+                tab.Page.Visible = false
+                services.TweenService:Create(tab.Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = theme.Element,
+                    TextColor3 = theme.TextSecondary
+                }):Play()
+            end
+            
+            Page.Visible = true
+            services.TweenService:Create(TabBtn, TweenInfo.new(0.2), {
+                BackgroundColor3 = theme.Accent,
+                TextColor3 = Color3.new(1, 1, 1)
+            }):Play()
+            
+            WindowObj.CurrentTab = Tab
+        end
+        
+        -- Настраиваем тач для кнопки вкладки
+        setupTouchInput(TabBtn, activateTab)
+        
+        -- Элементы вкладки
+        
+        function Tab:Label(text)
+            local LabelFrame = createUI("Frame", {
+                Size = UDim2.new(1, -20, 0, 30),
+                BackgroundTransparency = 1,
+                LayoutOrder = #Tab.Elements + 1,
+                Parent = Page
+            })
+            
+            createUI("TextLabel", {
+                Text = text,
+                Size = UDim2.new(1, 0, 1, 0),
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = GeminiLib.Config.FontSize,
+                BackgroundTransparency = 1,
+                Parent = LabelFrame
+            })
+            
+            table.insert(Tab.Elements, LabelFrame)
+            return LabelFrame
+        end
+        
+        function Tab:Button(text, callback)
+            local Btn = createUI("TextButton", {
+                Text = text,
+                Size = UDim2.new(1, -20, 0, GeminiLib.Config.ButtonHeight),
+                BackgroundColor3 = theme.Element,
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = GeminiLib.Config.FontSize,
+                LayoutOrder = #Tab.Elements + 1,
+                Parent = Page
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = Btn
+            })
+            
+            -- Настраиваем тач-ввод
+            setupTouchInput(Btn, function()
+                if callback then
+                    pcall(callback)
+                end
+            end)
+            
+            table.insert(Tab.Elements, Btn)
+            return Btn
+        end
+        
+        function Tab:Toggle(text, default, callback)
+            local state = default or false
+            
+            local ToggleFrame = createUI("TextButton", {
+                Text = "  " .. text,
+                Size = UDim2.new(1, -20, 0, GeminiLib.Config.ButtonHeight),
+                BackgroundColor3 = theme.Element,
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = GeminiLib.Config.FontSize,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                LayoutOrder = #Tab.Elements + 1,
+                Parent = Page
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = ToggleFrame
+            })
+            
+            -- Индикатор
+            local Indicator = createUI("Frame", {
+                Size = UDim2.new(0, 24, 0, 24),
+                Position = UDim2.new(1, -32, 0.5, -12),
+                BackgroundColor3 = state and theme.Success or Color3.fromRGB(80, 80, 90),
+                Parent = ToggleFrame
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = Indicator
+            })
+            
+            local function updateToggle()
+                services.TweenService:Create(Indicator, TweenInfo.new(0.2), {
+                    BackgroundColor3 = state and theme.Success or Color3.fromRGB(80, 80, 90)
+                }):Play()
+                
+                if callback then
+                    pcall(callback, state)
+                end
+            end
+            
+            -- Настраиваем тач для переключателя
+            setupTouchInput(ToggleFrame, function()
+                state = not state
+                updateToggle()
+            end)
+            
+            table.insert(Tab.Elements, ToggleFrame)
+            
+            return {
+                Set = function(value)
+                    state = value
+                    updateToggle()
+                end,
+                Get = function() return state end
+            }
+        end
+        
+        function Tab:Slider(text, min, max, default, callback)
+            local currentValue = default or min
+            
+            local SliderFrame = createUI("Frame", {
+                Size = UDim2.new(1, -20, 0, 70),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.5,
+                LayoutOrder = #Tab.Elements + 1,
+                Parent = Page
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = SliderFrame
+            })
+            
+            local Label = createUI("TextLabel", {
+                Text = text .. ": " .. currentValue,
+                Size = UDim2.new(1, 0, 0, 30),
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = GeminiLib.Config.FontSize - 2,
+                BackgroundTransparency = 1,
+                Parent = SliderFrame
+            })
+            
+            local Bar = createUI("Frame", {
+                Size = UDim2.new(1, -20, 0, 8),
+                Position = UDim2.new(0, 10, 1, -30),
+                BackgroundColor3 = Color3.fromRGB(60, 60, 70),
+                Parent = SliderFrame
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = Bar
+            })
+            
+            local Fill = createUI("Frame", {
+                Size = UDim2.new((currentValue - min) / (max - min), 0, 1, 0),
+                BackgroundColor3 = theme.Accent,
+                Parent = Bar
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = Fill
+            })
+            
+            local SliderButton = createUI("TextButton", {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundTransparency = 1,
+                Parent = SliderFrame
+            })
+            
+            local isDragging = false
+            local touchStartX = 0
+            local barStartWidth = 0
+            
+            local function updateSliderValue(xPosition)
+                local barAbsPos = Bar.AbsolutePosition
+                local barAbsSize = Bar.AbsoluteSize
+                
+                local pos = math.clamp(
+                    (xPosition - barAbsPos.X) / barAbsSize.X,
+                    0, 1
+                )
+                local val = math.floor(min + (max - min) * pos)
+                
+                if val ~= currentValue then
+                    currentValue = val
+                    Fill.Size = UDim2.new(pos, 0, 1, 0)
+                    Label.Text = text .. ": " .. val
+                    
+                    if callback then
+                        pcall(callback, val)
+                    end
+                end
+            end
+            
+            SliderButton.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    isDragging = true
+                    touchStartX = input.Position.X
+                    barStartWidth = Fill.Size.X.Scale
+                    updateSliderValue(input.Position.X)
+                end
+            end)
+            
+            services.UIS.InputChanged:Connect(function(input)
+                if isDragging and input.UserInputType == Enum.UserInputType.Touch then
+                    updateSliderValue(input.Position.X)
+                end
+            end)
+            
+            services.UIS.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    isDragging = false
+                end
+            end)
+            
+            table.insert(Tab.Elements, SliderFrame)
+            
+            return {
+                Set = function(value)
+                    currentValue = math.clamp(value, min, max)
+                    local pos = (currentValue - min) / (max - min)
+                    Fill.Size = UDim2.new(pos, 0, 1, 0)
+                    Label.Text = text .. ": " .. currentValue
+                end,
+                Get = function() return currentValue end
+            }
+        end
+        
+        function Tab:Dropdown(text, options, default, callback)
+            local selected = default or options[1]
+            local isOpen = false
+            
+            local DropFrame = createUI("Frame", {
+                Size = UDim2.new(1, -20, 0, GeminiLib.Config.ButtonHeight),
+                BackgroundColor3 = theme.Element,
+                LayoutOrder = #Tab.Elements + 1,
+                Parent = Page
+            })
+            
+            createUI("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = DropFrame
+            })
+            
+            local DropButton = createUI("TextButton", {
+                Text = text .. ": " .. selected,
+                Size = UDim2.new(1, 0, 1, 0),
+                TextColor3 = theme.Text,
+                Font = Enum.Font.Gotham,
+                TextSize = GeminiLib.Config.FontSize,
+                BackgroundTransparency = 1,
+                Parent = DropFrame
+            })
+            
+            local DropdownContainer
+            local dropdownOptions = {}
+            
+            local function createDropdown()
+                if DropdownContainer then
+                    DropdownContainer:Destroy()
+                end
+                
+                DropdownContainer = createUI("Frame", {
+                    Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0),
+                    Position = UDim2.new(0, DropFrame.AbsolutePosition.X, 0, DropFrame.AbsolutePosition.Y + DropFrame.AbsoluteSize.Y + 5),
+                    BackgroundColor3 = theme.Element,
+                    BackgroundTransparency = 0.1,
+                    Parent = ScreenGui,
+                    Visible = false,
+                    ZIndex = 100
+                })
+                
+                createUI("UICorner", {
+                    CornerRadius = UDim.new(0, 8),
+                    Parent = DropdownContainer
+                })
+                
+                local MaxHeight = 200
+                local optionsHeight = math.min(#options * 35, MaxHeight)
+                
+                local OptionsList = createUI("ScrollingFrame", {
+                    Size = UDim2.new(1, -10, 1, -10),
+                    Position = UDim2.new(0, 5, 0, 5),
+                    BackgroundTransparency = 1,
+                    CanvasSize = UDim2.new(0, 0, 0, #options * 35),
+                    ScrollBarThickness = 3,
+                    Parent = DropdownContainer
+                })
+                
+                for i, option in ipairs(options) do
+                    local OptionBtn = createUI("TextButton", {
+                        Text = option,
+                        Size = UDim2.new(1, 0, 0, 30),
+                        Position = UDim2.new(0, 0, 0, (i-1)*35),
+                        BackgroundColor3 = option == selected and theme.Accent or theme.Element,
+                        TextColor3 = option == selected and Color3.new(1,1,1) or theme.Text,
+                        Font = Enum.Font.Gotham,
+                        TextSize = GeminiLib.Config.FontSize - 1,
+                        Parent = OptionsList
+                    })
+                    
+                    createUI("UICorner", {
+                        CornerRadius = UDim.new(0, 6),
+                        Parent = OptionBtn
+                    })
+                    
+                    setupTouchInput(OptionBtn, function()
+                        selected = option
+                        DropButton.Text = text .. ": " .. selected
+                        
+                        if callback then
+                            pcall(callback, selected)
+                        end
+                        
+                        if DropdownContainer then
+                            DropdownContainer:Destroy()
+                            DropdownContainer = nil
+                        end
+                        isOpen = false
+                    end)
+                    
+                    table.insert(dropdownOptions, OptionBtn)
+                end
+                
+                return DropdownContainer, optionsHeight
+            end
+            
+            local function toggleDropdown()
+                isOpen = not isOpen
+                
+                if isOpen then
+                    local container, height = createDropdown()
+                    container.Visible = true
+                    
+                    services.TweenService:Create(container, TweenInfo.new(0.2), {
+                        Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, height)
+                    }):Play()
+                    
+                    -- Закрытие по клику вне dropdown
+                    local closeConnection
+                    closeConnection = services.UIS.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.Touch then
+                            local mousePos = input.Position
+                            local dropPos = DropFrame.AbsolutePosition
+                            local dropSize = DropFrame.AbsoluteSize
+                            
+                            local clickedInside = 
+                                mousePos.X >= dropPos.X and 
+                                mousePos.X <= dropPos.X + dropSize.X and
+                                mousePos.Y >= dropPos.Y and 
+                                mousePos.Y <= dropPos.Y + dropSize.Y
+                            
+                            if not clickedInside and DropdownContainer then
+                                services.TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {
+                                    Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
+                                }):Play()
+                                
+                                wait(0.2)
+                                DropdownContainer:Destroy()
+                                DropdownContainer = nil
+                                isOpen = false
+                                
+                                if closeConnection then
+                                    closeConnection:Disconnect()
+                                end
+                            end
+                        end
+                    end)
+                    
+                    table.insert(WindowObj.Connections, closeConnection)
+                else
+                    if DropdownContainer then
+                        services.TweenService:Create(DropdownContainer, TweenInfo.new(0.2), {
+                            Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
+                        }):Play()
+                        
+                        wait(0.2)
+                        DropdownContainer:Destroy()
+                        DropdownContainer = nil
+                    end
+                end
+            end
+            
+            setupTouchInput(DropButton, toggleDropdown)
+            
+            table.insert(Tab.Elements, DropFrame)
+            
+            return {
+                Set = function(value)
+                    selected = value
+                    DropButton.Text = text .. ": " .. value
+                end,
+                Get = function() return selected end
+            }
+        end
+        
+        table.insert(WindowObj.Tabs, Tab)
+        
+        if #WindowObj.Tabs == 1 then
+            activateTab()
+        end
+        
+        return Tab
+    end
+    
+    -- Обновление размера контента
+    local function updateContentSize()
+        local totalHeight = 0
+        for _, child in pairs(ContentScroll:GetChildren()) do
+            if child:IsA("Frame") and child.Visible then
+                totalHeight = totalHeight + child.Size.Y.Offset + 10
+            end
+        end
+        ContentScroll.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+    end
+    
+    ContentScroll.ChildAdded:Connect(updateContentSize)
+    ContentScroll.ChildRemoved:Connect(updateContentSize)
+    
+    -- Управление окном
+    function WindowObj:Destroy()
+        for _, connection in pairs(WindowObj.Connections) do
+            pcall(function() connection:Disconnect() end)
+        end
+        ScreenGui:Destroy()
+    end
+    
+    function WindowObj:ChangeTheme(newThemeName)
+        local newTheme = GeminiLib.Themes[newThemeName]
+        if not newTheme then return end
+        
+        WindowObj.Theme = newTheme
+        
+        Main.BackgroundColor3 = newTheme.Main
+        Title.TextColor3 = newTheme.Text
+        TopBar.BackgroundColor3 = newTheme.Section
+        
+        -- Обновляем все элементы
+        for _, element in pairs(WindowObj.Elements) do
+            if element:IsA("TextButton") or element:IsA("TextLabel") then
+                pcall(function()
+                    if element.BackgroundTransparency ~= 1 then
+                        element.BackgroundColor3 = newTheme.Element
+                    end
+                end)
+            end
+        end
+    end
+    
+    return WindowObj
+end
+
+return GeminiLib
