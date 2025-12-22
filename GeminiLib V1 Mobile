@@ -1,6 +1,6 @@
 -- Menoo Mobile Version
 -- Загружаем мобильную библиотеку
-local GeminiLib = loadstring(game:HttpGet("https://github.com/243555515555f-ship-it/scripts/raw/refs/heads/main/MyLibForMobile"))()
+local GeminiLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/243555515555f-ship-it/scripts/refs/heads/main/MyLibForMobile"))()
 
 -- Сервисы
 local Players = game:GetService("Players")
