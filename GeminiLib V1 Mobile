@@ -1,0 +1,477 @@
+-- Menoo Mobile Version
+-- Загружаем мобильную библиотеку
+local GeminiLib = loadstring(game:HttpGet("URL_ВАШЕЙ_МОБИЛЬНОЙ_БИБЛИОТЕКИ"))()
+
+-- Сервисы
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Утилиты для получения персонажа
+local function getPlayerObject()
+    return player.Character or workspace:FindFirstChild(player.Name)
+end
+
+local function getPlayerHumanoid()
+    local p = getPlayerObject()
+    return p and p:FindFirstChildOfClass("Humanoid")
+end
+
+local function getRootPart()
+    local p = getPlayerObject()
+    return p and p:FindFirstChild("HumanoidRootPart")
+end
+
+-- Создаем окно
+local MenooWindow = GeminiLib:CreateWindow("Menoo Mobile", "Dark")
+
+-- Вкладки
+local MainTab = MenooWindow:CreateTab("Main", "🎮")
+local VisualsTab = MenooWindow:CreateTab("Visuals", "👁")
+local CombatTab = MenooWindow:CreateTab("Combat", "⚔")
+local SettingsTab = MenooWindow:CreateTab("Settings", "⚙")
+
+-- ========== MAIN TAB ==========
+MainTab:Label("Movement")
+
+local oldWalkSpeed = getPlayerHumanoid().WalkSpeed
+local newWalkSpeed = oldWalkSpeed
+
+local speedSlider = MainTab:Slider("Walk Speed", 16, 200, oldWalkSpeed, function(value)
+    newWalkSpeed = value
+    local hum = getPlayerHumanoid()
+    if hum then hum.WalkSpeed = value end
+end)
+
+MainTab:Toggle("Speed Hack", false, function(state)
+    local hum = getPlayerHumanoid()
+    if hum then
+        hum.WalkSpeed = state and newWalkSpeed or oldWalkSpeed
+    end
+end)
+
+local oldJumpPower = getPlayerHumanoid().JumpPower or 50
+local jumpSlider = MainTab:Slider("Jump Power", 50, 350, oldJumpPower, function(value)
+    local hum = getPlayerHumanoid()
+    if hum then hum.JumpPower = value end
+end)
+
+MainTab:Label("Flight System")
+
+local FLYING = false
+local flySpeed = 50
+local flyConnections = {}
+
+local function startFly()
+    FLYING = true
+    local root = getRootPart()
+    if not root then return end
+    
+    -- Создаем BodyVelocity для полета
+    local bv = Instance.new("BodyVelocity")
+    bv.Name = "MobileFlyBV"
+    bv.Parent = root
+    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    
+    -- Используем джойстик для управления полетом
+    table.insert(flyConnections, RunService.RenderStepped:Connect(function()
+        if not FLYING then return end
+        
+        local humanoid = getPlayerHumanoid()
+        local camera = Camera
+        
+        if humanoid then
+            humanoid.PlatformStand = true
+        end
+        
+        -- Получаем направление движения
+        local moveDir = Vector3.new(0, 0, 0)
+        
+        -- Здесь можно добавить управление через виртуальный джойстик
+        -- В текущей версии используется автополет вперед
+        moveDir = camera.CFrame.LookVector * flySpeed
+        
+        bv.Velocity = moveDir
+    end))
+end
+
+local function stopFly()
+    FLYING = false
+    local root = getRootPart()
+    if root and root:FindFirstChild("MobileFlyBV") then
+        root.MobileFlyBV:Destroy()
+    end
+    
+    local humanoid = getPlayerHumanoid()
+    if humanoid then
+        humanoid.PlatformStand = false
+    end
+    
+    -- Отключаем все соединения
+    for _, conn in pairs(flyConnections) do
+        conn:Disconnect()
+    end
+    flyConnections = {}
+end
+
+MainTab:Slider("Fly Speed", 10, 100, 50, function(value)
+    flySpeed = value
+end)
+
+MainTab:Toggle("Fly", false, function(state)
+    if state then
+        startFly()
+    else
+        stopFly()
+    end
+end)
+
+MainTab:Label("Other Features")
+
+MainTab:Toggle("NoClip", false, function(state)
+    local conn
+    if state then
+        conn = RunService.Stepped:Connect(function()
+            local char = getPlayerObject()
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if conn then conn:Disconnect() end
+        local char = getPlayerObject()
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+-- ========== VISUALS TAB ==========
+VisualsTab:Label("ESP Tools")
+
+-- Простой ESP для мобильных
+local espEnabled = false
+local espObjects = {}
+
+local function createESP(player)
+    if player == Players.LocalPlayer then return end
+    if espObjects[player] then return end
+    
+    local char = player.Character
+    if not char then return end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "MobileESP"
+    highlight.FillColor = Color3.fromRGB(255, 50, 50)
+    highlight.FillTransparency = 0.7
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = char
+    
+    espObjects[player] = {
+        Highlight = highlight,
+        Character = char
+    }
+end
+
+local function removeESP(player)
+    if espObjects[player] then
+        espObjects[player].Highlight:Destroy()
+        espObjects[player] = nil
+    end
+end
+
+VisualsTab:Toggle("Player ESP", false, function(state)
+    espEnabled = state
+    
+    if state then
+        -- Добавляем ESP существующим игрокам
+        for _, player in pairs(Players:GetPlayers()) do
+            createESP(player)
+        end
+        
+        -- Обработка новых игроков
+        Players.PlayerAdded:Connect(function(player)
+            if espEnabled then
+                player.CharacterAdded:Connect(function()
+                    wait(0.5)
+                    createESP(player)
+                end)
+            end
+        end)
+        
+        -- Удаление при выходе
+        Players.PlayerRemoving:Connect(removeESP)
+    else
+        -- Удаляем весь ESP
+        for player, data in pairs(espObjects) do
+            removeESP(player)
+        end
+        espObjects = {}
+    end
+end)
+
+-- Радужный ESP
+local rainbowESP = false
+local rainbowConn
+
+VisualsTab:Toggle("Rainbow ESP", false, function(state)
+    rainbowESP = state
+    
+    if state then
+        rainbowConn = RunService.RenderStepped:Connect(function()
+            if not rainbowESP then return end
+            
+            local hue = tick() * 0.5 % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            
+            for _, data in pairs(espObjects) do
+                if data.Highlight then
+                    data.Highlight.FillColor = color
+                    data.Highlight.OutlineColor = Color3.new(1, 1, 1)
+                end
+            end
+        end)
+    else
+        if rainbowConn then
+            rainbowConn:Disconnect()
+            rainbowConn = nil
+        end
+    end
+end)
+
+-- Трассеры
+local tracersEnabled = false
+local tracerLines = {}
+
+VisualsTab:Toggle("Tracers", false, function(state)
+    tracersEnabled = state
+    
+    if not state then
+        for _, line in pairs(tracerLines) do
+            line:Remove()
+        end
+        tracerLines = {}
+    end
+end)
+
+if tracersEnabled then
+    RunService.RenderStepped:Connect(function()
+        if not tracersEnabled then return end
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character then
+                local root = player.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                    
+                    if onScreen then
+                        if not tracerLines[player] then
+                            local line = Drawing.new("Line")
+                            line.Thickness = 1
+                            line.Color = Color3.fromRGB(255, 255, 255)
+                            tracerLines[player] = line
+                        end
+                        
+                        local line = tracerLines[player]
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        line.Visible = true
+                    else
+                        if tracerLines[player] then
+                            tracerLines[player].Visible = false
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    Players.PlayerRemoving:Connect(function(player)
+        if tracerLines[player] then
+            tracerLines[player]:Remove()
+            tracerLines[player] = nil
+        end
+    end)
+end
+
+-- ========== COMBAT TAB ==========
+CombatTab:Label("Aimbot")
+
+local aimbotEnabled = false
+local aimbotKey = Enum.UserInputType.Touch
+local aimbotPart = "Head"
+local aimbotRadius = 200
+
+local function getClosestTarget()
+    local target = nil
+    local closestDist = aimbotRadius
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character then
+            local part = player.Character:FindFirstChild(aimbotPart)
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            
+            if part and humanoid and humanoid.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                
+                if onScreen then
+                    local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    
+                    if dist < closestDist then
+                        target = part
+                        closestDist = dist
+                    end
+                end
+            end
+        end
+    end
+    
+    return target
+end
+
+-- Aimbot для мобильных (активируется по тапу)
+local isAiming = false
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == aimbotKey then
+        isAiming = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == aimbotKey then
+        isAiming = false
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if aimbotEnabled and isAiming then
+        local target = getClosestTarget()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
+    end
+end)
+
+CombatTab:Toggle("Aimbot", false, function(state)
+    aimbotEnabled = state
+end)
+
+CombatTab:Slider("Aimbot Radius", 50, 500, 200, function(value)
+    aimbotRadius = value
+end)
+
+CombatTab:Dropdown("Aim Part", {"Head", "HumanoidRootPart", "UpperTorso"}, "Head", function(value)
+    aimbotPart = value
+end)
+
+-- Hitbox Expander
+local hitboxEnabled = false
+local hitboxScale = 5
+
+CombatTab:Toggle("Hitbox Expander", false, function(state)
+    hitboxEnabled = state
+    
+    if state then
+        local conn = RunService.RenderStepped:Connect(function()
+            if not hitboxEnabled then 
+                conn:Disconnect()
+                return 
+            end
+            
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= Players.LocalPlayer and player.Character then
+                    local head = player.Character:FindFirstChild("Head")
+                    if head then
+                        head.Size = Vector3.new(hitboxScale, hitboxScale, hitboxScale)
+                        head.Transparency = 0.5
+                        head.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        -- Восстанавливаем размеры
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    head.Size = Vector3.new(1.2, 1.2, 1.2)
+                    head.Transparency = 0
+                    head.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+CombatTab:Slider("Hitbox Size", 2, 10, 5, function(value)
+    hitboxScale = value
+end)
+
+-- ========== SETTINGS TAB ==========
+SettingsTab:Label("Game Settings")
+
+SettingsTab:Button("Rejoin Server", function()
+    local ts = game:GetService("TeleportService")
+    local p = game:GetService("Players").LocalPlayer
+    ts:Teleport(game.PlaceId, p)
+end)
+
+SettingsTab:Button("Server Hop", function()
+    local HttpService = game:GetService("HttpService")
+    local TeleportService = game:GetService("TeleportService")
+    local PlaceId = game.PlaceId
+    
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(
+            "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+        ))
+    end)
+    
+    if success and result and result.data then
+        for _, server in pairs(result.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(PlaceId, server.id, player)
+                return
+            end
+        end
+    end
+    
+    TeleportService:Teleport(PlaceId, player)
+end)
+
+SettingsTab:Label("UI Settings")
+
+local themes = {"Dark", "Blue", "Red", "Green"}
+SettingsTab:Dropdown("Theme", themes, "Dark", function(value)
+    -- Здесь можно изменить тему интерфейса
+end)
+
+SettingsTab:Toggle("Show FPS", true, function(state)
+    -- Показ FPS
+end)
+
+SettingsTab:Button("Destroy UI", function()
+    MenooWindow:Destroy()
+end)
+
+SettingsTab:Label("Credits")
+SettingsTab:Label("Menoo Mobile v1.0")
+SettingsTab:Label("Adapted for Mobile Devices")
+SettingsTab:Label("By nxs_Bounty")
