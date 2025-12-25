@@ -1010,30 +1010,33 @@ function GeminiLib:CreateWindow(title, themeName)
         -- ФУНКЦИЯ СЛАЙДЕРА
         function Tab:Slider(text, min, max, default, callback, showValue)
             Tab.ElementCount = Tab.ElementCount + 1
-            
+    
             local currentValue = default
             local isDragging = false
             
-            local SliderFrame = UI:Create("Frame", {
+            -- ИЗМЕНЕНО: Используем TextButton вместо Frame
+            local SliderFrame = UI:Create("TextButton", {
+                Name = "Slider_" .. text,
                 Size = UDim2_new(1, -16, 0, 60),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
+                Text = "", -- Убираем текст кнопки
+                AutoButtonColor = false, -- Отключаем стандартное изменение цвета при клике
                 ZIndex = 14,
                 LayoutOrder = Tab.ElementCount,
                 Parent = Page
             })
             
+            -- Далее код остается почти таким же, но вызов частиц теперь заработает
             UI:Create("UICorner", {
                 CornerRadius = UDim_new(0, 8),
                 Parent = SliderFrame
             })
             
-            UI:Create("UIStroke", {
-                Color = theme.Accent,
-                Thickness = 1,
-                Transparency = 0.8,
-                Parent = SliderFrame
-            })
+            -- Привязка частиц к нажатию на всю область слайдера
+            table_insert(WindowObj.Connections, SliderFrame.MouseButton1Click:Connect(function()
+                SpawnParticle(Main) -- Передаем Main, как обсуждали ранее
+            end))
             
             local Label = UI:Create("TextLabel", {
                 Text = "  " .. text .. (showValue and (": " .. default) or ""),
