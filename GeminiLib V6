@@ -466,8 +466,11 @@ function GeminiLib:CreateWindow(title, themeName)
 
     -- ОБРАБОТКА НАЖАТИЯ
     DragButton.MouseButton1Down:Connect(function()
-        if (UIS:GetMouseLocation() - dragStart).Magnitude < clickThreshold then
-            WindowObj:ToggleVisibility()            
+        local startPosVector2 = Vector2.new(dragStart.X, dragStart.Y)
+        local currentMousePos = UIS:GetMouseLocation()
+        
+        if (currentMousePos - startPosVector2).Magnitude < clickThreshold then
+            WindowObj:ToggleVisibility()
         end
     end)
 
