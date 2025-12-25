@@ -359,10 +359,25 @@ function GeminiLib:CreateWindow(title, themeName)
         Parent = TopBar
     })
 
-    CloseBtn.Image.MouseButton1Click:Connect(function ()
-        WindowObj:Destroy()
-    end)
+    table_insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
+        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
+            ImageColor3 = theme.Error,
+            Rotation = 90,
+            Size = UDim2_new(0, 30, 0, 30)
+        }):Play()
+    end))
     
+    table_insert(WindowObj.Connections, CloseBtn.MouseLeave:Connect(function()
+        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
+            ImageColor3 = theme.Text,
+            Rotation = 0,
+            Size = UDim2_new(0, 28, 0, 28)
+        }):Play()
+    end))
+    
+    table_insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
+        WindowObj:Destroy()
+    end))
 
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Name = "MinimizeBtn"
@@ -424,25 +439,7 @@ function GeminiLib:CreateWindow(title, themeName)
         tween:Play()
     end)
 
-    table_insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
-            ImageColor3 = theme.Error,
-            Rotation = 90,
-            Size = UDim2_new(0, 30, 0, 30)
-        }):Play()
-    end))
     
-    table_insert(WindowObj.Connections, CloseBtn.MouseLeave:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
-            ImageColor3 = theme.Text,
-            Rotation = 0,
-            Size = UDim2_new(0, 28, 0, 28)
-        }):Play()
-    end))
-    
-    table_insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
-        WindowObj:Destroy()
-    end))
 
     -- Боковая панель для вкладок
     local SideBar = UI:Create("Frame", {
