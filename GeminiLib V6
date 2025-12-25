@@ -156,10 +156,18 @@ local function CreateParticle(parent, position)
     game:GetService("Debris"):AddItem(particle, 0.6)
 end
 
-local function SpawnParticle()
-    local mousePos = services.UIS:GetMouseLocation() - Main.AbsolutePosition - Vector2.new(0, 36)
-        for i = 1, 5 do CreateParticle(Main, mousePos) end -- Спавним 5 частиц
-            callback()
+local function SpawnParticle(parent, callback)
+    -- Получаем позицию мыши относительно окна Main
+    local mousePos = services.UIS:GetMouseLocation() - parent.AbsolutePosition - Vector2.new(0, 36)
+    
+    for i = 1, 5 do 
+        CreateParticle(parent, mousePos) 
+    end
+    
+    -- Вызываем колбэк, если он передан
+    if callback then 
+        callback() 
+    end
 end
 
 -- Класс для управления UI элементами
