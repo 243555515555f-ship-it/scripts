@@ -81,14 +81,26 @@ GeminiLib.Themes = {
         Success = Color3_fromRGB(0, 230, 180),
         Warning = Color3_fromRGB(255, 230, 0),
         Error = Color3_fromRGB(255, 70, 70)
+    },
+    NeonAbyss = {
+        Name = "NeonAbyss",
+        Main = Color3_fromRGB(10, 10, 15),
+        Accent = Color3_fromRGB(0, 255, 150), -- Ярко-бирюзовый
+        Secondary = Color3_fromRGB(255, 0, 100), -- Розовый неон
+        Text = Color3_fromRGB(240, 255, 250),
+        TextSecondary = Color3_fromRGB(130, 150, 140),
+        Section = Color3_fromRGB(20, 25, 30),
+        Element = Color3_fromRGB(25, 35, 40),
+        Border = Color3_fromRGB(0, 255, 150),
+        Shadow = Color3_fromRGB(0, 255, 150),
+        ShadowAlpha = 0.2
     }
 }
 
 -- КОНФИГУРАЦИЯ
 GeminiLib.Config = {
-    WindowWidth = 650,
-    WindowHeight = 500,
-    AnimationSpeed = 0.15,
+    WindowWidth = 800,
+    WindowHeight = 600,
     Roundness = 12,
     EnableShadows = true,
     DefaultTheme = "Dark",
@@ -115,6 +127,39 @@ local function createShadow(parent, color, transparency, sizeMultiplier)
     shadow.ZIndex = parent.ZIndex - 1
     shadow.Parent = parent
     return shadow
+end
+
+local function CreateParticle(parent, position)
+    local particle = Instance.new("Frame")
+    particle.Size = UDim2_new(0, 4, 0, 4)
+    particle.Position = UDim2_new(0, position.X, 0, position.Y)
+    particle.BackgroundColor3 = Color3_fromRGB(0, 255, 150) -- Цвет частиц (позже подстроится под тему)
+    particle.BorderSizePixel = 0
+    particle.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = particle
+
+    local angle = math.random(0, 360)
+    local distance = math.random(20, 50)
+    local targetX = position.X + math.cos(math.rad(angle)) * distance
+    local targetY = position.Y + math.sin(math.rad(angle)) * distance
+
+    local tween = services.TweenService:Create(particle, TweenInfo_new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = UDim2_new(0, targetX, 0, targetY),
+        BackgroundTransparency = 1,
+        Size = UDim2_new(0, 0, 0, 0)
+    })
+    
+    tween:Play()
+    game:GetService("Debris"):AddItem(particle, 0.6)
+end
+
+local function SpawnParticle()
+    local mousePos = services.UIS:GetMouseLocation() - Main.AbsolutePosition - Vector2.new(0, 36)
+        for i = 1, 5 do CreateParticle(Main, mousePos) end -- Спавним 5 частиц
+            callback()
 end
 
 -- Класс для управления UI элементами
@@ -207,35 +252,33 @@ function GeminiLib:CreateWindow(title, themeName)
         Parent = TopBar
     })
     
-    -- Drag функционал
-    local dragging = false
-    local dragStart, startPos
-    
-    table_insert(WindowObj.Connections, TopBar.InputBegan:Connect(function(input)
+    -- [ПЛАВНЫЙ DRAG]
+    local dragging, dragInput, dragStart, startPos
+    local function update(input)
+        local delta = input.Position - dragStart
+        local targetPos = UDim2_new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        services.TweenService:Create(Main, TweenInfo_new(0.15, Enum.EasingStyle.Cubic), {Position = targetPos}):Play()
+    end
+
+    Main.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = Main.Position
         end
-    end))
-    
-    table_insert(WindowObj.Connections, services.UIS.InputChanged:Connect(function(input)
+    end)
+
+    services.UIS.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            Main.Position = UDim2_new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+            update(input)
         end
-    end))
-    
-    table_insert(WindowObj.Connections, services.UIS.InputEnded:Connect(function(input)
+    end)
+
+    services.UIS.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
-    end))
+    end)
     
     -- Заголовок с FPS и Ping
     local Title = UI:Create("TextLabel", {
@@ -305,77 +348,6 @@ function GeminiLib:CreateWindow(title, themeName)
     
     startStatsUpdate()
 
-    -- Кнопка сворачивания
-    local MinimizeBtn = Instance.new("TextButton")
-    MinimizeBtn.Name = "MinimizeBtn"
-    MinimizeBtn.Parent = TopBar
-    MinimizeBtn.ZIndex = 100 -- Гарантирует, что кнопка будет поверх всего
-    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(35, 35, 40)
-    MinimizeBtn.BorderSizePixel = 0
-    -- Позиция: справа, с отступом 10 пикселей от края
-    MinimizeBtn.Size = UDim2_new(0, 24, 0, 24)
-    MinimizeBtn.Position = UDim2_new(1, -34, 0.5, -12)
-    
-    MinimizeBtn.Font = Enum.Font.GothamBold
-    MinimizeBtn.Text = "-"
-    MinimizeBtn.TextColor3 = Color3_new(1, 1, 1) -- Чисто белый
-    MinimizeBtn.TextSize = 16
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim_new(0, 6)
-    btnCorner.Parent = MinimizeBtn
-
-    -- [ ИСПРАВЛЕННАЯ ЛОГИКА СВОРАЧИВАНИЯ ] --
-    local IsMinimized = false
-    
-    MinimizeBtn.MouseButton1Click:Connect(function()
-        IsMinimized = not IsMinimized
-        
-        -- Поиск контейнера напрямую, если переменная nil
-        local Container = ContentContainer or Main:FindFirstChild("ContentContainer") or Main:FindFirstChildOfClass("ScrollingFrame")
-        
-        -- Смена текста
-        MinimizeBtn.Text = IsMinimized and "+" or "-"
-        
-        -- 1. Скрываем контент (если нашли его)
-        if Container then
-            if IsMinimized then
-                Container.Visible = false
-            end
-        end
-
-        -- 2. Анимация размера окна
-        -- Используем стандартные размеры: 350 - раскрыто, 35 - свернуто
-        local targetSize = IsMinimized and UDim2_new(0, 550, 0, 35) or UDim2_new(0, 550, 0, 350)
-        
-        local tween = services.TweenService:Create(Main, TweenInfo_new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = targetSize
-        })
-        
-        tween.Completed:Connect(function()
-            -- Показываем контент только после того, как окно раскрылось
-            if not IsMinimized and Container then
-                Container.Visible = true
-            end
-        end)
-        
-        tween:Play()
-    end)
-    
-    table_insert(WindowObj.Connections, MinimizeBtn.MouseEnter:Connect(function()
-        services.TweenService:Create(MinimizeBtn, TweenInfo_new(0.15), {
-            TextColor3 = theme.Accent,
-            Size = UDim2_new(0, 30, 0, 30)
-        }):Play()
-    end))
-    
-    table_insert(WindowObj.Connections, MinimizeBtn.MouseLeave:Connect(function()
-        services.TweenService:Create(MinimizeBtn, TweenInfo_new(0.15), {
-            TextColor3 = theme.Text,
-            Size = UDim2_new(0, 28, 0, 28)
-        }):Play()
-    end))
-
     -- Кнопка закрытия
     local CloseBtn = UI:Create("ImageButton", {
         Size = UDim2_new(0, 28, 0, 28),
@@ -386,15 +358,19 @@ function GeminiLib:CreateWindow(title, themeName)
         ZIndex = 13,
         Parent = TopBar
     })
+
+    CloseBtn.Image.MouseButton1Click:Connect(function ()
+        WindowObj:Destroy()
+    end)
     
-    -- [ КНОПКА СВОРАЧИВАНИЯ ] --
+
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Parent = TopBar
     MinimizeBtn.BackgroundColor3 = Color3_fromRGB(45, 45, 50)
     MinimizeBtn.Size = UDim2_new(0, 25, 0, 25)
     -- Смещаем её левее кнопки закрытия (кнопка закрытия обычно на -10, эта на -40)
-    MinimizeBtn.Position = UDim2_new(1, -65, 0.5, -12) 
+    MinimizeBtn.Position = UDim2_new(1, -45, 0.5, -12) 
     MinimizeBtn.Font = Enum.Font.GothamBold
     MinimizeBtn.Text = "-"
     MinimizeBtn.TextColor3 = theme.Text
@@ -427,7 +403,7 @@ function GeminiLib:CreateWindow(title, themeName)
         end
 
         -- 2. Анимация сворачивания
-        local targetSize = IsMinimized and UDim2_new(0, 550, 0, MinHeight) or UDim2_new(0, 550, 0, FullHeight)
+        local targetSize = IsMinimized and UDim2_new(0, WindowWidth, 0, MinHeight) or UDim2_new(0, WindowWidth, 0, FullHeight)
         
         local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Size = targetSize
@@ -851,6 +827,10 @@ function GeminiLib:CreateWindow(title, themeName)
                 }):Play()
             end))
             
+            Btn.MouseButton1Click:Connect(function()
+                SpawnParticle()
+            end)
+
             table_insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
                 services.TweenService:Create(Btn, TweenInfo_new(0.15), {
                     BackgroundTransparency = 0.5,
@@ -957,6 +937,11 @@ function GeminiLib:CreateWindow(title, themeName)
                 }):Play()
             end))
             
+            
+            ToggleFrame.MouseButton1Click:Connect(function()
+                SpawnParticle()
+            end)
+
             table_insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
                 services.TweenService:Create(ToggleFrame, TweenInfo_new(0.15), {
                     BackgroundTransparency = 0.5,
@@ -1132,6 +1117,10 @@ function GeminiLib:CreateWindow(title, themeName)
                     end
                 end
             end
+
+            SliderFrame.MouseButton1Click:Connect(function()
+                SpawnParticle()
+            end)
 
             table_insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1502,7 +1491,10 @@ function GeminiLib:CreateWindow(title, themeName)
                     }):Play()
                 end
             end))
-            
+            DropBtn.MouseButton1Click:Connect(function()
+                SpawnParticle()
+            end)
+
             table_insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
                 if not isOpen then
                     services.TweenService:Create(DropFrame, TweenInfo_new(0.15), {
@@ -1719,3 +1711,4 @@ function GeminiLib:CreateWindow(title, themeName)
 end
 
 return GeminiLib
+
