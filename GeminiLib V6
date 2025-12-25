@@ -94,6 +94,22 @@ GeminiLib.Themes = {
         Border = Color3_fromRGB(0, 255, 150),
         Shadow = Color3_fromRGB(0, 255, 150),
         ShadowAlpha = 0.2
+    },
+    Rampage = {
+        Name = "Rampage",
+        Main = Color3_fromRGB(35, 15, 15),
+        Accent = Color3_fromRGB(255, 50, 50),
+        Secondary = Color3_fromRGB(200, 0, 0),
+        Text = Color3_fromRGB(255, 230, 230),
+        TextSecondary = Color3_fromRGB(200, 150, 150),
+        Section = Color3_fromRGB(50, 20, 20),
+        Element = Color3_fromRGB(60, 25, 25),
+        Border = Color3_fromRGB(255, 80, 80),
+        Shadow = Color3_fromRGB(100, 0, 0),
+        ShadowAlpha = 0.3,
+        Success = Color3_fromRGB(255, 100, 100),
+        Warning = Color3_fromRGB(255, 150, 50),
+        Error = Color3_fromRGB(255, 50, 50)
     }
 }
 
@@ -192,6 +208,9 @@ end
 -- ОСНОВНАЯ ФУНКЦИЯ СОЗДАНИЯ ОКНА
 function GeminiLib:CreateWindow(title, themeName)
     local theme = GeminiLib.Themes[themeName] or GeminiLib.Themes[GeminiLib.Config.DefaultTheme]
+    if themeName == "Rampage" then 
+        title = "🩸" .. "Rampage Menoo" .. "🩸"
+    end
     
     local WindowObj = {
         Tabs = {},
@@ -387,67 +406,79 @@ function GeminiLib:CreateWindow(title, themeName)
         WindowObj:Destroy()
     end))
 
-    local MinimizeBtn = Instance.new("TextButton")
-    MinimizeBtn.Name = "MinimizeBtn"
-    MinimizeBtn.Parent = TopBar
-    MinimizeBtn.BackgroundColor3 = Color3_fromRGB(45, 45, 50)
-    MinimizeBtn.Size = UDim2_new(0, 25, 0, 25)
-    -- Смещаем её левее кнопки закрытия (кнопка закрытия обычно на -10, эта на -40)
-    MinimizeBtn.Position = UDim2_new(1, -45, 0.5, -12) 
-    MinimizeBtn.Font = Enum.Font.GothamBold
-    MinimizeBtn.Text = "-"
-    MinimizeBtn.TextColor3 = theme.Text
-    MinimizeBtn.TextSize = 14
-    Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim_new(0, 4)
 
-    local IsMinimized = false
-    -- Запоминаем текущий размер контента
-    local FullHeight = WindowHeight
-    local MinHeight = 35
+    -- MINIMIZE BUTTON
+    local UIS = game:GetService("UserInputService")
 
-    MinimizeBtn.MouseButton1Click:Connect(function()
-        IsMinimized = not IsMinimized
-        
-        -- Меняем символ
-        MinimizeBtn.Text = IsMinimized and "+" or "-"
-        
-        -- 1. Управление контентом
-        -- Ищем контейнер через Main, чтобы избежать ошибки nil
-        local Container = Main:FindFirstChild("ContentContainer") or ContentContainer
-        
-        if IsMinimized then
-            if Container then Container.Visible = false end
-            -- Скрываем всё лишнее, кроме TopBar
-            for _, child in pairs(Main:GetChildren()) do
-                if child:IsA("Frame") and child ~= TopBar then
-                    child.Visible = false
+    -- Создание самой кнопки
+    local DragButton = Instance.new("TextButton")
+
+    DragButton.Name = "DraggableToggleMenooButton" .. math.random(1000, 9999)
+    DragButton.Size = UDim2.new(0, 50, 0, 50) -- Размер 50x50
+    DragButton.Position = UDim2.new(0.5, 0, 0.5, 0) -- Центр экрана
+    DragButton.BackgroundColor3 = theme.Accent
+    DragButton.Text = "M" -- Можно заменить на любой текст/иконку
+    DragButton.TextColor3 = theme.Text
+    DragButton.Font = Enum.Font.RobotoMono
+    DragButton.Parent = ScreenGui
+
+    -- Скругление углов
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = DragButton
+
+    -- ЛОГИКА ПЕРЕТАСКИВАНИЯ (ДЛЯ ПК И МОБИЛЬНЫХ)
+    local dragging, dragInput, dragStart, startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        DragButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    DragButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = DragButton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
                 end
-            end
+            end)
         end
-
-        -- 2. Анимация сворачивания
-        local targetSize = IsMinimized and UDim2_new(0, WindowWidth, 0, MinHeight) or UDim2_new(0, WindowWidth, 0, FullHeight)
-        
-        local tween = services.TweenService:Create(Main, TweenInfo_new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = targetSize
-        })
-        
-        tween.Completed:Connect(function()
-            if not IsMinimized then
-                -- Показываем всё обратно после разворачивания
-                if Container then Container.Visible = true end
-                for _, child in pairs(Main:GetChildren()) do
-                    if child:IsA("Frame") and child ~= TopBar then
-                        child.Visible = true
-                    end
-                end
-            end
-        end)
-        
-        tween:Play()
     end)
 
-    
+    DragButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+
+    local dragDistance = 0
+    local clickThreshold = 5
+
+    -- ОБРАБОТКА НАЖАТИЯ
+    DragButton.MouseButton1Down:Connect(function()
+        if (UIS:GetMouseLocation() - dragStart).Magnitude < clickThreshold then
+            
+            -- ЗДЕСЬ ТВОЕ СОБЫТИЕ:
+            print("Кнопка нажата! Открываем меню...")
+            
+            -- Если ты используешь свою библиотеку GeminiLib:
+            if WindowObj and WindowObj.ToggleVisibility then
+                WindowObj:ToggleVisibility()
+            end
+            
+        end
+    end)
+
 
     -- Боковая панель для вкладок
     local SideBar = UI:Create("Frame", {
