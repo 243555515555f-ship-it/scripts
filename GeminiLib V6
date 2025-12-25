@@ -467,15 +467,7 @@ function GeminiLib:CreateWindow(title, themeName)
     -- ОБРАБОТКА НАЖАТИЯ
     DragButton.MouseButton1Down:Connect(function()
         if (UIS:GetMouseLocation() - dragStart).Magnitude < clickThreshold then
-            
-            -- ЗДЕСЬ ТВОЕ СОБЫТИЕ:
-            print("Кнопка нажата! Открываем меню...")
-            
-            -- Если ты используешь свою библиотеку GeminiLib:
-            if WindowObj and WindowObj.ToggleVisibility then
-                WindowObj:ToggleVisibility()
-            end
-            
+            WindowObj:ToggleVisibility()            
         end
     end)
 
