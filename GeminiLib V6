@@ -414,12 +414,13 @@ function GeminiLib:CreateWindow(title, themeName)
     local DragButton = Instance.new("TextButton")
 
     DragButton.Name = "DraggableToggleMenooButton" .. math.random(1000, 9999)
-    DragButton.Size = UDim2.new(0, 50, 0, 50) -- Размер 50x50
-    DragButton.Position = UDim2.new(0.5, 0, 0.5, 0) -- Центр экрана
-    DragButton.BackgroundColor3 = theme.Accent
-    DragButton.Text = "M" -- Можно заменить на любой текст/иконку
+    DragButton.Size = UDim2.new(0, 50, 0, 50)
+    DragButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DragButton.BackgroundColor3 = theme.Main
+    DragButton.Text = "𑣲𝓂"
+    DragButton.TextSize = 24
     DragButton.TextColor3 = theme.Text
-    DragButton.Font = Enum.Font.RobotoMono
+    DragButton.Font = Enum.Font.LuckiestGuy
     DragButton.Parent = ScreenGui
 
     -- Скругление углов
@@ -466,12 +467,20 @@ function GeminiLib:CreateWindow(title, themeName)
 
     -- ОБРАБОТКА НАЖАТИЯ
     DragButton.MouseButton1Down:Connect(function()
+        if not dragStart then return end
+
         local startPosVector2 = Vector2.new(dragStart.X, dragStart.Y)
         local currentMousePos = UIS:GetMouseLocation()
+
+        local distanceMoved = (currentMousePos - startPosVector2).Magnitude
         
-        if (currentMousePos - startPosVector2).Magnitude < clickThreshold then
-            WindowObj:ToggleVisibility()
+        if distanceMoved < clickThreshold then
+            if WindowObj and WindowObj.ToggleVisibility then
+                WindowObj:ToggleVisibility()
+            end
         end
+        
+        dragStart = nil
     end)
 
 
