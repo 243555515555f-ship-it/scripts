@@ -1324,7 +1324,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         -- Закрываем dropdown
                         toggleDropdown()
                     end))
-                    
+
                     table_insert(dropdownOptions, OptionBtn)
                 end
             end
@@ -1548,6 +1548,46 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             }
             
+            -- Метод для обновления списка игроков (или любых других данных)
+            function DropdownObj:Refresh(newList)
+                options = newList -- Обновляем локальный список опций
+                
+                -- Очищаем текущие кнопки в контейнере
+                for _, child in pairs(Container:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child:Destroy()
+                    end
+                end
+                
+                -- Заново создаем кнопки из нового списка
+                for _, option in pairs(newList) do
+                    local OptBtn = UI:Create("TextButton", {
+                        Name = "Option_" .. tostring(option),
+                        Size = UDim2_new(1, -10, 0, 35),
+                        BackgroundColor3 = theme.Element,
+                        BackgroundTransparency = 0.5,
+                        Text = tostring(option),
+                        TextColor3 = theme.Text,
+                        Font = Enum.Font.Offset,
+                        TextSize = 14,
+                        Parent = Container
+                    })
+                    
+                    UI:Create("UICorner", { CornerRadius = UDim_new(0, 4), Parent = OptBtn })
+                    
+                    OptBtn.MouseButton1Click:Connect(function()
+                        currentValue = option
+                        SelectedLabel.Text = text .. ": " .. tostring(option)
+                        callback(option)
+                        DropdownObj:Close()
+                    end)
+                end
+                
+                -- Обновляем размер контейнера под новое количество игроков
+                Container.Size = UDim2_new(1, -10, 0, #newList * 35 + 10)
+            end
+
+
             return dropdownObj
         end
 
