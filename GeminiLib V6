@@ -1862,8 +1862,7 @@ function GeminiLib:CreateWindow(title, themeName)
         for k in pairs(WindowObj) do
             WindowObj[k] = nil
         end
-    end
-    
+
     -- СОЗДАЕМ ПЛАВАЮЩУЮ КНОПКУ СРАЗУ ПОСЛЕ СОЗДАНИЯ ОКНА
     task.wait(0.1)
     WindowObj:CreateFloatingButton()
