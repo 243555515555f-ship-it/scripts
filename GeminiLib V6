@@ -97,19 +97,19 @@ GeminiLib.Themes = {
     },
     Rampage = {
         Name = "Rampage",
-        Main = Color3_fromRGB(35, 15, 15),
-        Accent = Color3_fromRGB(255, 50, 50),
-        Secondary = Color3_fromRGB(200, 0, 0),
-        Text = Color3_fromRGB(255, 230, 230),
-        TextSecondary = Color3_fromRGB(200, 150, 150),
-        Section = Color3_fromRGB(50, 20, 20),
-        Element = Color3_fromRGB(60, 25, 25),
-        Border = Color3_fromRGB(255, 80, 80),
-        Shadow = Color3_fromRGB(100, 0, 0),
-        ShadowAlpha = 0.3,
-        Success = Color3_fromRGB(255, 100, 100),
-        Warning = Color3_fromRGB(255, 150, 50),
-        Error = Color3_fromRGB(255, 50, 50)
+        Main = Color3_fromRGB(10, 5, 5),
+        Accent = Color3_fromRGB(255, 0, 0),
+        Secondary = Color3_fromRGB(150, 0, 0),
+        Text = Color3_fromRGB(255, 240, 240),
+        TextSecondary = Color3_fromRGB(140, 80, 80),
+        Section = Color3_fromRGB(18, 10, 10),
+        Element = Color3_fromRGB(25, 12, 12),
+        Border = Color3_fromRGB(200, 20, 20),
+        Shadow = Color3_fromRGB(150, 0, 0),
+        ShadowAlpha = 0.4,
+        Success = Color3_fromRGB(255, 70, 70),
+        Warning = Color3_fromRGB(255, 140, 0),
+        Error = Color3_fromRGB(255, 0, 0)
     }
 }
 
@@ -143,47 +143,6 @@ local function createShadow(parent, color, transparency, sizeMultiplier)
     shadow.ZIndex = parent.ZIndex - 1
     shadow.Parent = parent
     return shadow
-end
-
-local function CreateParticle(parent, position)
-    local particle = Instance.new("Frame")
-    particle.Size = UDim2_new(0, 4, 0, 4)
-    particle.Position = UDim2_new(0, position.X, 0, position.Y)
-    particle.BackgroundColor3 = Color3_fromRGB(0, 255, 150) -- Цвет частиц (позже подстроится под тему)
-    particle.BorderSizePixel = 0
-    particle.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = particle
-
-    local angle = math.random(0, 360)
-    local distance = math.random(20, 50)
-    local targetX = position.X + math.cos(math.rad(angle)) * distance
-    local targetY = position.Y + math.sin(math.rad(angle)) * distance
-
-    local tween = services.TweenService:Create(particle, TweenInfo_new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Position = UDim2_new(0, targetX, 0, targetY),
-        BackgroundTransparency = 1,
-        Size = UDim2_new(0, 0, 0, 0)
-    })
-    
-    tween:Play()
-    game:GetService("Debris"):AddItem(particle, 0.6)
-end
-
-local function SpawnParticle(parent, callback)
-    -- Получаем позицию мыши относительно окна Main
-    local mousePos = services.UIS:GetMouseLocation() - parent.AbsolutePosition - Vector2.new(0, 36)
-    
-    for i = 1, 5 do 
-        CreateParticle(parent, mousePos) 
-    end
-    
-    -- Вызываем колбэк, если он передан
-    if callback then 
-        callback() 
-    end
 end
 
 -- Класс для управления UI элементами
@@ -417,8 +376,8 @@ function GeminiLib:CreateWindow(title, themeName)
     DragButton.Size = UDim2.new(0, 50, 0, 50)
     DragButton.Position = UDim2.new(0.5, 0, 0.5, 0)
     DragButton.BackgroundColor3 = theme.Main
-    DragButton.Text = "𑣲𝓂"
-    DragButton.TextSize = 24
+    DragButton.Text = "🛠"
+    DragButton.TextSize = 20
     DragButton.TextColor3 = theme.Text
     DragButton.Font = Enum.Font.LuckiestGuy
     DragButton.Parent = ScreenGui
@@ -479,7 +438,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 WindowObj:ToggleVisibility()
             end
         end
-        
+
         dragStart = nil
     end)
 
@@ -868,7 +827,6 @@ function GeminiLib:CreateWindow(title, themeName)
             end))
             
             Btn.MouseButton1Click:Connect(function()
-                SpawnParticle()
             end)
 
             table_insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
@@ -979,7 +937,6 @@ function GeminiLib:CreateWindow(title, themeName)
             
             
             ToggleFrame.MouseButton1Click:Connect(function()
-                SpawnParticle()
             end)
 
             table_insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
@@ -1070,7 +1027,6 @@ function GeminiLib:CreateWindow(title, themeName)
             
             -- Привязка частиц к нажатию на всю область слайдера
             table_insert(WindowObj.Connections, SliderFrame.MouseButton1Click:Connect(function()
-                SpawnParticle(Main) -- Передаем Main, как обсуждали ранее
             end))
             
             local Label = UI:Create("TextLabel", {
@@ -1162,7 +1118,6 @@ function GeminiLib:CreateWindow(title, themeName)
             end
 
             SliderFrame.MouseButton1Click:Connect(function()
-                SpawnParticle()
             end)
 
             table_insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
@@ -1535,7 +1490,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end))
             DropBtn.MouseButton1Click:Connect(function()
-                SpawnParticle()
             end)
 
             table_insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
