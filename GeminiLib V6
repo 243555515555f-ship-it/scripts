@@ -1548,40 +1548,45 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             }
             
-            -- Метод для обновления списка игроков (или любых других данных)
-            function DropdownObj:Refresh(newList)
-                options = newList -- Обновляем локальный список опций
+            -- Метод для обновления списка (вставь это внутрь Tab:Dropdown)
+            function dropdownObj:Refresh(newList)
+                options = newList -- Обновляем локальный список
                 
-                -- Очищаем текущие кнопки в контейнере
+                -- Очищаем старые кнопки
                 for _, child in pairs(Container:GetChildren()) do
-                    if child:IsA("TextButton") then
+                    if child:IsA("TextButton") and child.Name == "Option" then
                         child:Destroy()
                     end
                 end
                 
-                -- Заново создаем кнопки из нового списка
+                -- Заново создаем кнопки (используем ту же логику, что в основной функции)
                 for _, option in pairs(newList) do
                     local OptBtn = UI:Create("TextButton", {
-                        Name = "Option_" .. tostring(option),
-                        Size = UDim2_new(1, -10, 0, 35),
+                        Name = "Option",
+                        Size = UDim2_new(1, -10, 0, 32),
                         BackgroundColor3 = theme.Element,
-                        BackgroundTransparency = 0.5,
+                        BackgroundTransparency = 0.4,
                         Text = tostring(option),
                         TextColor3 = theme.Text,
-                        Font = Enum.Font.Offset,
-                        TextSize = 14,
+                        Font = Enum.Font.Gotham,
+                        TextSize = 13,
                         Parent = Container
                     })
                     
                     UI:Create("UICorner", { CornerRadius = UDim_new(0, 4), Parent = OptBtn })
                     
                     OptBtn.MouseButton1Click:Connect(function()
+                        selected = option
                         currentValue = option
-                        SelectedLabel.Text = text .. ": " .. tostring(option)
+                        SelectedLabel.Text = "  " .. text .. ": " .. tostring(selected)
                         callback(option)
-                        DropdownObj:Close()
+                        dropdownObj:Close()
                     end)
                 end
+                
+                -- Корректируем размер контейнера
+                Container.Size = UDim2_new(1, -5, 0, #newList * 34 + 5)
+            end
                 
                 -- Обновляем размер контейнера под новое количество игроков
                 Container.Size = UDim2_new(1, -10, 0, #newList * 35 + 10)
@@ -1858,7 +1863,7 @@ function GeminiLib:CreateWindow(title, themeName)
             WindowObj[k] = nil
         end
     end
-
+    
     -- СОЗДАЕМ ПЛАВАЮЩУЮ КНОПКУ СРАЗУ ПОСЛЕ СОЗДАНИЯ ОКНА
     task.wait(0.1)
     WindowObj:CreateFloatingButton()
