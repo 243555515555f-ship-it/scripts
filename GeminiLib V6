@@ -12,6 +12,10 @@ local services = {
     Stats = game:GetService("Stats")
 }
 
+function GeminiLib:Version()
+    return "V6.3"
+end
+
 -- Кэшированные функции для оптимизации
 local Color3_new = Color3.new
 local Color3_fromRGB = Color3.fromRGB
@@ -97,11 +101,11 @@ GeminiLib.Themes = {
     },
     Rampage = {
         Name = "Rampage",
-        Main = Color3_fromRGB(10, 5, 5),
-        Accent = Color3_fromRGB(255, 0, 0),
-        Secondary = Color3_fromRGB(150, 0, 0),
+        Main = Color3_fromRGB(107, 0, 0),
+        Accent = Color3_fromRGB(140, 0, 0),
+        Secondary = Color3_fromRGB(92, 10, 10),
         Text = Color3_fromRGB(255, 240, 240),
-        TextSecondary = Color3_fromRGB(140, 80, 80),
+        TextSecondary = Color3_fromRGB(135, 64, 64),
         Section = Color3_fromRGB(18, 10, 10),
         Element = Color3_fromRGB(25, 12, 12),
         Border = Color3_fromRGB(200, 20, 20),
@@ -119,8 +123,8 @@ GeminiLib.Config = {
     WindowHeight = 600,
     Roundness = 12,
     EnableShadows = true,
-    DefaultTheme = "Dark",
-    MaxDropdownHeight = 200,
+    DefaultTheme = "Cyberpunk",
+    MaxDropdownHeight = 300,
     StatsUpdateInterval = 1
 }
 
@@ -164,12 +168,27 @@ function UI:Create(class, properties)
     return instance
 end
 
+-- ФУНКЦИЯ ПРОВЕРКИ ТЕМЫ RAMPAGE
+function RampageCheck(themeName, title)
+    if themeName == "Rampage" then 
+        title = "🩸Rampage Menoo🩸 " .. GeminiLib:Version() .. " | by nxs_Bounty"
+    end
+    return title
+end
+
+-- Функция возвращает простой массив строк с названиями всех тем
+function GeminiLib:GetThemesList()
+    local list = {}
+    for themeName, _ in pairs(GeminiLib.Themes) do
+        table_insert(list, themeName)
+    end
+    return list
+end
+
 -- ОСНОВНАЯ ФУНКЦИЯ СОЗДАНИЯ ОКНА
 function GeminiLib:CreateWindow(title, themeName)
     local theme = GeminiLib.Themes[themeName] or GeminiLib.Themes[GeminiLib.Config.DefaultTheme]
-    if themeName == "Rampage" then 
-        title = "🩸" .. "Rampage Menoo" .. "🩸"
-    end
+    title = title .. " " .. GeminiLib:Version() .. " | by nxs_Bounty"
     
     local WindowObj = {
         Tabs = {},
@@ -364,84 +383,6 @@ function GeminiLib:CreateWindow(title, themeName)
     table_insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
         WindowObj:Destroy()
     end))
-
-
-    -- MINIMIZE BUTTON
-    local UIS = game:GetService("UserInputService")
-
-    -- Создание самой кнопки
-    local DragButton = Instance.new("TextButton")
-
-    DragButton.Name = "DraggableToggleMenooButton" .. math.random(1000, 9999)
-    DragButton.Size = UDim2.new(0, 50, 0, 50)
-    DragButton.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DragButton.BackgroundColor3 = theme.Main
-    DragButton.Text = "🛠"
-    DragButton.TextSize = 20
-    DragButton.TextColor3 = theme.Text
-    DragButton.Font = Enum.Font.LuckiestGuy
-    DragButton.Parent = ScreenGui
-
-    -- Скругление углов
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 8)
-    UICorner.Parent = DragButton
-
-    -- ЛОГИКА ПЕРЕТАСКИВАНИЯ (ДЛЯ ПК И МОБИЛЬНЫХ)
-    local dragging, dragInput, dragStart, startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        DragButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    DragButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = DragButton.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    DragButton.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-
-    local dragDistance = 0
-    local clickThreshold = 5
-
-    -- ОБРАБОТКА НАЖАТИЯ
-    DragButton.MouseButton1Down:Connect(function()
-        if not dragStart then return end
-
-        local startPosVector2 = Vector2.new(dragStart.X, dragStart.Y)
-        local currentMousePos = UIS:GetMouseLocation()
-
-        local distanceMoved = (currentMousePos - startPosVector2).Magnitude
-        
-        if distanceMoved < clickThreshold then
-            if WindowObj and WindowObj.ToggleVisibility then
-                WindowObj:ToggleVisibility()
-            end
-        end
-
-        dragStart = nil
-    end)
-
 
     -- Боковая панель для вкладок
     local SideBar = UI:Create("Frame", {
@@ -1648,33 +1589,202 @@ function GeminiLib:CreateWindow(title, themeName)
 
         return Tab
     end
-    -- Дополнительные функции окна
+
+    -- ФУНКЦИЯ ИЗМЕНЕНИЯ ТЕМЫ
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
         if not newTheme then return end
         
         WindowObj.Theme = newTheme
         
+        -- 1. ОБНОВЛЕНИЕ ОСНОВНЫХ ПАНЕЛЕЙ
         Main.BackgroundColor3 = newTheme.Main
-        Title.TextColor3 = newTheme.Text
         TopBar.BackgroundColor3 = newTheme.Section
         
+        -- Обновление заголовка (если он есть)
+        if Title then Title.TextColor3 = newTheme.Text end
+        
+        -- Обновление тени (если используется ImageLabel для тени)
+        local ShadowFrame = Main:FindFirstChild("Shadow") or Main:FindFirstChild("DropShadow")
+        if ShadowFrame and ShadowFrame:IsA("ImageLabel") then
+            ShadowFrame.ImageColor3 = newTheme.Shadow
+            ShadowFrame.ImageTransparency = 1 - (newTheme.ShadowAlpha or 0.4)
+        end
+
+        -- 2. ЦИКЛ ПО ВСЕМ СОХРАНЕННЫМ ЭЛЕМЕНТАМ
         for _, element in pairs(WindowObj.Elements) do
-            if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
-                if element.BackgroundTransparency ~= 1 then
-                    pcall(function()
-                        element.TextColor3 = newTheme.Text
-                    end)
+            pcall(function()
+                -- Если это текстовый элемент (Кнопки, Лейблы)
+                if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
+                    -- Если элемент - это кнопка или поле ввода (не прозрачный лейбл)
+                    if element.BackgroundTransparency < 1 then
+                        element.BackgroundColor3 = newTheme.Element
+                    end
+                    element.TextColor3 = newTheme.Text
                 end
-            end
+                
+                -- Если это секция (фрейм группы)
+                if element.Name == "SectionFrame" or element:FindFirstChild("UIListLayout") then
+                    element.BackgroundColor3 = newTheme.Section
+                end
+
+                -- ОБНОВЛЕНИЕ ГРАНИЦ (UIStroke)
+                local stroke = element:FindFirstChildOfClass("UIStroke")
+                if stroke then
+                    -- Если это граница активного элемента (например, слайдера или чекбокса)
+                    if element.Name:find("Slider") or element.Name:find("Toggle") then
+                        stroke.Color = newTheme.Accent
+                    else
+                        stroke.Color = newTheme.Border
+                    end
+                end
+
+                -- ОБНОВЛЕНИЕ АКЦЕНТОВ (Полоски слайдеров, чекбоксы)
+                local AccentPart = element:FindFirstChild("AccentPart") or element:FindFirstChild("Fill")
+                if AccentPart then
+                    if AccentPart:IsA("Frame") or AccentPart:IsA("ScrollingFrame") then
+                        AccentPart.BackgroundColor3 = newTheme.Accent
+                    elseif AccentPart:IsA("TextLabel") or AccentPart:IsA("ImageLabel") then
+                        AccentPart.ImageColor3 = newTheme.Accent
+                    end
+                end
+                
+                -- Вторичный текст (описания)
+                local SubText = element:FindFirstChild("SubText") or element:FindFirstChild("Description")
+                if SubText and SubText:IsA("TextLabel") then
+                    SubText.TextColor3 = newTheme.TextSecondary
+                end
+            end)
         end
     end
 
+    -- ПЕРЕПИСАННАЯ ФУНКЦИЯ ПЛАВАЮЩЕЙ КНОПКИ
+    function WindowObj:CreateFloatingButton()
+        -- Проверяем, не создана ли уже кнопка
+        if WindowObj.FloatingButton then
+            WindowObj.FloatingButton:Destroy()
+        end
+        
+        -- Создаем кнопку
+        local FloatingButton = Instance.new("TextButton")
+        FloatingButton.Name = "FloatingToggleButton"
+        FloatingButton.Size = UDim2.new(0, 50, 0, 50)
+        FloatingButton.Position = UDim2.new(0.85, 0, 0.15, 0) -- Правый верхний угол
+        FloatingButton.BackgroundColor3 = WindowObj.Theme.Main
+        FloatingButton.Text = "🛠"
+        FloatingButton.TextSize = 20
+        FloatingButton.TextColor3 = WindowObj.Theme.Text
+        FloatingButton.Font = Enum.Font.LuckiestGuy
+        FloatingButton.Parent = ScreenGui
+        
+        -- Скругление углов
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 8)
+        UICorner.Parent = FloatingButton
+        
+        -- Обводка
+        local UIStroke = Instance.new("UIStroke")
+        UIStroke.Color = WindowObj.Theme.Accent
+        UIStroke.Thickness = 2
+        UIStroke.Parent = FloatingButton
+        
+        -- ЛОГИКА ПЕРЕТАСКИВАНИЯ
+        local dragging, dragInput, dragStart, startPos
+        
+        local function update(input)
+            local delta = input.Position - dragStart
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, ScreenGui.AbsoluteSize.X - FloatingButton.AbsoluteSize.X)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, ScreenGui.AbsoluteSize.Y - FloatingButton.AbsoluteSize.Y)
+            FloatingButton.Position = UDim2.new(0, newX, 0, newY)
+        end
+        
+        FloatingButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = FloatingButton.Position
+                
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+        
+        FloatingButton.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+        
+        services.UIS.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
+        
+        -- ПРИВЯЗЫВАЕМ КЛИК К ПЕРЕКЛЮЧЕНИЮ МЕНЮ
+        table.insert(WindowObj.Connections, FloatingButton.MouseButton1Click:Connect(function()
+            WindowObj:ToggleVisibility()
+        end))
+        
+        -- Анимация при наведении
+        table.insert(WindowObj.Connections, FloatingButton.MouseEnter:Connect(function()
+            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {
+                Size = UDim2.new(0, 55, 0, 55),
+                BackgroundTransparency = 0.2
+            }):Play()
+        end))
+        
+        table.insert(WindowObj.Connections, FloatingButton.MouseLeave:Connect(function()
+            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {
+                Size = UDim2.new(0, 50, 0, 50),
+                BackgroundTransparency = 0
+            }):Play()
+        end))
+        
+        -- Сохраняем ссылку
+        WindowObj.FloatingButton = FloatingButton
+        
+        return FloatingButton
+    end
+
+    -- Исправленная функция переключения видимости
     function WindowObj:ToggleVisibility()
-        Main.Visible = not Main.Visible
-        if not Main.Visible then
+        if Main.Visible then
+            -- Скрываем меню
+            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {
+                Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 1.5, 0)
+            }):Play()
+            
+            -- Изменяем иконку кнопки
+            if WindowObj.FloatingButton then
+                WindowObj.FloatingButton.Text = "🔅"
+            end
+            
+            -- Останавливаем обновление статистики
             stopStatsUpdate()
+            
+            -- Прячем меню после анимации
+            task.wait(0.3)
+            Main.Visible = false
         else
+            -- Показываем меню
+            Main.Visible = true
+            Main.Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 1.5, 0)
+            
+            -- Анимация появления
+            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {
+                Position = WindowObj.OriginalPosition or UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
+            }):Play()
+            
+            -- Изменяем иконку кнопки
+            if WindowObj.FloatingButton then
+                WindowObj.FloatingButton.Text = "💠"
+            end
+            
+            -- Запускаем обновление статистики
             startStatsUpdate()
         end
     end
@@ -1696,6 +1806,11 @@ function GeminiLib:CreateWindow(title, themeName)
             end
         end
         
+        -- Удаляем плавающую кнопку
+        if WindowObj.FloatingButton then
+            WindowObj.FloatingButton:Destroy()
+        end
+        
         ScreenGui:Destroy()
         
         -- Очищаем таблицы для сборки мусора
@@ -1703,6 +1818,10 @@ function GeminiLib:CreateWindow(title, themeName)
             WindowObj[k] = nil
         end
     end
+
+    -- СОЗДАЕМ ПЛАВАЮЩУЮ КНОПКУ СРАЗУ ПОСЛЕ СОЗДАНИЯ ОКНА
+    task.wait(0.1)
+    WindowObj:CreateFloatingButton()
 
     return WindowObj
 end
