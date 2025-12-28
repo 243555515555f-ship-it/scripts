@@ -181,7 +181,6 @@ end
 function GeminiLib:CreateWindow(title, themeName)
     local theme = GeminiLib.Themes[themeName] or GeminiLib.Themes[GeminiLib.Config.DefaultTheme]
     title = title  .. " | by nxs_Bounty"
-    WindowObj.Connections = {}
 
     local WindowObj = {
         Tabs = {},
@@ -194,9 +193,9 @@ function GeminiLib:CreateWindow(title, themeName)
         OriginalPosition = nil,
         StatsConnection = nil,
         HiddenElements = {},
-        Connections = {},
         OpenDropdowns = {}
     }
+    WindowObj.Connections = {}
 
     -- Создаем ScreenGui
     local ScreenGui = UI:Create("ScreenGui", {
