@@ -1710,7 +1710,8 @@ function GeminiLib:CreateWindow(title, themeName)
         local FloatingButton = Instance.new("TextButton")
         FloatingButton.Name = "FloatingToggleButton"
         FloatingButton.Size = UDim2.new(0, 50, 0, 50)
-        FloatingButton.Position = UDim2.new(0.50, 0, 0.25, 0) -- Правый верхний угол
+        FloatingButton.Position = UDim2.new(0.5, 0, 0, 20) -- 0.5 по X (центр), 20 пикселей отступ сверху
+        FloatingButton.AnchorPoint = Vector2.new(0.5, 0)   -- Точка привязки в центре кнопки
         FloatingButton.BackgroundColor3 = WindowObj.Theme.Main
         FloatingButton.Text = "🔅"
         FloatingButton.TextSize = 20
