@@ -1712,7 +1712,7 @@ function GeminiLib:CreateWindow(title, themeName)
         FloatingButton.Size = UDim2.new(0, 50, 0, 50)
         FloatingButton.Position = UDim2.new(0.50, 0, 0.25, 0) -- Правый верхний угол
         FloatingButton.BackgroundColor3 = WindowObj.Theme.Main
-        FloatingButton.Text = "💠"
+        FloatingButton.Text = "🔅"
         FloatingButton.TextSize = 20
         FloatingButton.TextColor3 = WindowObj.Theme.Text
         FloatingButton.Font = Enum.Font.LuckiestGuy
