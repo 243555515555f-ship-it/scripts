@@ -1551,6 +1551,7 @@ function GeminiLib:CreateWindow(title, themeName)
             
             -- Метод для обновления списка (вставь это внутрь Tab:Dropdown)
             function dropdownObj:Refresh(newList)
+                newList = newList or {} -- Новый список опций
                 options = newList -- Обновляем локальный список
                 
                 -- Очищаем старые кнопки
