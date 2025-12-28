@@ -1430,6 +1430,7 @@ function GeminiLib:CreateWindow(title, themeName)
                     }):Play()
                 end
             end))
+            
             DropBtn.MouseButton1Click:Connect(function()
             end)
 
@@ -1587,10 +1588,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 -- Корректируем размер контейнера
                 Container.Size = UDim2_new(1, -5, 0, #newList * 34 + 5)
             end
-                
                 -- Обновляем размер контейнера под новое количество игроков
                 Container.Size = UDim2_new(1, -10, 0, #newList * 35 + 10)
-            end
 
 
             return dropdownObj
@@ -1635,48 +1634,44 @@ function GeminiLib:CreateWindow(title, themeName)
         return Tab
     end
 
-    -- ФУНКЦИЯ ИЗМЕНЕНИЯ ТЕМЫ
+    --#region ПЕРЕПИСАННАЯ ФУНКЦИЯ СМЕНЫ ТЕМЫ
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
         if not newTheme then return end
         
         WindowObj.Theme = newTheme
         
-        -- 1. ОБНОВЛЕНИЕ ОСНОВНЫХ ПАНЕЛЕЙ
+        -- 1. Основные панели
         Main.BackgroundColor3 = newTheme.Main
-        TopBar.BackgroundColor3 = newTheme.Section
-        
-        -- Обновление заголовка (если он есть)
+        if TopBar then TopBar.BackgroundColor3 = newTheme.Section end
         if Title then Title.TextColor3 = newTheme.Text end
         
-        -- Обновление тени (если используется ImageLabel для тени)
+        -- 2. Тень
         local ShadowFrame = Main:FindFirstChild("Shadow") or Main:FindFirstChild("DropShadow")
         if ShadowFrame and ShadowFrame:IsA("ImageLabel") then
             ShadowFrame.ImageColor3 = newTheme.Shadow
             ShadowFrame.ImageTransparency = 1 - (newTheme.ShadowAlpha or 0.4)
         end
 
-        -- 2. ЦИКЛ ПО ВСЕМ СОХРАНЕННЫМ ЭЛЕМЕНТАМ
+        -- 3. Обход всех элементов
         for _, element in pairs(WindowObj.Elements) do
             pcall(function()
-                -- Если это текстовый элемент (Кнопки, Лейблы)
+                -- Текстовые объекты
                 if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
-                    -- Если элемент - это кнопка или поле ввода (не прозрачный лейбл)
                     if element.BackgroundTransparency < 1 then
                         element.BackgroundColor3 = newTheme.Element
                     end
                     element.TextColor3 = newTheme.Text
                 end
                 
-                -- Если это секция (фрейм группы)
+                -- Секции и фреймы
                 if element.Name == "SectionFrame" or element:FindFirstChild("UIListLayout") then
                     element.BackgroundColor3 = newTheme.Section
                 end
 
-                -- ОБНОВЛЕНИЕ ГРАНИЦ (UIStroke)
+                -- Границы (UIStroke)
                 local stroke = element:FindFirstChildOfClass("UIStroke")
                 if stroke then
-                    -- Если это граница активного элемента (например, слайдера или чекбокса)
                     if element.Name:find("Slider") or element.Name:find("Toggle") then
                         stroke.Color = newTheme.Accent
                     else
@@ -1684,24 +1679,24 @@ function GeminiLib:CreateWindow(title, themeName)
                     end
                 end
 
-                -- ОБНОВЛЕНИЕ АКЦЕНТОВ (Полоски слайдеров, чекбоксы)
+                -- Акцентные части (Slider Fill, Toggle Check)
                 local AccentPart = element:FindFirstChild("AccentPart") or element:FindFirstChild("Fill")
                 if AccentPart then
-                    if AccentPart:IsA("Frame") or AccentPart:IsA("ScrollingFrame") then
+                    if AccentPart:IsA("Frame") then
                         AccentPart.BackgroundColor3 = newTheme.Accent
-                    elseif AccentPart:IsA("TextLabel") or AccentPart:IsA("ImageLabel") then
+                    elseif AccentPart:IsA("ImageLabel") then
                         AccentPart.ImageColor3 = newTheme.Accent
                     end
                 end
                 
-                -- Вторичный текст (описания)
+                -- Вторичный текст
                 local SubText = element:FindFirstChild("SubText") or element:FindFirstChild("Description")
                 if SubText and SubText:IsA("TextLabel") then
                     SubText.TextColor3 = newTheme.TextSecondary
                 end
-            end)
-        end
-    end
+            end) -- Конец pcall
+        end -- Конец цикла for
+    end -- Конец функции ChangeTheme    
 
     -- ПЕРЕПИСАННАЯ ФУНКЦИЯ ПЛАВАЮЩЕЙ КНОПКИ
     function WindowObj:CreateFloatingButton()
@@ -1862,7 +1857,7 @@ function GeminiLib:CreateWindow(title, themeName)
         for k in pairs(WindowObj) do
             WindowObj[k] = nil
         end
-
+    end
     -- СОЗДАЕМ ПЛАВАЮЩУЮ КНОПКУ СРАЗУ ПОСЛЕ СОЗДАНИЯ ОКНА
     task.wait(0.1)
     WindowObj:CreateFloatingButton()
