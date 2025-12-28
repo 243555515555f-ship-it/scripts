@@ -1551,19 +1551,20 @@ function GeminiLib:CreateWindow(title, themeName)
             
             -- Метод для обновления списка (вставь это внутрь Tab:Dropdown)
             function dropdownObj:Refresh(newList)
-                newList = newList or {} -- Новый список опций
-                options = newList -- Обновляем локальный список
+                newList = newList or {}
+                options = newList
                 
-                -- Очищаем старые кнопки
+                -- Очистка старых опций
                 for _, child in pairs(Container:GetChildren()) do
                     if child:IsA("TextButton") and child.Name == "Option" then
                         child:Destroy()
                     end
                 end
                 
-                -- Заново создаем кнопки (используем ту же логику, что в основной функции)
+                -- Создание новых опций
                 for _, option in pairs(newList) do
-                    local OptBtn = UI:Create("TextButton", {
+                    -- ПРОВЕРКА: используем напрямую GeminiLib.UI, если локальный UI недоступен
+                    local OptBtn = (UI or GeminiLib.UI):Create("TextButton", {
                         Name = "Option",
                         Size = UDim2_new(1, -10, 0, 32),
                         BackgroundColor3 = theme.Element,
@@ -1575,22 +1576,24 @@ function GeminiLib:CreateWindow(title, themeName)
                         Parent = Container
                     })
                     
-                    UI:Create("UICorner", { CornerRadius = UDim_new(0, 4), Parent = OptBtn })
+                    -- Используем безопасный вызов для создания угла
+                    local ui_lib = (UI or GeminiLib.UI)
+                    ui_lib:Create("UICorner", { CornerRadius = UDim_new(0, 4), Parent = OptBtn })
                     
                     OptBtn.MouseButton1Click:Connect(function()
                         selected = option
                         currentValue = option
-                        SelectedLabel.Text = "  " .. text .. ": " .. tostring(selected)
+                        -- Используем tostring для безопасности, чтобы не было ошибки конкатенации
+                        SelectedLabel.Text = "  " .. tostring(text) .. ": " .. tostring(selected)
                         callback(option)
                         dropdownObj:Close()
                     end)
                 end
                 
-                -- Корректируем размер контейнера
-                Container.Size = UDim2_new(1, -5, 0, #newList * 34 + 5)
+                -- Обновление размера (исправление ошибки с #newList)
+                local listCount = #newList
+                Container.Size = UDim2_new(1, -5, 0, listCount * 34 + 5)
             end
-                -- Обновляем размер контейнера под новое количество игроков
-                Container.Size = UDim2_new(1, -10, 0, #newList * 35 + 10)
 
 
             return dropdownObj
