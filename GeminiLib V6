@@ -1085,6 +1085,19 @@ function GeminiLib:CreateWindow(title, themeName)
             local isOpen = false
             local dropdownContainer
             local dropdownOptions = {}
+
+            local OptionsList = UI:Create("ScrollingFrame", {
+                Name = "OptionsList",
+                Size = UDim2.new(1, -8, 1, -8),
+                Position = UDim2.new(0, 4, 0, 4),
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                ScrollBarThickness = 4,
+                ScrollBarImageColor3 = theme.Accent,
+                CanvasSize = UDim2.new(0, 0, 0, #options * 32),
+                ZIndex = 1001,
+                Parent = dropdownContainer
+            })
             
             -- Главный контейнер
             local DropFrame = UI:Create("Frame", {
@@ -1197,19 +1210,6 @@ function GeminiLib:CreateWindow(title, themeName)
                 
                 createShadow(dropdownContainer, theme.Shadow, 0.3, 6)
                 
-                -- Создаем список опций
-                OptionsList = UI:Create("ScrollingFrame", {
-                    Name = "OptionsList",
-                    Size = UDim2.new(1, -8, 1, -8),
-                    Position = UDim2.new(0, 4, 0, 4),
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    ScrollBarThickness = 4,
-                    ScrollBarImageColor3 = theme.Accent,
-                    CanvasSize = UDim2.new(0, 0, 0, #options * 32),
-                    ZIndex = 1001,
-                    Parent = dropdownContainer
-                })
                 
                 UI:Create("UIListLayout", {
                     Padding = UDim.new(0, 2),
@@ -1520,19 +1520,24 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Метод для обновления списка (вставь это внутрь Tab:Dropdown)
             function dropdownObj:Refresh(newList)
                 newList = newList or {}
-                options = newList
                 
                 -- Очистка старых опций
-                for _, child in pairs(dropdownOptions) do
-                    if child:IsA("TextButton") then
-                        child:Destroy()
+                if OptionsList then
+                    for _, child in pairs(OptionsList:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child:Destroy()
+                        end
                     end
+                    
+                    -- Обновление размера (теперь не будет nil с CanvasSize)
+                    local listCount = #newList
+                    OptionsList.CanvasSize = UDim2.new(1, -5, 0, listCount * 34 + 5)
                 end
                 
                 -- Создание новых опций
-                for _, option in pairs(options) do
+                for _, option in pairs(newList) do
                     -- ПРОВЕРКА: используем напрямую GeminiLib.UI, если локальный UI недоступен
-                    local OptBtn = (UI or GeminiLib.UI):Create("TextButton", {
+                    local OptBtn = UI:Create("TextButton", {
                         Name = "Option_" .. tostring(option),
                         Size = UDim2.new(1, -10, 0, 32),
                         BackgroundColor3 = theme.Element,
@@ -1540,7 +1545,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         Text = tostring(option),
                         TextColor3 = theme.Text,
                         Font = Enum.Font.Gotham,
-                        TextSize = 13,
+                        TextSize = 15,
                         Parent = OptionsList
                     })
                     
@@ -1559,7 +1564,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
                 
                 -- Обновление размера (исправление ошибки с #newList)
-                local listCount = #options
+                local listCount = #newList
                 OptionsList.CanvasSize = UDim2.new(1, -5, 0, listCount * 34 + 5)
             end
 
