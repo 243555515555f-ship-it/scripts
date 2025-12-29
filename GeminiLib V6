@@ -192,10 +192,10 @@ function GeminiLib:CreateWindow(title, themeName)
         OriginalSize = UDim2_new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
         OriginalPosition = nil,
         StatsConnection = nil,
-        HiddenElements = {},
-        OpenDropdowns = {}
+        HiddenElements = {}
     }
     WindowObj.Connections = {}
+    WindowObj.OpenDropdowns = {}
 
     -- Создаем ScreenGui
     local ScreenGui = UI:Create("ScreenGui", {
@@ -1312,16 +1312,12 @@ function GeminiLib:CreateWindow(title, themeName)
                                 warn("Dropdown callback error:", err)
                             end
                         end
-                        
-                        -- Закрываем dropdown
-                        toggleDropdown()
                     end))
 
                     table_insert(dropdownOptions, OptionBtn)
                 end
             end
-            
-            -- Функция открытия/закрытия dropdown
+
             local function toggleDropdown()
                 isOpen = not isOpen
     
@@ -1576,7 +1572,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         selected = option
                         currentValue = option
                         -- Используем tostring для безопасности, чтобы не было ошибки конкатенации
-                        SelectedLabel.Text = "  " .. tostring(text) .. ": " .. tostring(selected)
+                        SelectedLabel.Text = "  " .. tostring(text) .. " " .. tostring(selected)
                         callback(option)
                         dropdownObj:Close()
                     end)
