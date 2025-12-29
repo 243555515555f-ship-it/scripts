@@ -1543,7 +1543,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 options = newList
                 
                 -- Очистка старых опций
-                for _, child in pairs(Container:GetChildren()) do
+                for _, child in pairs(OptionsList:GetChildren()) do
                     if child:IsA("TextButton") and child.Name == "Option" then
                         child:Destroy()
                     end
@@ -1561,7 +1561,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         TextColor3 = theme.Text,
                         Font = Enum.Font.Gotham,
                         TextSize = 13,
-                        Parent = Container
+                        Parent = OptionsList
                     })
                     
                     -- Используем безопасный вызов для создания угла
