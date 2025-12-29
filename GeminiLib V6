@@ -1544,7 +1544,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 
                 -- Очистка старых опций
                 for _, child in pairs(OptionsList:GetChildren()) do
-                    if child:IsA("TextButton") and child.Name == "Option" then
+                    if child:IsA("TextButton")then
                         child:Destroy()
                     end
                 end
@@ -1553,7 +1553,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 for _, option in pairs(newList) do
                     -- ПРОВЕРКА: используем напрямую GeminiLib.UI, если локальный UI недоступен
                     local OptBtn = (UI or GeminiLib.UI):Create("TextButton", {
-                        Name = "Option",
+                        Name = "Option_" .. tostring(option),
                         Size = UDim2_new(1, -10, 0, 32),
                         BackgroundColor3 = theme.Element,
                         BackgroundTransparency = 0.4,
