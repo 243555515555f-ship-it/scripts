@@ -1550,7 +1550,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
                 
                 -- Создание новых опций
-                for _, option in pairs(newList) do
+                for _, option in pairs(options) do
                     -- ПРОВЕРКА: используем напрямую GeminiLib.UI, если локальный UI недоступен
                     local OptBtn = (UI or GeminiLib.UI):Create("TextButton", {
                         Name = "Option_" .. tostring(option),
@@ -1579,8 +1579,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
                 
                 -- Обновление размера (исправление ошибки с #newList)
-                local listCount = #newList
-                Container.Size = UDim2_new(1, -5, 0, listCount * 34 + 5)
+                local listCount = #options
+                OptionsList.Size = UDim2_new(1, -5, 0, listCount * 34 + 5)
             end
 
 
