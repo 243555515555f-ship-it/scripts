@@ -1543,7 +1543,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 options = newList
                 
                 -- Очистка старых опций
-                for _, child in pairs(OptionsList:GetChildren()) do
+                for _, child in pairs(dropdownOptions:GetChildren()) do
                     if child:IsA("TextButton")then
                         child:Destroy()
                     end
