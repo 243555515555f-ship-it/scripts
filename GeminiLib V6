@@ -1580,7 +1580,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 
                 -- Обновление размера (исправление ошибки с #newList)
                 local listCount = #options
-                OptionsList.Size = UDim2_new(1, -5, 0, listCount * 34 + 5)
+                OptionsList.CanvasSize = UDim2_new(1, -5, 0, listCount * 34 + 5)
             end
 
 
