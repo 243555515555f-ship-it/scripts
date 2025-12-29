@@ -1,4 +1,4 @@
--- GeminiLib V6 - Полностью переработанная, оптимизированная версия
+-- GeminiLib V6.4.1
 local GeminiLib = {}
 
 -- Кэшированные сервисы для оптимизации
@@ -13,107 +13,87 @@ local services = {
 }
 
 function GeminiLib:Version()
-    return "V6.3"
+    return "V6.4.1"
 end
-
--- Кэшированные функции для оптимизации
-local Color3_new = Color3.new
-local Color3_fromRGB = Color3.fromRGB
-local UDim2_new = UDim2.new
-local UDim_new = UDim.new
-local Rect_new = Rect.new
-local TweenInfo_new = TweenInfo.new
-local NumberSequence_new = NumberSequence.new
-local NumberSequenceKeypoint_new = NumberSequenceKeypoint.new
-local ColorSequence_new = ColorSequence.new
-local ColorSequenceKeypoint_new = ColorSequenceKeypoint.new
-local math_floor = math.floor
-local math_clamp = math.clamp
-local string_format = string.format
-local table_insert = table.insert
-local table_remove = table.remove
-local task_spawn = task.spawn
-local task_wait = task.wait
-local pcall = pcall
 
 -- УНИВЕРСАЛЬНАЯ СИСТЕМА ТЕМ
 GeminiLib.Themes = {
     Dark = {
         Name = "Dark",
-        Main = Color3_fromRGB(30, 30, 35),
-        Accent = Color3_fromRGB(80, 170, 255),
-        Secondary = Color3_fromRGB(100, 180, 255),
-        Text = Color3_fromRGB(230, 230, 235),
-        TextSecondary = Color3_fromRGB(160, 160, 170),
-        Section = Color3_fromRGB(40, 40, 45),
-        Element = Color3_fromRGB(50, 50, 55),
-        Border = Color3_fromRGB(70, 70, 80),
-        Shadow = Color3_fromRGB(0, 0, 0),
+        Main = Color3.fromRGB(30, 30, 35),
+        Accent = Color3.fromRGB(80, 170, 255),
+        Secondary = Color3.fromRGB(100, 180, 255),
+        Text = Color3.fromRGB(230, 230, 235),
+        TextSecondary = Color3.fromRGB(160, 160, 170),
+        Section = Color3.fromRGB(40, 40, 45),
+        Element = Color3.fromRGB(50, 50, 55),
+        Border = Color3.fromRGB(70, 70, 80),
+        Shadow = Color3.fromRGB(0, 0, 0),
         ShadowAlpha = 0.25,
-        Success = Color3_fromRGB(70, 220, 130),
-        Warning = Color3_fromRGB(255, 190, 50),
-        Error = Color3_fromRGB(240, 90, 90)
+        Success = Color3.fromRGB(70, 220, 130),
+        Warning = Color3.fromRGB(255, 190, 50),
+        Error = Color3.fromRGB(240, 90, 90)
     },
     Midnight = {
         Name = "Midnight",
-        Main = Color3_fromRGB(20, 20, 30),
-        Accent = Color3_fromRGB(150, 100, 255),
-        Secondary = Color3_fromRGB(130, 90, 230),
-        Text = Color3_fromRGB(230, 230, 240),
-        TextSecondary = Color3_fromRGB(170, 170, 190),
-        Section = Color3_fromRGB(30, 30, 45),
-        Element = Color3_fromRGB(40, 40, 60),
-        Border = Color3_fromRGB(90, 90, 130),
-        Shadow = Color3_fromRGB(0, 0, 0),
+        Main = Color3.fromRGB(20, 20, 30),
+        Accent = Color3.fromRGB(150, 100, 255),
+        Secondary = Color3.fromRGB(130, 90, 230),
+        Text = Color3.fromRGB(230, 230, 240),
+        TextSecondary = Color3.fromRGB(170, 170, 190),
+        Section = Color3.fromRGB(30, 30, 45),
+        Element = Color3.fromRGB(40, 40, 60),
+        Border = Color3.fromRGB(90, 90, 130),
+        Shadow = Color3.fromRGB(0, 0, 0),
         ShadowAlpha = 0.3,
-        Success = Color3_fromRGB(80, 220, 160),
-        Warning = Color3_fromRGB(255, 180, 60),
-        Error = Color3_fromRGB(255, 100, 100)
+        Success = Color3.fromRGB(80, 220, 160),
+        Warning = Color3.fromRGB(255, 180, 60),
+        Error = Color3.fromRGB(255, 100, 100)
     },
     Cyberpunk = {
         Name = "Cyberpunk",
-        Main = Color3_fromRGB(10, 15, 25),
-        Accent = Color3_fromRGB(0, 220, 220),
-        Secondary = Color3_fromRGB(200, 0, 200),
-        Text = Color3_fromRGB(240, 245, 255),
-        TextSecondary = Color3_fromRGB(180, 190, 220),
-        Section = Color3_fromRGB(20, 25, 40),
-        Element = Color3_fromRGB(30, 35, 55),
-        Border = Color3_fromRGB(0, 180, 180),
-        Shadow = Color3_fromRGB(0, 100, 255),
+        Main = Color3.fromRGB(10, 15, 25),
+        Accent = Color3.fromRGB(0, 220, 220),
+        Secondary = Color3.fromRGB(200, 0, 200),
+        Text = Color3.fromRGB(240, 245, 255),
+        TextSecondary = Color3.fromRGB(180, 190, 220),
+        Section = Color3.fromRGB(20, 25, 40),
+        Element = Color3.fromRGB(30, 35, 55),
+        Border = Color3.fromRGB(0, 180, 180),
+        Shadow = Color3.fromRGB(0, 100, 255),
         ShadowAlpha = 0.25,
-        Success = Color3_fromRGB(0, 230, 180),
-        Warning = Color3_fromRGB(255, 230, 0),
-        Error = Color3_fromRGB(255, 70, 70)
+        Success = Color3.fromRGB(0, 230, 180),
+        Warning = Color3.fromRGB(255, 230, 0),
+        Error = Color3.fromRGB(255, 70, 70)
     },
     NeonAbyss = {
         Name = "NeonAbyss",
-        Main = Color3_fromRGB(10, 10, 15),
-        Accent = Color3_fromRGB(0, 255, 150), -- Ярко-бирюзовый
-        Secondary = Color3_fromRGB(255, 0, 100), -- Розовый неон
-        Text = Color3_fromRGB(240, 255, 250),
-        TextSecondary = Color3_fromRGB(130, 150, 140),
-        Section = Color3_fromRGB(20, 25, 30),
-        Element = Color3_fromRGB(25, 35, 40),
-        Border = Color3_fromRGB(0, 255, 150),
-        Shadow = Color3_fromRGB(0, 255, 150),
+        Main = Color3.fromRGB(10, 10, 15),
+        Accent = Color3.fromRGB(0, 255, 150), -- Ярко-бирюзовый
+        Secondary = Color3.fromRGB(255, 0, 100), -- Розовый неон
+        Text = Color3.fromRGB(240, 255, 250),
+        TextSecondary = Color3.fromRGB(130, 150, 140),
+        Section = Color3.fromRGB(20, 25, 30),
+        Element = Color3.fromRGB(25, 35, 40),
+        Border = Color3.fromRGB(0, 255, 150),
+        Shadow = Color3.fromRGB(0, 255, 150),
         ShadowAlpha = 0.2
     },
     Rampage = {
         Name = "Rampage",
-        Main = Color3_fromRGB(107, 0, 0),
-        Accent = Color3_fromRGB(140, 0, 0),
-        Secondary = Color3_fromRGB(92, 10, 10),
-        Text = Color3_fromRGB(255, 240, 240),
-        TextSecondary = Color3_fromRGB(135, 64, 64),
-        Section = Color3_fromRGB(18, 10, 10),
-        Element = Color3_fromRGB(25, 12, 12),
-        Border = Color3_fromRGB(200, 20, 20),
-        Shadow = Color3_fromRGB(150, 0, 0),
+        Main = Color3.fromRGB(107, 0, 0),
+        Accent = Color3.fromRGB(140, 0, 0),
+        Secondary = Color3.fromRGB(92, 10, 10),
+        Text = Color3.fromRGB(255, 240, 240),
+        TextSecondary = Color3.fromRGB(135, 64, 64),
+        Section = Color3.fromRGB(18, 10, 10),
+        Element = Color3.fromRGB(25, 12, 12),
+        Border = Color3.fromRGB(200, 20, 20),
+        Shadow = Color3.fromRGB(150, 0, 0),
         ShadowAlpha = 0.4,
-        Success = Color3_fromRGB(255, 70, 70),
-        Warning = Color3_fromRGB(255, 140, 0),
-        Error = Color3_fromRGB(255, 0, 0)
+        Success = Color3.fromRGB(255, 70, 70),
+        Warning = Color3.fromRGB(255, 140, 0),
+        Error = Color3.fromRGB(255, 0, 0)
     }
 }
 
@@ -140,9 +120,9 @@ local function createShadow(parent, color, transparency, sizeMultiplier)
     
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceScale = 0.05
-    shadow.SliceCenter = Rect_new(10, 10, 118, 118)
-    shadow.Size = UDim2_new(1, sizeMultiplier or 8, 1, sizeMultiplier or 8)
-    shadow.Position = UDim2_new(0, -(sizeMultiplier or 8)/2, 0, -(sizeMultiplier or 8)/2)
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.Size = UDim2.new(1, sizeMultiplier or 8, 1, sizeMultiplier or 8)
+    shadow.Position = UDim2.new(0, -(sizeMultiplier or 8)/2, 0, -(sizeMultiplier or 8)/2)
     shadow.BackgroundTransparency = 1
     shadow.ZIndex = parent.ZIndex - 1
     shadow.Parent = parent
@@ -172,7 +152,7 @@ end
 function GeminiLib:GetThemesList()
     local list = {}
     for themeName, _ in pairs(GeminiLib.Themes) do
-        table_insert(list, themeName)
+        table.insert(list, themeName)
     end
     return list
 end
@@ -189,7 +169,7 @@ function GeminiLib:CreateWindow(title, themeName)
         Elements = {},
         Settings = {},
         IsMinimized = false,
-        OriginalSize = UDim2_new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
+        OriginalSize = UDim2.new(0, GeminiLib.Config.WindowWidth, 0, GeminiLib.Config.WindowHeight),
         OriginalPosition = nil,
         StatsConnection = nil,
         HiddenElements = {}
@@ -207,7 +187,7 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Главный контейнер
     local Main = UI:Create("Frame", {
         Size = WindowObj.OriginalSize,
-        Position = UDim2_new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2),
+        Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2),
         BackgroundColor3 = theme.Main,
         BorderSizePixel = 0,
         ClipsDescendants = true,
@@ -216,7 +196,7 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(0, GeminiLib.Config.Roundness),
+        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness),
         Parent = Main
     })
     
@@ -225,7 +205,7 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Верхняя панель
     local TopBar = UI:Create("Frame", {
         Name = "TopBar",
-        Size = UDim2_new(1, 0, 0, 45),
+        Size = UDim2.new(1, 0, 0, 45),
         BackgroundColor3 = theme.Section,
         BackgroundTransparency = 0.4,
         ZIndex = 12,
@@ -233,18 +213,18 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(0, GeminiLib.Config.Roundness),
+        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness),
         Parent = TopBar
     })
     
     -- Легкий градиент
     UI:Create("UIGradient", {
-        Color = ColorSequence_new{
-            ColorSequenceKeypoint_new(0, theme.Accent),
-            ColorSequenceKeypoint_new(0.5, theme.Section),
-            ColorSequenceKeypoint_new(1, theme.Section)
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, theme.Accent),
+            ColorSequenceKeypoint.new(0.5, theme.Section),
+            ColorSequenceKeypoint.new(1, theme.Section)
         },
-        Transparency = NumberSequence_new(0.8),
+        Transparency = NumberSequence.new(0.8),
         Rotation = 90,
         Parent = TopBar
     })
@@ -253,8 +233,8 @@ function GeminiLib:CreateWindow(title, themeName)
     local dragging, dragInput, dragStart, startPos
     local function update(input)
         local delta = input.Position - dragStart
-        local targetPos = UDim2_new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        services.TweenService:Create(Main, TweenInfo_new(0.15, Enum.EasingStyle.Cubic), {Position = targetPos}):Play()
+        local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        services.TweenService:Create(Main, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {Position = targetPos}):Play()
     end
 
     Main.InputBegan:Connect(function(input)
@@ -281,7 +261,7 @@ function GeminiLib:CreateWindow(title, themeName)
     local Title = UI:Create("TextLabel", {
         Name = "Title",
         Text = "  " .. title,
-        Size = UDim2_new(1, -280, 1, 0),
+        Size = UDim2.new(1, -280, 1, 0),
         TextColor3 = theme.Text,
         Font = Enum.Font.GothamMedium,
         TextSize = 18,
@@ -295,8 +275,8 @@ function GeminiLib:CreateWindow(title, themeName)
     local StatsLabel = UI:Create("TextLabel", {
         Name = "StatsLabel",
         Text = "FPS: -- | Ping: --",
-        Size = UDim2_new(0, 140, 1, 0),
-        Position = UDim2_new(1, -200, 0, 0),
+        Size = UDim2.new(0, 140, 1, 0),
+        Position = UDim2.new(1, -200, 0, 0),
         TextColor3 = theme.TextSecondary,
         Font = Enum.Font.Gotham,
         TextSize = 12,
@@ -313,10 +293,10 @@ function GeminiLib:CreateWindow(title, themeName)
         if now - lastUpdate < GeminiLib.Config.StatsUpdateInterval then return end
         lastUpdate = now
         
-        local fps = math_floor(1 / services.RunService.RenderStepped:Wait())
+        local fps = math.floor(1 / services.RunService.RenderStepped:Wait())
         local ping = math.random(20, 80)
         
-        StatsLabel.Text = string_format("FPS: %d | Ping: %dms", fps, ping)
+        StatsLabel.Text = string.format("FPS: %d | Ping: %dms", fps, ping)
         
         if fps < 30 then
             StatsLabel.TextColor3 = theme.Error
@@ -347,8 +327,8 @@ function GeminiLib:CreateWindow(title, themeName)
 
     -- Кнопка закрытия
     local CloseBtn = UI:Create("ImageButton", {
-        Size = UDim2_new(0, 28, 0, 28),
-        Position = UDim2_new(1, -36, 0.5, -14),
+        Size = UDim2.new(0, 28, 0, 28),
+        Position = UDim2.new(1, -36, 0.5, -14),
         Image = "rbxassetid://6031094678",
         ImageColor3 = theme.Text,
         BackgroundTransparency = 1,
@@ -356,31 +336,31 @@ function GeminiLib:CreateWindow(title, themeName)
         Parent = TopBar
     })
 
-    table_insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
+    table.insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
+        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
             ImageColor3 = theme.Error,
             Rotation = 90,
-            Size = UDim2_new(0, 30, 0, 30)
+            Size = UDim2.new(0, 30, 0, 30)
         }):Play()
     end))
     
-    table_insert(WindowObj.Connections, CloseBtn.MouseLeave:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo_new(0.15), {
+    table.insert(WindowObj.Connections, CloseBtn.MouseLeave:Connect(function()
+        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
             ImageColor3 = theme.Text,
             Rotation = 0,
-            Size = UDim2_new(0, 28, 0, 28)
+            Size = UDim2.new(0, 28, 0, 28)
         }):Play()
     end))
     
-    table_insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
+    table.insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
         WindowObj:Destroy()
     end))
 
     -- Боковая панель для вкладок
     local SideBar = UI:Create("Frame", {
         Name = "SideBar",
-        Size = UDim2_new(0, 170, 1, -65),
-        Position = UDim2_new(0, 10, 0, 55),
+        Size = UDim2.new(0, 170, 1, -65),
+        Position = UDim2.new(0, 10, 0, 55),
         BackgroundColor3 = theme.Section,
         BackgroundTransparency = 0.6,
         ZIndex = 12,
@@ -388,7 +368,7 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(0, GeminiLib.Config.Roundness - 2),
+        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2),
         Parent = SideBar
     })
     
@@ -402,10 +382,10 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Прокручиваемая область для вкладок
     local TabScroll = UI:Create("ScrollingFrame", {
         Name = "TabScroll",
-        Size = UDim2_new(1, -10, 1, -80),
-        Position = UDim2_new(0, 5, 0, 5),
+        Size = UDim2.new(1, -10, 1, -80),
+        Position = UDim2.new(0, 5, 0, 5),
         BackgroundTransparency = 1,
-        CanvasSize = UDim2_new(0, 0, 0, 0),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
         ScrollBarThickness = 3,
         ScrollBarImageColor3 = theme.Accent,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -414,7 +394,7 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     
     UI:Create("UIListLayout", {
-        Padding = UDim_new(0, 6),
+        Padding = UDim.new(0, 6),
         HorizontalAlignment = Enum.HorizontalAlignment.Center,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Parent = TabScroll
@@ -423,8 +403,8 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Профиль пользователя
     local ProfileFrame = UI:Create("Frame", {
         Name = "ProfileFrame",
-        Size = UDim2_new(1, -10, 0, 60),
-        Position = UDim2_new(0, 5, 1, -65),
+        Size = UDim2.new(1, -10, 0, 60),
+        Position = UDim2.new(0, 5, 1, -65),
         BackgroundColor3 = theme.Element,
         BackgroundTransparency = 0.4,
         ZIndex = 14,
@@ -432,7 +412,7 @@ function GeminiLib:CreateWindow(title, themeName)
     })
 
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(0, 10),
+        CornerRadius = UDim.new(0, 10),
         Parent = ProfileFrame
     })
     
@@ -446,15 +426,15 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Аватар
     local Avatar = UI:Create("ImageLabel", {
         Name = "Avatar",
-        Size = UDim2_new(0, 40, 0, 40),
-        Position = UDim2_new(0, 8, 0.5, -20),
+        Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0, 8, 0.5, -20),
         BackgroundColor3 = theme.Main,
         ZIndex = 15,
         Parent = ProfileFrame
     })
     
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(1, 0),
+        CornerRadius = UDim.new(1, 0),
         Parent = Avatar
     })
 
@@ -473,8 +453,8 @@ function GeminiLib:CreateWindow(title, themeName)
     UI:Create("TextLabel", {
         Name = "Username",
         Text = services.Players.LocalPlayer.Name,
-        Size = UDim2_new(1, -55, 0, 20),
-        Position = UDim2_new(0, 55, 0, 10),
+        Size = UDim2.new(1, -55, 0, 20),
+        Position = UDim2.new(0, 55, 0, 10),
         TextColor3 = theme.Text,
         Font = Enum.Font.GothamMedium,
         TextSize = 12,
@@ -489,8 +469,8 @@ function GeminiLib:CreateWindow(title, themeName)
     UI:Create("TextLabel", {
         Name = "Status",
         Text = "🟢 Online",
-        Size = UDim2_new(1, -55, 0, 18),
-        Position = UDim2_new(0, 55, 0, 32),
+        Size = UDim2.new(1, -55, 0, 18),
+        Position = UDim2.new(0, 55, 0, 32),
         TextColor3 = theme.Success,
         Font = Enum.Font.Gotham,
         TextSize = 11,
@@ -503,8 +483,8 @@ function GeminiLib:CreateWindow(title, themeName)
     -- Контейнер для контента вкладок
     local ContentContainer = UI:Create("Frame", {
         Name = "ContentContainer",
-        Size = UDim2_new(1, -190, 1, -65),
-        Position = UDim2_new(0, 185, 0, 55),
+        Size = UDim2.new(1, -190, 1, -65),
+        Position = UDim2.new(0, 185, 0, 55),
         BackgroundColor3 = theme.Section,
         BackgroundTransparency = 0.7,
         ZIndex = 12,
@@ -512,7 +492,7 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     
     UI:Create("UICorner", {
-        CornerRadius = UDim_new(0, GeminiLib.Config.Roundness - 2),
+        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2),
         Parent = ContentContainer
     })
     
@@ -527,7 +507,7 @@ function GeminiLib:CreateWindow(title, themeName)
     function WindowObj:CreateTab(name, icon)
         local TabBtn = UI:Create("TextButton", {
             Name = "TabBtn_" .. name,
-            Size = UDim2_new(1, 0, 0, 38),
+            Size = UDim2.new(1, 0, 0, 38),
             BackgroundColor3 = theme.Element,
             BackgroundTransparency = 0.6,
             Text = (icon or "📱") .. "  " .. name,
@@ -541,23 +521,23 @@ function GeminiLib:CreateWindow(title, themeName)
         })
         
         UI:Create("UIPadding", {
-            PaddingLeft = UDim_new(0, 12),
+            PaddingLeft = UDim.new(0, 12),
             Parent = TabBtn
         })
         
         UI:Create("UICorner", {
-            CornerRadius = UDim_new(0, 8),
+            CornerRadius = UDim.new(0, 8),
             Parent = TabBtn
         })
         
         -- Страница вкладки
         local Page = UI:Create("ScrollingFrame", {
             Name = "Page_" .. name,
-            Size = UDim2_new(1, -15, 1, -15),
-            Position = UDim2_new(0, 7.5, 0, 7.5),
+            Size = UDim2.new(1, -15, 1, -15),
+            Position = UDim2.new(0, 7.5, 0, 7.5),
             BackgroundTransparency = 1,
             Visible = false,
-            CanvasSize = UDim2_new(0, 0, 0, 0),
+            CanvasSize = UDim2.new(0, 0, 0, 0),
             ScrollBarThickness = 3,
             ScrollBarImageColor3 = theme.Accent,
             ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -566,15 +546,15 @@ function GeminiLib:CreateWindow(title, themeName)
         })
         
         UI:Create("UIListLayout", {
-            Padding = UDim_new(0, 10),
+            Padding = UDim.new(0, 10),
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
             SortOrder = Enum.SortOrder.LayoutOrder,
             Parent = Page
         })
         
         UI:Create("UIPadding", {
-            PaddingLeft = UDim_new(0, 8),
-            PaddingRight = UDim_new(0, 8),
+            PaddingLeft = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8),
             Parent = Page
         })
         
@@ -601,46 +581,46 @@ function GeminiLib:CreateWindow(title, themeName)
             
             for _, btn in pairs(TabScroll:GetChildren()) do
                 if btn:IsA("TextButton") and btn ~= TabBtn then
-                    services.TweenService:Create(btn, TweenInfo_new(0.15), {
+                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
                         BackgroundTransparency = 0.6,
                         TextColor3 = theme.TextSecondary
                     }):Play()
                 end
             end
             
-            services.TweenService:Create(TabBtn, TweenInfo_new(0.15), {
+            services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
                 BackgroundTransparency = 0.3,
                 TextColor3 = theme.Accent
             }):Play()
         end
 
         -- Анимации кнопки
-        table_insert(WindowObj.Connections, TabBtn.MouseEnter:Connect(function()
+        table.insert(WindowObj.Connections, TabBtn.MouseEnter:Connect(function()
             if TabBtn ~= WindowObj.CurrentTab then
-                services.TweenService:Create(TabBtn, TweenInfo_new(0.15), {
+                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.4,
                     TextColor3 = theme.Text
                 }):Play()
             end
         end))
         
-        table_insert(WindowObj.Connections, TabBtn.MouseLeave:Connect(function()
+        table.insert(WindowObj.Connections, TabBtn.MouseLeave:Connect(function()
             if TabBtn ~= WindowObj.CurrentTab then
-                services.TweenService:Create(TabBtn, TweenInfo_new(0.15), {
+                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.6,
                     TextColor3 = theme.TextSecondary
                 }):Play()
             end
         end))
         
-        table_insert(WindowObj.Connections, TabBtn.MouseButton1Click:Connect(activateTab))
+        table.insert(WindowObj.Connections, TabBtn.MouseButton1Click:Connect(activateTab))
 
         -- ФУНКЦИЯ РАЗДЕЛИТЕЛЯ
         function Tab:Separator(text)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local SeparatorFrame = UI:Create("Frame", {
-                Size = UDim2_new(1, -16, 0, 30),
+                Size = UDim2.new(1, -16, 0, 30),
                 BackgroundTransparency = 1,
                 ZIndex = 14,
                 LayoutOrder = Tab.ElementCount,
@@ -648,8 +628,8 @@ function GeminiLib:CreateWindow(title, themeName)
             })
             
             local Line = UI:Create("Frame", {
-                Size = UDim2_new(1, 0, 0, 1),
-                Position = UDim2_new(0, 0, 0.5, 0),
+                Size = UDim2.new(1, 0, 0, 1),
+                Position = UDim2.new(0, 0, 0.5, 0),
                 BackgroundColor3 = theme.Accent,
                 BackgroundTransparency = 0.5,
                 ZIndex = 15,
@@ -659,8 +639,8 @@ function GeminiLib:CreateWindow(title, themeName)
             if text then
                 local TextLabel = UI:Create("TextLabel", {
                     Text = text,
-                    Size = UDim2_new(0, 0, 0, 20),
-                    Position = UDim2_new(0.5, 0, 0.5, -10),
+                    Size = UDim2.new(0, 0, 0, 20),
+                    Position = UDim2.new(0.5, 0, 0.5, -10),
                     BackgroundColor3 = theme.Section,
                     TextColor3 = theme.TextSecondary,
                     Font = Enum.Font.Gotham,
@@ -670,13 +650,13 @@ function GeminiLib:CreateWindow(title, themeName)
                 })
                 
                 UI:Create("UICorner", {
-                    CornerRadius = UDim_new(0, 4),
+                    CornerRadius = UDim.new(0, 4),
                     Parent = TextLabel
                 })
             end
             
-            table_insert(Tab.Elements, SeparatorFrame)
-            table_insert(WindowObj.Elements, SeparatorFrame)
+            table.insert(Tab.Elements, SeparatorFrame)
+            table.insert(WindowObj.Elements, SeparatorFrame)
             
             return SeparatorFrame
         end
@@ -688,7 +668,7 @@ function GeminiLib:CreateWindow(title, themeName)
             local fontSize = size or 13
             
             local LabelFrame = UI:Create("Frame", {
-                Size = UDim2_new(1, -16, 0, 22),
+                Size = UDim2.new(1, -16, 0, 22),
                 BackgroundTransparency = 1,
                 ZIndex = 14,
                 LayoutOrder = Tab.ElementCount,
@@ -697,7 +677,7 @@ function GeminiLib:CreateWindow(title, themeName)
             
             UI:Create("TextLabel", {
                 Text = text,
-                Size = UDim2_new(1, 0, 1, 0),
+                Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 TextColor3 = theme.Text,
                 Font = Enum.Font.Gotham,
@@ -707,8 +687,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 Parent = LabelFrame
             })
             
-            table_insert(Tab.Elements, LabelFrame)
-            table_insert(WindowObj.Elements, LabelFrame)
+            table.insert(Tab.Elements, LabelFrame)
+            table.insert(WindowObj.Elements, LabelFrame)
             
             return LabelFrame
         end
@@ -718,7 +698,7 @@ function GeminiLib:CreateWindow(title, themeName)
             Tab.ElementCount = Tab.ElementCount + 1
             
             local Btn = UI:Create("TextButton", {
-                Size = UDim2_new(1, -16, 0, 36),
+                Size = UDim2.new(1, -16, 0, 36),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 Text = (icon or "•") .. "  " .. text,
@@ -732,12 +712,12 @@ function GeminiLib:CreateWindow(title, themeName)
             })
             
             UI:Create("UIPadding", {
-                PaddingLeft = UDim_new(0, 12),
+                PaddingLeft = UDim.new(0, 12),
                 Parent = Btn
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(0, 8),
+                CornerRadius = UDim.new(0, 8),
                 Parent = Btn
             })
             
@@ -749,12 +729,12 @@ function GeminiLib:CreateWindow(title, themeName)
             })
             
             -- Анимации
-            table_insert(WindowObj.Connections, Btn.MouseEnter:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo_new(0.15), {
+            table.insert(WindowObj.Connections, Btn.MouseEnter:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.3,
-                    Size = UDim2_new(1, -12, 0, 38)
+                    Size = UDim2.new(1, -12, 0, 38)
                 }):Play()
-                services.TweenService:Create(btnStroke, TweenInfo_new(0.15), {
+                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
                     Transparency = 0.6
                 }):Play()
             end))
@@ -762,26 +742,26 @@ function GeminiLib:CreateWindow(title, themeName)
             Btn.MouseButton1Click:Connect(function()
             end)
 
-            table_insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo_new(0.15), {
+            table.insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.5,
-                    Size = UDim2_new(1, -16, 0, 36)
+                    Size = UDim2.new(1, -16, 0, 36)
                 }):Play()
-                services.TweenService:Create(btnStroke, TweenInfo_new(0.15), {
+                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
                     Transparency = 0.8
                 }):Play()
             end))
             
             -- Клик
-            table_insert(WindowObj.Connections, Btn.MouseButton1Click:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo_new(0.1), {
+            table.insert(WindowObj.Connections, Btn.MouseButton1Click:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.1), {
                     BackgroundTransparency = 0.2,
-                    Size = UDim2_new(1, -18, 0, 34)
+                    Size = UDim2.new(1, -18, 0, 34)
                 }):Play()
-                task_wait(0.1)
-                services.TweenService:Create(Btn, TweenInfo_new(0.1), {
+                task.wait(0.1)
+                services.TweenService:Create(Btn, TweenInfo.new(0.1), {
                     BackgroundTransparency = 0.3,
-                    Size = UDim2_new(1, -12, 0, 38)
+                    Size = UDim2.new(1, -12, 0, 38)
                 }):Play()
                 
                 if callback then
@@ -792,8 +772,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end))
             
-            table_insert(Tab.Elements, Btn)
-            table_insert(WindowObj.Elements, Btn)
+            table.insert(Tab.Elements, Btn)
+            table.insert(WindowObj.Elements, Btn)
             return Btn
         end
 
@@ -804,7 +784,7 @@ function GeminiLib:CreateWindow(title, themeName)
             local state = default or false
             
             local ToggleFrame = UI:Create("TextButton", {
-                Size = UDim2_new(1, -16, 0, 36),
+                Size = UDim2.new(1, -16, 0, 36),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 Text = "  " .. text,
@@ -818,7 +798,7 @@ function GeminiLib:CreateWindow(title, themeName)
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(0, 8),
+                CornerRadius = UDim.new(0, 8),
                 Parent = ToggleFrame
             })
             
@@ -831,39 +811,39 @@ function GeminiLib:CreateWindow(title, themeName)
             
             -- Ползунок
             local SliderTrack = UI:Create("Frame", {
-                Size = UDim2_new(0, 48, 0, 20),
-                Position = UDim2_new(1, -60, 0.5, -10),
-                BackgroundColor3 = state and theme.Accent or Color3_fromRGB(80, 80, 90),
+                Size = UDim2.new(0, 48, 0, 20),
+                Position = UDim2.new(1, -60, 0.5, -10),
+                BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 90),
                 ZIndex = 15,
                 Parent = ToggleFrame
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(1, 0),
+                CornerRadius = UDim.new(1, 0),
                 Parent = SliderTrack
             })
             
             -- Кружок
             local SliderDot = UI:Create("Frame", {
-                Size = UDim2_new(0, 16, 0, 16),
-                Position = state and UDim2_new(1, -18, 0.5, -8) or UDim2_new(0, 2, 0.5, -8),
-                BackgroundColor3 = Color3_fromRGB(240, 240, 245),
+                Size = UDim2.new(0, 16, 0, 16),
+                Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+                BackgroundColor3 = Color3.fromRGB(240, 240, 245),
                 ZIndex = 16,
                 Parent = SliderTrack
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(1, 0),
+                CornerRadius = UDim.new(1, 0),
                 Parent = SliderDot
             })
             
             -- Анимации
-            table_insert(WindowObj.Connections, ToggleFrame.MouseEnter:Connect(function()
-                services.TweenService:Create(ToggleFrame, TweenInfo_new(0.15), {
+            table.insert(WindowObj.Connections, ToggleFrame.MouseEnter:Connect(function()
+                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.4,
-                    Size = UDim2_new(1, -12, 0, 38)
+                    Size = UDim2.new(1, -12, 0, 38)
                 }):Play()
-                services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                     Transparency = 0.6
                 }):Play()
             end))
@@ -872,12 +852,12 @@ function GeminiLib:CreateWindow(title, themeName)
             ToggleFrame.MouseButton1Click:Connect(function()
             end)
 
-            table_insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
-                services.TweenService:Create(ToggleFrame, TweenInfo_new(0.15), {
+            table.insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
+                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
                     BackgroundTransparency = 0.5,
-                    Size = UDim2_new(1, -16, 0, 36)
+                    Size = UDim2.new(1, -16, 0, 36)
                 }):Play()
-                services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                     Transparency = 0.8
                 }):Play()
             end))
@@ -887,18 +867,18 @@ function GeminiLib:CreateWindow(title, themeName)
                 state = not state
                 
                 if state then
-                    services.TweenService:Create(SliderTrack, TweenInfo_new(0.15), {
+                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
                         BackgroundColor3 = theme.Accent
                     }):Play()
-                    services.TweenService:Create(SliderDot, TweenInfo_new(0.15), {
-                        Position = UDim2_new(1, -18, 0.5, -8)
+                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
+                        Position = UDim2.new(1, -18, 0.5, -8)
                     }):Play()
                 else
-                    services.TweenService:Create(SliderTrack, TweenInfo_new(0.15), {
-                        BackgroundColor3 = Color3_fromRGB(80, 80, 90)
+                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
+                        BackgroundColor3 = Color3.fromRGB(80, 80, 90)
                     }):Play()
-                    services.TweenService:Create(SliderDot, TweenInfo_new(0.15), {
-                        Position = UDim2_new(0, 2, 0.5, -8)
+                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
+                        Position = UDim2.new(0, 2, 0.5, -8)
                     }):Play()
                 end
                 
@@ -910,10 +890,10 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end
             
-            table_insert(WindowObj.Connections, ToggleFrame.MouseButton1Click:Connect(toggleState))
+            table.insert(WindowObj.Connections, ToggleFrame.MouseButton1Click:Connect(toggleState))
             
-            table_insert(Tab.Elements, ToggleFrame)
-            table_insert(WindowObj.Elements, ToggleFrame)
+            table.insert(Tab.Elements, ToggleFrame)
+            table.insert(WindowObj.Elements, ToggleFrame)
             
             return {
                 Set = function(val)
@@ -921,10 +901,10 @@ function GeminiLib:CreateWindow(title, themeName)
                         state = val
                         if state then
                             SliderTrack.BackgroundColor3 = theme.Accent
-                            SliderDot.Position = UDim2_new(1, -18, 0.5, -8)
+                            SliderDot.Position = UDim2.new(1, -18, 0.5, -8)
                         else
-                            SliderTrack.BackgroundColor3 = Color3_fromRGB(80, 80, 90)
-                            SliderDot.Position = UDim2_new(0, 2, 0.5, -8)
+                            SliderTrack.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+                            SliderDot.Position = UDim2.new(0, 2, 0.5, -8)
                         end
                     end
                 end,
@@ -942,7 +922,7 @@ function GeminiLib:CreateWindow(title, themeName)
             -- ИЗМЕНЕНО: Используем TextButton вместо Frame
             local SliderFrame = UI:Create("TextButton", {
                 Name = "Slider_" .. text,
-                Size = UDim2_new(1, -16, 0, 60),
+                Size = UDim2.new(1, -16, 0, 60),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 Text = "", -- Убираем текст кнопки
@@ -954,17 +934,17 @@ function GeminiLib:CreateWindow(title, themeName)
             
             -- Далее код остается почти таким же, но вызов частиц теперь заработает
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(0, 8),
+                CornerRadius = UDim.new(0, 8),
                 Parent = SliderFrame
             })
             
             -- Привязка частиц к нажатию на всю область слайдера
-            table_insert(WindowObj.Connections, SliderFrame.MouseButton1Click:Connect(function()
+            table.insert(WindowObj.Connections, SliderFrame.MouseButton1Click:Connect(function()
             end))
             
             local Label = UI:Create("TextLabel", {
                 Text = "  " .. text .. (showValue and (": " .. default) or ""),
-                Size = UDim2_new(1, 0, 0, 22),
+                Size = UDim2.new(1, 0, 0, 22),
                 BackgroundTransparency = 1,
                 TextColor3 = theme.Text,
                 TextXAlignment = Enum.TextXAlignment.Left,
@@ -976,8 +956,8 @@ function GeminiLib:CreateWindow(title, themeName)
 
             local ValueLabel = UI:Create("TextLabel", {
                 Text = tostring(default),
-                Size = UDim2_new(0, 36, 0, 22),
-                Position = UDim2_new(1, -40, 0, 0),
+                Size = UDim2.new(0, 36, 0, 22),
+                Position = UDim2.new(1, -40, 0, 0),
                 BackgroundTransparency = 1,
                 TextColor3 = theme.Accent,
                 Font = Enum.Font.GothamMedium,
@@ -987,54 +967,54 @@ function GeminiLib:CreateWindow(title, themeName)
             })
 
             local Bar = UI:Create("Frame", {
-                Size = UDim2_new(1, -28, 0, 5),
-                Position = UDim2_new(0, 14, 1, -20),
-                BackgroundColor3 = Color3_fromRGB(70, 70, 80),
+                Size = UDim2.new(1, -28, 0, 5),
+                Position = UDim2.new(0, 14, 1, -20),
+                BackgroundColor3 = Color3.fromRGB(70, 70, 80),
                 ZIndex = 15,
                 Parent = SliderFrame
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(1, 0),
+                CornerRadius = UDim.new(1, 0),
                 Parent = Bar
             })
             
             local Fill = UI:Create("Frame", {
-                Size = UDim2_new((default - min) / (max - min), 0, 1, 0),
+                Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
                 BackgroundColor3 = theme.Accent,
                 ZIndex = 16,
                 Parent = Bar
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(1, 0),
+                CornerRadius = UDim.new(1, 0),
                 Parent = Fill
             })
             
             local SliderDot = UI:Create("Frame", {
-                Size = UDim2_new(0, 14, 0, 14),
-                Position = UDim2_new((default - min) / (max - min), -7, 0.5, -7),
-                BackgroundColor3 = Color3_fromRGB(240, 240, 245),
+                Size = UDim2.new(0, 14, 0, 14),
+                Position = UDim2.new((default - min) / (max - min), -7, 0.5, -7),
+                BackgroundColor3 = Color3.fromRGB(240, 240, 245),
                 ZIndex = 17,
                 Parent = Bar
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(1, 0),
+                CornerRadius = UDim.new(1, 0),
                 Parent = SliderDot
             })
 
             local function updateSlider(input)
                 if not input then return end
                 
-                local pos = math_clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local val = math_floor(min + (max - min) * pos)
+                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                local val = math.floor(min + (max - min) * pos)
                 
                 if val ~= currentValue then
                     currentValue = val
                     
-                    Fill.Size = UDim2_new(pos, 0, 1, 0)
-                    SliderDot.Position = UDim2_new(pos, -7, 0.5, -7)
+                    Fill.Size = UDim2.new(pos, 0, 1, 0)
+                    SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
                     ValueLabel.Text = tostring(val)
                     
                     if showValue then
@@ -1053,7 +1033,7 @@ function GeminiLib:CreateWindow(title, themeName)
             SliderFrame.MouseButton1Click:Connect(function()
             end)
 
-            table_insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
+            table.insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     isDragging = true
                     updateSlider(input)
@@ -1065,7 +1045,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         end
                     end)
                     
-                    table_insert(WindowObj.Connections, services.UIS.InputEnded:Connect(function(input)
+                    table.insert(WindowObj.Connections, services.UIS.InputEnded:Connect(function(input)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 then
                             isDragging = false
                             if connection then
@@ -1076,16 +1056,16 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end))
             
-            table_insert(Tab.Elements, SliderFrame)
-            table_insert(WindowObj.Elements, SliderFrame)
+            table.insert(Tab.Elements, SliderFrame)
+            table.insert(WindowObj.Elements, SliderFrame)
             
             return {
                 Set = function(val)
-                    val = math_clamp(val, min, max)
+                    val = math.clamp(val, min, max)
                     currentValue = val
                     local pos = (val - min) / (max - min)
-                    Fill.Size = UDim2_new(pos, 0, 1, 0)
-                    SliderDot.Position = UDim2_new(pos, -7, 0.5, -7)
+                    Fill.Size = UDim2.new(pos, 0, 1, 0)
+                    SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
                     ValueLabel.Text = tostring(val)
                     if showValue then
                         Label.Text = "  " .. text .. ": " .. val
@@ -1109,7 +1089,7 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Главный контейнер
             local DropFrame = UI:Create("Frame", {
                 Name = "Dropdown_" .. text,
-                Size = UDim2_new(1, -16, 0, 36),
+                Size = UDim2.new(1, -16, 0, 36),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 ZIndex = 14,
@@ -1118,7 +1098,7 @@ function GeminiLib:CreateWindow(title, themeName)
             })
             
             UI:Create("UICorner", {
-                CornerRadius = UDim_new(0, 8),
+                CornerRadius = UDim.new(0, 8),
                 Parent = DropFrame
             })
             
@@ -1132,7 +1112,7 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Кнопка для открытия dropdown
             local DropBtn = UI:Create("TextButton", {
                 Name = "DropBtn",
-                Size = UDim2_new(1, 0, 0, 36),
+                Size = UDim2.new(1, 0, 0, 36),
                 BackgroundTransparency = 1,
                 Text = "  " .. text .. ": " .. selected,
                 TextColor3 = theme.Text,
@@ -1146,8 +1126,8 @@ function GeminiLib:CreateWindow(title, themeName)
             -- Стрелка
             local Arrow = UI:Create("TextLabel", {
                 Text = "▼",
-                Size = UDim2_new(0, 20, 1, 0),
-                Position = UDim2_new(1, -25, 0, 0),
+                Size = UDim2.new(0, 20, 1, 0),
+                Position = UDim2.new(1, -25, 0, 0),
                 BackgroundTransparency = 1,
                 TextColor3 = theme.TextSecondary,
                 Font = Enum.Font.GothamMedium,
@@ -1198,13 +1178,13 @@ function GeminiLib:CreateWindow(title, themeName)
                 
                 -- Ограничиваем позицию
                 local maxY = Main.AbsoluteSize.Y - 180 - 10
-                relativeY = math_clamp(relativeY, 10, maxY)
+                relativeY = math.clamp(relativeY, 10, maxY)
                 
-                dropdownContainer.Position = UDim2_new(0, relativeX, 0, relativeY)
-                dropdownContainer.Size = UDim2_new(0, dropAbsSize.X, 0, 0)
+                dropdownContainer.Position = UDim2.new(0, relativeX, 0, relativeY)
+                dropdownContainer.Size = UDim2.new(0, dropAbsSize.X, 0, 0)
                 
                 UI:Create("UICorner", {
-                    CornerRadius = UDim_new(0, 8),
+                    CornerRadius = UDim.new(0, 8),
                     Parent = dropdownContainer
                 })
                 
@@ -1220,19 +1200,19 @@ function GeminiLib:CreateWindow(title, themeName)
                 -- Создаем список опций
                 OptionsList = UI:Create("ScrollingFrame", {
                     Name = "OptionsList",
-                    Size = UDim2_new(1, -8, 1, -8),
-                    Position = UDim2_new(0, 4, 0, 4),
+                    Size = UDim2.new(1, -8, 1, -8),
+                    Position = UDim2.new(0, 4, 0, 4),
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
                     ScrollBarThickness = 4,
                     ScrollBarImageColor3 = theme.Accent,
-                    CanvasSize = UDim2_new(0, 0, 0, #options * 32),
+                    CanvasSize = UDim2.new(0, 0, 0, #options * 32),
                     ZIndex = 1001,
                     Parent = dropdownContainer
                 })
                 
                 UI:Create("UIListLayout", {
-                    Padding = UDim_new(0, 2),
+                    Padding = UDim.new(0, 2),
                     SortOrder = Enum.SortOrder.LayoutOrder,
                     Parent = OptionsList
                 })
@@ -1242,7 +1222,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 for i, option in ipairs(options) do
                     local OptionBtn = UI:Create("TextButton", {
                         Name = "Option_" .. option,
-                        Size = UDim2_new(1, 0, 0, 28),
+                        Size = UDim2.new(1, 0, 0, 28),
                         LayoutOrder = i,
                         BackgroundColor3 = theme.Element,
                         BackgroundTransparency = option == selected and 0.3 or 0.6,
@@ -1256,28 +1236,28 @@ function GeminiLib:CreateWindow(title, themeName)
                     })
                     
                     UI:Create("UIPadding", {
-                        PaddingLeft = UDim_new(0, 10),
+                        PaddingLeft = UDim.new(0, 10),
                         Parent = OptionBtn
                     })
                     
                     UI:Create("UICorner", {
-                        CornerRadius = UDim_new(0, 6),
+                        CornerRadius = UDim.new(0, 6),
                         Parent = OptionBtn
                     })
                     
                     -- Анимация при наведении
-                    table_insert(WindowObj.Connections, OptionBtn.MouseEnter:Connect(function()
+                    table.insert(WindowObj.Connections, OptionBtn.MouseEnter:Connect(function()
                         if option ~= selected then
-                            services.TweenService:Create(OptionBtn, TweenInfo_new(0.15), {
+                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
                                 BackgroundTransparency = 0.4,
                                 TextColor3 = theme.Text
                             }):Play()
                         end
                     end))
                     
-                    table_insert(WindowObj.Connections, OptionBtn.MouseLeave:Connect(function()
+                    table.insert(WindowObj.Connections, OptionBtn.MouseLeave:Connect(function()
                         if option ~= selected then
-                            services.TweenService:Create(OptionBtn, TweenInfo_new(0.15), {
+                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
                                 BackgroundTransparency = 0.6,
                                 TextColor3 = theme.TextSecondary
                             }):Play()
@@ -1285,7 +1265,7 @@ function GeminiLib:CreateWindow(title, themeName)
                     end))
                     
                     -- Выбор опции
-                    table_insert(WindowObj.Connections, OptionBtn.MouseButton1Click:Connect(function()
+                    table.insert(WindowObj.Connections, OptionBtn.MouseButton1Click:Connect(function()
                         selected = option
                         DropBtn.Text = "  " .. text .. ": " .. selected
                         
@@ -1293,12 +1273,12 @@ function GeminiLib:CreateWindow(title, themeName)
                         for _, btn in pairs(OptionsList:GetChildren()) do
                             if btn:IsA("TextButton") then
                                 if btn.Text == selected then
-                                    services.TweenService:Create(btn, TweenInfo_new(0.15), {
+                                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
                                         BackgroundTransparency = 0.3,
                                         TextColor3 = theme.Accent
                                     }):Play()
                                 else
-                                    services.TweenService:Create(btn, TweenInfo_new(0.15), {
+                                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
                                         BackgroundTransparency = 0.6,
                                         TextColor3 = theme.TextSecondary
                                     }):Play()
@@ -1314,7 +1294,7 @@ function GeminiLib:CreateWindow(title, themeName)
                         end
                     end))
 
-                    table_insert(dropdownOptions, OptionBtn)
+                    table.insert(dropdownOptions, OptionBtn)
                 end
             end
 
@@ -1346,25 +1326,25 @@ function GeminiLib:CreateWindow(title, themeName)
                     end
                     
                     -- Ограничиваем позицию
-                    relativeY = math_clamp(relativeY, 10, viewportSize.Y - 180 - 10)
+                    relativeY = math.clamp(relativeY, 10, viewportSize.Y - 180 - 10)
                     
-                    dropdownContainer.Position = UDim2_new(0, dropAbsPos.X, 0, relativeY)
+                    dropdownContainer.Position = UDim2.new(0, dropAbsPos.X, 0, relativeY)
                     dropdownContainer.Visible = true
-                    services.TweenService:Create(dropdownContainer, TweenInfo_new(0.2), {
-                        Size = UDim2_new(0, DropFrame.AbsoluteSize.X, 0, 180)
+                    services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
+                        Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 180)
                     }):Play()
                     
-                    services.TweenService:Create(Arrow, TweenInfo_new(0.2), {
+                    services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
                         Rotation = 180,
                         TextColor3 = theme.Accent
                     }):Play()
                     
-                    services.TweenService:Create(DropFrame, TweenInfo_new(0.15), {
+                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
                         BackgroundTransparency = 0.2,
-                        Size = UDim2_new(1, -12, 0, 38)
+                        Size = UDim2.new(1, -12, 0, 38)
                     }):Play()
                     
-                    services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                         Transparency = 0.4
                     }):Play()
                     
@@ -1378,25 +1358,25 @@ function GeminiLib:CreateWindow(title, themeName)
                     }
                 else
                     if dropdownContainer then
-                        services.TweenService:Create(dropdownContainer, TweenInfo_new(0.2), {
-                            Size = UDim2_new(0, DropFrame.AbsoluteSize.X, 0, 0)
+                        services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
+                            Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
                         }):Play()
                         
-                        services.TweenService:Create(Arrow, TweenInfo_new(0.2), {
+                        services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
                             Rotation = 0,
                             TextColor3 = theme.TextSecondary
                         }):Play()
                         
-                        services.TweenService:Create(DropFrame, TweenInfo_new(0.15), {
+                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
                             BackgroundTransparency = 0.5,
-                            Size = UDim2_new(1, -16, 0, 36)
+                            Size = UDim2.new(1, -16, 0, 36)
                         }):Play()
                         
-                        services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                             Transparency = 0.8
                         }):Play()
                         
-                        task_wait(0.2)
+                        task.wait(0.2)
                         dropdownContainer:Destroy()
                         dropdownContainer = nil
                     end
@@ -1407,13 +1387,13 @@ function GeminiLib:CreateWindow(title, themeName)
             end
             
             -- Анимации кнопки
-            table_insert(WindowObj.Connections, DropBtn.MouseEnter:Connect(function()
+            table.insert(WindowObj.Connections, DropBtn.MouseEnter:Connect(function()
                 if not isOpen then
-                    services.TweenService:Create(DropFrame, TweenInfo_new(0.15), {
+                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
                         BackgroundTransparency = 0.4,
-                        Size = UDim2_new(1, -12, 0, 38)
+                        Size = UDim2.new(1, -12, 0, 38)
                     }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                         Transparency = 0.6
                     }):Play()
                 end
@@ -1422,20 +1402,20 @@ function GeminiLib:CreateWindow(title, themeName)
             DropBtn.MouseButton1Click:Connect(function()
             end)
 
-            table_insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
+            table.insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
                 if not isOpen then
-                    services.TweenService:Create(DropFrame, TweenInfo_new(0.15), {
+                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
                         BackgroundTransparency = 0.5,
-                        Size = UDim2_new(1, -16, 0, 36)
+                        Size = UDim2.new(1, -16, 0, 36)
                     }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo_new(0.15), {
+                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
                         Transparency = 0.8
                     }):Play()
                 end
             end))
             
             -- Открытие dropdown
-            table_insert(WindowObj.Connections, DropBtn.MouseButton1Click:Connect(toggleDropdown))
+            table.insert(WindowObj.Connections, DropBtn.MouseButton1Click:Connect(toggleDropdown))
             
             -- Закрытие dropdown при клике вне его
             local function closeOnClickOutside(input)
@@ -1462,11 +1442,11 @@ function GeminiLib:CreateWindow(title, themeName)
             end
             
             local closeConnection = services.UIS.InputBegan:Connect(closeOnClickOutside)
-            table_insert(WindowObj.Connections, closeConnection)
+            table.insert(WindowObj.Connections, closeConnection)
             
-            table_insert(Tab.Elements, DropFrame)
-            table_insert(WindowObj.Elements, DropFrame)
-            table_insert(Tab.Dropdowns, DropFrame)
+            table.insert(Tab.Elements, DropFrame)
+            table.insert(WindowObj.Elements, DropFrame)
+            table.insert(Tab.Dropdowns, DropFrame)
             
             -- Возвращаем объект для управления
             local dropdownObj = {
@@ -1509,14 +1489,14 @@ function GeminiLib:CreateWindow(title, themeName)
                     end
                     
                     if not exists then
-                        table_insert(options, newOption)
+                        table.insert(options, newOption)
                     end
                 end,
                 
                 RemoveOption = function(optionToRemove)
                     for i, v in ipairs(options) do
                         if v == optionToRemove then
-                            table_remove(options, i)
+                            table.remove(options, i)
                             if selected == optionToRemove then
                                 selected = options[1] or ""
                                 DropBtn.Text = "  " .. text .. ": " .. selected
@@ -1554,7 +1534,7 @@ function GeminiLib:CreateWindow(title, themeName)
                     -- ПРОВЕРКА: используем напрямую GeminiLib.UI, если локальный UI недоступен
                     local OptBtn = (UI or GeminiLib.UI):Create("TextButton", {
                         Name = "Option_" .. tostring(option),
-                        Size = UDim2_new(1, -10, 0, 32),
+                        Size = UDim2.new(1, -10, 0, 32),
                         BackgroundColor3 = theme.Element,
                         BackgroundTransparency = 0.4,
                         Text = tostring(option),
@@ -1566,7 +1546,7 @@ function GeminiLib:CreateWindow(title, themeName)
                     
                     -- Используем безопасный вызов для создания угла
                     local ui_lib = (UI or GeminiLib.UI)
-                    ui_lib:Create("UICorner", { CornerRadius = UDim_new(0, 4), Parent = OptBtn })
+                    ui_lib:Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = OptBtn })
                     
                     OptBtn.MouseButton1Click:Connect(function()
                         selected = option
@@ -1580,7 +1560,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 
                 -- Обновление размера (исправление ошибки с #newList)
                 local listCount = #options
-                OptionsList.CanvasSize = UDim2_new(1, -5, 0, listCount * 34 + 5)
+                OptionsList.CanvasSize = UDim2.new(1, -5, 0, listCount * 34 + 5)
             end
 
 
@@ -1597,26 +1577,26 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end
             
-            Page.CanvasSize = UDim2_new(0, 0, 0, totalHeight + 15)
+            Page.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 15)
         end
 
         Page.ChildAdded:Connect(function()
-            task_wait(0.01)
+            task.wait(0.01)
             updatePageSize()
         end)
         
         Page.ChildRemoved:Connect(function()
-            task_wait(0.01)
+            task.wait(0.01)
             updatePageSize()
         end)
 
-        task_spawn(function()
-            task_wait(0.1)
+        task.spawn(function()
+            task.wait(0.1)
             updatePageSize()
         end)
 
         -- Добавляем вкладку в список
-        table_insert(WindowObj.Tabs, Tab)
+        table.insert(WindowObj.Tabs, Tab)
         
         -- Активируем первую вкладку
         if #WindowObj.Tabs == 1 then
