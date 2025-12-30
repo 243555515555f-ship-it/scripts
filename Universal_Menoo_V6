@@ -45,32 +45,40 @@ local function getRootPart()
     return p and p:FindFirstChild("HumanoidRootPart")
 end
 
-local function getRainbowColor(speed, saturation, value)
-    speed = speed or 0.5
-    saturation = saturation or 1
-    value = value or 1
-    
-    -- Используем tick() для плавного изменения оттенка от 0 до 1
-    local hue = (tick() * speed) % 1
-    return Color3.fromHSV(hue, saturation, value)
+
+local function Notify(text, duration)
+    GeminiLib:CreateNotification({
+        Title = "Menoo " .. GeminiLib:Version(),
+        Text = text,
+        Duration = duration or 5
+    })
 end
 
-local MenooWindow = GeminiLib:CreateWindow("Menoo V4 | by nxs_Bounty", "Dark")
+local currentTheme = "Cyberpunk"
+local MenooWindow = GeminiLib:CreateWindow("Menoo", currentTheme)
 
 local PlrBypassTab = MenooWindow:CreateTab("Player Bypass", "🎅")
-local OtherToolsTab = MenooWindow:CreateTab("Other Tools", "🤶")
-local SettingsTab = MenooWindow:CreateTab("Settings", "🧑‍🎄")
+local ESPTab = MenooWindow:CreateTab("ESP Tools", "🎇")
+local XrayTab = MenooWindow:CreateTab("Xray Tools", "🎄")
+local GameSpecificTab = MenooWindow:CreateTab("Game Specific Tools", "🎄")
+local MasterFuncTab = MenooWindow:CreateTab("Master Functions", "🎇")
+local OtherToolsTab = MenooWindow:CreateTab("Other Tools", "🧑‍🎄")
+local SettingsTab = MenooWindow:CreateTab("Settings", "🎇")
+local CreditsTab = MenooWindow:CreateTab("Credits", "🎁")
 
 
 local oldWalkSpeed = getPlayerHumanoid().WalkSpeed
 local oldJumpPower = getPlayerHumanoid().JumpPower
 local newWalkSpeed = 0
+local newJumpPower = 0
 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 PlrBypassTab:Label("Player Bypass Features ♾︎")
 
-local walkSpeedSlider = PlrBypassTab:Slider("WalkSpeed Bypass Value", oldWalkSpeed, 200, 16, function(value)
+PlrBypassTab:Slider("WalkSpeed Bypass Value", oldWalkSpeed, 200, oldWalkSpeed, function(value)
     newWalkSpeed = value
-end, 16)
+end, oldWalkSpeed)
 
 PlrBypassTab:Toggle("Enable WalkSpeed Bypass", false, function(state)
     local plr = getPlayerHumanoid()
@@ -81,12 +89,8 @@ PlrBypassTab:Toggle("Enable WalkSpeed Bypass", false, function(state)
     end
 end)
 
-PlrBypassTab:Button("Reset WalkSpeed", function()
-    local plr = getPlayerHumanoid()
-    plr.WalkSpeed = oldWalkSpeed
-    walkSpeedSlider:SetValue(oldWalkSpeed)
-end, "")
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 PlrBypassTab:Label("Jump Bypass Features ⛷")
 
 PlrBypassTab:Button("Jump Enable Bypass (If dont work)", function()
@@ -94,237 +98,172 @@ PlrBypassTab:Button("Jump Enable Bypass (If dont work)", function()
     plr.UseJumpPower = true
     plr.AutoJumpEnabled = true
 end, "")
-local jumpPowerSlider = PlrBypassTab:Slider("JumpPower Bypass Value", oldJumpPower, 350, 50, function(value)
-    local plr = getPlayerHumanoid()
-    plr.JumpPower = value
-end, 50)
-PlrBypassTab:Button("Reset JumpPower", function()
-    local plr = getPlayerHumanoid()
-    plr.JumpPower = oldJumpPower
-    jumpPowerSlider:SetValue(oldJumpPower)
+PlrBypassTab:Slider("JumpPower Bypass Value", oldJumpPower, 350, oldJumpPower, function(value)
+    newJumpPower = value
+end, oldJumpPower)
+PlrBypassTab:Toggle("JumpPower On/Off", false, function(state)
+    if state then
+        local plr = getPlayerHumanoid()
+        plr.JumpPower = newJumpPower
+    else
+        local plr = getPlayerHumanoid()
+        plr.JumpPower = oldJumpPower
+    end
 end, "")
 
-PlrBypassTab:Label("Fly Tools𖨆")
 
--- Flight system (Исправленный)
-local FLYING = false
-local QEfly = true
-local iyflyspeed = 1
-local vehicleflyspeed = 1
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+local CAS = game:GetService("ContextActionService")
+local ACTION_NAME = "DisableCtrlGameBind"
 
-local flyKeyDown, flyKeyUp
+PlrBypassTab:Label("Fly Tools (WASD, SPACE, LEFT CTRL) ✈")
 
-local function sFLY(vfly)
-    local char = getPlayerObject()
-    local humanoid = getPlayerHumanoid()
-    local T = getRootPart()
-    
-    if not T then return end
-
-    if flyKeyDown then flyKeyDown:Disconnect() flyKeyDown = nil end
-    if flyKeyUp then flyKeyUp:Disconnect() flyKeyUp = nil end
-
-    local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-    local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-    local SPEED = 0
-
-    local function FLY()
-        FLYING = true
-        local BG = Instance.new('BodyGyro')
-        local BV = Instance.new('BodyVelocity')
-        BG.P = 9e4
-        BG.Parent = T
-        BV.Parent = T
-        BG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-        BG.CFrame = T.CFrame
-        BV.Velocity = Vector3.new(0, 0, 0)
-        BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-        
-        task.spawn(function()
-            repeat task.wait()
-                local camera = workspace.CurrentCamera
-                if not vfly and humanoid then humanoid.PlatformStand = true end
-
-                if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
-                    SPEED = 50
-                elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
-                    SPEED = 0
-                end
-                
-                if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
-                    BV.Velocity = ((camera.CFrame.LookVector * (CONTROL.F + CONTROL.B)) + 
-                                   ((camera.CFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - camera.CFrame.p)) * SPEED
-                    lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
-                elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
-                    BV.Velocity = ((camera.CFrame.LookVector * (lCONTROL.F + lCONTROL.B)) + 
-                                    ((camera.CFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - camera.CFrame.p)) * SPEED
-                else
-                    BV.Velocity = Vector3.new(0, 0, 0)
-                end
-                BG.CFrame = camera.CFrame
-            until not FLYING
-            
-            CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-            lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-            SPEED = 0
-            BG:Destroy()
-            BV:Destroy()
-            if humanoid then humanoid.PlatformStand = false end
-        end)
-    end
-
-    flyKeyDown = UserInputService.InputBegan:Connect(function(input, processed)
-        if processed then return end
-        if input.KeyCode == Enum.KeyCode.W then CONTROL.F = (vfly and vehicleflyspeed or iyflyspeed)
-        elseif input.KeyCode == Enum.KeyCode.S then CONTROL.B = - (vfly and vehicleflyspeed or iyflyspeed)
-        elseif input.KeyCode == Enum.KeyCode.A then CONTROL.L = - (vfly and vehicleflyspeed or iyflyspeed)
-        elseif input.KeyCode == Enum.KeyCode.D then CONTROL.R = (vfly and vehicleflyspeed or iyflyspeed)
-        elseif input.KeyCode == Enum.KeyCode.E and QEfly then CONTROL.Q = (vfly and vehicleflyspeed or iyflyspeed) * 2
-        elseif input.KeyCode == Enum.KeyCode.Q and QEfly then CONTROL.E = -(vfly and vehicleflyspeed or iyflyspeed) * 2
-        end
-    end)
-
-    flyKeyUp = UserInputService.InputEnded:Connect(function(input, processed)
-        if processed then return end
-        if input.KeyCode == Enum.KeyCode.W then CONTROL.F = 0
-        elseif input.KeyCode == Enum.KeyCode.S then CONTROL.B = 0
-        elseif input.KeyCode == Enum.KeyCode.A then CONTROL.L = 0
-        elseif input.KeyCode == Enum.KeyCode.D then CONTROL.R = 0
-        elseif input.KeyCode == Enum.KeyCode.E then CONTROL.Q = 0
-        elseif input.KeyCode == Enum.KeyCode.Q then CONTROL.E = 0
-        end
-    end)
-    
-    FLY()
-end
-
-local function NOFLY()
-    FLYING = false
-    if flyKeyDown then flyKeyDown:Disconnect() flyKeyDown = nil end
-    if flyKeyUp then flyKeyUp:Disconnect() flyKeyUp = nil end
-    local humanoid = getPlayerHumanoid()
-    if humanoid then humanoid.PlatformStand = false end
-end
-
--- Mobile flight
-local velocityHandlerName = "MFlyVel" .. math.random(1, 9999)
-local gyroHandlerName = "MFlyGyro" .. math.random(1, 9999)
-local mfly1, mfly2
-
-local function unmobilefly()
-    FLYING = false
-    local char = getPlayerObject()
-    if char then
-        local root = getRootPart()
-        if root then
-            pcall(function() root:FindFirstChild(velocityHandlerName):Destroy() end)
-            pcall(function() root:FindFirstChild(gyroHandlerName):Destroy() end)
-        end
-        local humanoid = getPlayerHumanoid()
-        if humanoid then humanoid.PlatformStand = false end
-    end
-    if mfly1 then mfly1:Disconnect() mfly1 = nil end
-    if mfly2 then mfly2:Disconnect() mfly2 = nil end
-end
-
-local function mobilefly(vfly)
-    unmobilefly()
-    FLYING = true
-    
-    local char = getPlayerObject()
-    local root = getRootPart()
-    if not root then return end
-    
-    local bv = Instance.new("BodyVelocity")
-    bv.Name = velocityHandlerName
-    bv.Parent = root
-    bv.MaxForce = Vector3.new(0, 0, 0)
-    bv.Velocity = Vector3.new(0, 0, 0)
-
-    local bg = Instance.new("BodyGyro")
-    bg.Name = gyroHandlerName
-    bg.Parent = root
-    bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bg.P = 1000
-    bg.D = 50
-
-    mfly2 = RunService.RenderStepped:Connect(function()
-        local char = getPlayerObject()
-        if not char then return end
-        
-        local root = getRootPart()
-        local humanoid = getPlayerHumanoid()
-        local camera = workspace.CurrentCamera
-        
-        if humanoid and root and root:FindFirstChild(velocityHandlerName) and root:FindFirstChild(gyroHandlerName) then
-            local VelocityHandler = root[velocityHandlerName]
-            local GyroHandler = root[gyroHandlerName]
-
-            VelocityHandler.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            GyroHandler.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            if not vfly then humanoid.PlatformStand = true end
-            GyroHandler.CFrame = camera.CoordinateFrame
-            
-            local moveDir = humanoid.MoveDirection
-            if moveDir.Magnitude > 0 then
-                VelocityHandler.Velocity = camera.CFrame:VectorToWorldSpace(moveDir) * ((vfly and vehicleflyspeed or iyflyspeed) * 50)
-            else
-                VelocityHandler.Velocity = Vector3.new(0, 0, 0)
+local function DisableGameControl()
+    CAS:BindActionAtPriority(
+        ACTION_NAME,
+        function(actionName, inputState, inputObject)
+            -- Проверяем, нажал ли пользователь кнопку или отпустил
+            if inputState == Enum.UserInputState.Begin then
+                _G.FlyDownActive = true  -- Включаем флаг движения вниз
+            elseif inputState == Enum.UserInputState.End then
+                _G.FlyDownActive = false -- Выключаем флаг
             end
-        end
-    end)
+            
+            -- Возвращаем Sink, чтобы игра (Blox Fruits и др.) не видела Ctrl
+            return Enum.ContextActionResult.Sink
+        end,
+        false, 
+        Enum.ContextActionPriority.High.Value + 1000, 
+        Enum.KeyCode.LeftControl,
+        Enum.KeyCode.RightControl
+    )
+end
+local function EnableGameControl()
+    _G.FlyDownActive = false
+    CAS:UnbindAction(ACTION_NAME)
 end
 
--- Unified interface
-local function toggleFly()
-    if FLYING then
-        if UserInputService.TouchEnabled then
-            unmobilefly()
-        else
-            NOFLY()
+
+
+local Flight = {
+    Enabled = false,
+    Speed = 50,
+    VerticalUp = false,
+    VerticalDown = false,
+    Connection = nil,
+    ForceName = "FlightForce_" .. math.random(100, 999)
+}
+
+local KeyState = {W = 0, S = 0, A = 0, D = 0}
+
+-- 1. Унифицированный ввод
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    local kc = input.KeyCode
+    if KeyState[kc.Name] ~= nil then KeyState[kc.Name] = 1 end
+    if kc == Enum.KeyCode.Space then Flight.VerticalUp = true end
+    if kc == Enum.KeyCode.LeftControl then Flight.VerticalDown = true end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    local kc = input.KeyCode
+    if KeyState[kc.Name] ~= nil then KeyState[kc.Name] = 0 end
+    if kc == Enum.KeyCode.Space then Flight.VerticalUp = false end
+    if kc == Enum.KeyCode.LeftControl then Flight.VerticalDown = false end
+end)
+
+-- 2. Ядро полета
+local function flightUpdate()
+    if not Flight.Enabled then return end
+    local rp = getRootPart()
+    local hum = getPlayerHumanoid()
+    if not rp or not hum then return end
+
+    local cam = workspace.CurrentCamera
+    local cf = cam.CFrame
+    
+    local moveDir = Vector3.new(0, 0, 0)
+    local vertical = (Flight.VerticalUp and 1 or 0) - (Flight.VerticalDown and 1 or 0)
+
+    if UserInputService.TouchEnabled then
+        -- Mobile: берем направление джойстика
+        local joyDir = hum.MoveDirection
+        if joyDir.Magnitude > 0.05 then
+            -- Если тянем джойстик, летим туда, куда смотрит камера
+            moveDir = cf:VectorToWorldSpace(Vector3.new(joyDir.X, 0, -joyDir.Z).Unit)
+            -- Наклон камеры определяет высоту (на мобилках это удобнее)
+            moveDir = (moveDir + Vector3.new(0, cf.LookVector.Y * 1.5, 0)).Unit
         end
     else
-        if UserInputService.TouchEnabled then
-            mobilefly(false)
-        else
-            sFLY(false)
-        end
+        -- PC: Расчет WASD
+        local forward = (KeyState.W - KeyState.S)
+        local side = (KeyState.D - KeyState.A)
+        
+        -- Движение по плоскости XZ
+        local camXZ = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z).Unit
+        local camRightXZ = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z).Unit
+        
+        moveDir = (camXZ * forward + camRightXZ * side)
+        if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
+    end
+
+    -- Применяем скорость
+    local force = rp:FindFirstChild(Flight.ForceName)
+    if force then
+        force.Velocity = (moveDir * Flight.Speed) + Vector3.new(0, vertical * Flight.Speed, 0)
     end
 end
 
-local function setFlySpeed(speed)
-    iyflyspeed = speed
-    if FLYING then
-        if UserInputService.TouchEnabled then
-            unmobilefly()
-            task.wait(0.1)
-            mobilefly(false)
-        else
-            NOFLY()
-            task.wait(0.1)
-            sFLY(false)
-        end
-    end
+-- 3. Запуск и Остановка
+local function startFlight()
+    if Flight.Enabled then return end
+    Flight.Enabled = true
+    local rp = getRootPart()
+    if not rp then return end
+
+    local bv = Instance.new("BodyVelocity")
+    bv.Name = Flight.ForceName
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = rp
+
+    Flight.Connection = RunService.Heartbeat:Connect(flightUpdate)
+    getPlayerHumanoid().PlatformStand = true
 end
 
--- Fly Speed (Slider)
-PlrBypassTab:Slider("Fly Speed", 1, 70, 20,function(Value)
-    setFlySpeed(Value)
-end, "Very Fast")
--- Fly (Toggle)
-PlrBypassTab:Toggle("Fly", false,
-    function(on)
-        if on then
-            toggleFly()
+local function stopFlight()
+    Flight.Enabled = false
+    if Flight.Connection then Flight.Connection:Disconnect() end
+    local rp = getRootPart()
+    local bv = rp and rp:FindFirstChild(Flight.ForceName)
+    if bv then bv:Destroy() end
+    getPlayerHumanoid().PlatformStand = false
+end
+
+PlrBypassTab:Slider("Fly Speed", 10, 500, 50,
+    function(value)
+        Flight.Speed = value
+    end
+)
+
+PlrBypassTab:Toggle("Fly On/Off", false,
+    function(state)
+        if state then
+            DisableGameControl()
+            startFlight()
         else
-            toggleFly()
+            EnableGameControl()
+            stopFlight()
         end
     end
 )
 
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 PlrBypassTab:Label("Strange Func")
 local Noclip = { Enabled = false, Conn = nil }
-PlrBypassTab:Toggle("NoClip", false,
+PlrBypassTab:Toggle("NoClip On/Off", false,
     function(on)
         if on then
             if Noclip.Conn then Noclip.Conn:Disconnect() end
@@ -354,26 +293,24 @@ PlrBypassTab:Toggle("NoClip", false,
     end
 )
 local God = { Enabled = false, Conn = nil }
-PlrBypassTab:Toggle("Invincible || Godmode", false, 
-    function(state)
-        local h = getPlayerHumanoid()
-        if state then
-            if h then
-                if God.Conn then God.Conn:Disconnect() end
-                God.Conn = h.HealthChanged:Connect(function()
-                    if h and h.Health < 0.5 then
-                        h.Health = h.MaxHealth or 100
-                    end
-                end)
-                God.Enabled = true
-            end
-        else
-            if God.Conn then God.Conn:Disconnect() God.Conn = nil end
-            if h then h.Health = h.MaxHealth or 100 end
-            God.Enabled = false
+PlrBypassTab:Toggle("Godmode On/Off", false, function(state)
+    local h = getPlayerHumanoid()
+    if state then
+        if h then
+            if God.Conn then God.Conn:Disconnect() end
+            God.Conn = h.HealthChanged:Connect(function()
+                if h and h.Health < 0.5 then
+                    h.Health = h.MaxHealth or 100
+                 end
+            end)
+            God.Enabled = true
         end
+    else
+        if God.Conn then God.Conn:Disconnect() God.Conn = nil end
+        if h then h.Health = h.MaxHealth or 100 end
+        God.Enabled = false
     end
-)
+end)
 
 -- Invisible Bypass
 local PlayerValue = {} do
@@ -428,9 +365,11 @@ function StopFreecam()
 	Workspace.Camera.FieldOfView = 70
 	fcRunning = false
 end
+
 local viewing = nil
 local viewDied = nil
 local viewChanged = nil
+
 function fixcam()
     StopFreecam()
     if viewing ~= nil then
@@ -458,154 +397,152 @@ end
 local invisRunning = false
 local Invisible = { Enabled = false, Conn = nil, TurnVisibleFunc = nil, invisFix = nil, invisDied = nil, InvisibleCharacter = nil, OriginalCharacter = nil }
 
-PlrBypassTab:Toggle("Invisible", false,
-    function(state)
-        if state then
-            -- TURN INVISIBLE
-            if invisRunning then return end
-            invisRunning = true
-            repeat task.wait(.1) until player.Character
-            local Character = player.Character
-            Character.Archivable = true
-            local IsInvis = false
-            local InvisibleCharacter = Character:Clone()
-            InvisibleCharacter.Parent = Lighting
-            local Void = Workspace.FallenPartsDestroyHeight
+PlrBypassTab:Toggle("Invisible On/Off", false, function(state)
+    if state then
+        -- TURN INVISIBLE
+        if invisRunning then return end
+        invisRunning = true
+        repeat task.wait(.1) until player.Character
+        local Character = player.Character
+        Character.Archivable = true
+        local IsInvis = false
+        local InvisibleCharacter = Character:Clone()
+        InvisibleCharacter.Parent = Lighting
+        local Void = Workspace.FallenPartsDestroyHeight
 
-            InvisibleCharacter.Name = ""
+        InvisibleCharacter.Name = ""
 
-            -- Store references
-            Invisible.InvisibleCharacter = InvisibleCharacter
-            Invisible.OriginalCharacter = Character
+        -- Store references
+        Invisible.InvisibleCharacter = InvisibleCharacter
+        Invisible.OriginalCharacter = Character
 
-            Invisible.invisFix = RunService.Stepped:Connect(function()
-                pcall(function()
-                    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-                    local IsInteger = tostring(Void):find('-') and true or false
-                    local Pos = player.Character.HumanoidRootPart.Position
-                    local Pos_String = tostring(Pos)
-                    local Pos_Seperate = Pos_String:split(', ')
-                    local Y = tonumber(Pos_Seperate[2])
-                    if (IsInteger and Y <= Void) or (not IsInteger and Y >= Void) then
-                        Invisible.TurnVisibleFunc()
-                    end
-                end)
-            end)
-
-            for i,v in pairs(InvisibleCharacter:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    if v.Name == "HumanoidRootPart" then
-                        v.Transparency = 1
-                    else
-                        v.Transparency = .5
-                    end
-                end
-            end
-
-            Invisible.invisDied = InvisibleCharacter:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
-                if Invisible.TurnVisibleFunc then
+        Invisible.invisFix = RunService.Stepped:Connect(function()
+            pcall(function()
+                if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+                local IsInteger = tostring(Void):find('-') and true or false
+                local Pos = player.Character.HumanoidRootPart.Position
+                local Pos_String = tostring(Pos)
+                local Pos_Seperate = Pos_String:split(', ')
+                local Y = tonumber(Pos_Seperate[2])
+                if (IsInteger and Y <= Void) or (not IsInteger and Y >= Void) then
                     Invisible.TurnVisibleFunc()
                 end
             end)
+        end)
 
-            function Invisible.TurnVisibleFunc()
-                if not invisRunning then return end
-                invisRunning = false
-                Invisible.Enabled = false
-
-                pcall(function()
-                    if Invisible.invisFix then
-                        Invisible.invisFix:Disconnect()
-                        Invisible.invisFix = nil
-                    end
-                    if Invisible.invisDied then
-                        Invisible.invisDied:Disconnect()
-                        Invisible.invisDied = nil
-                    end
-
-                    -- destroy the invisible clone
-                    if Invisible.InvisibleCharacter and Invisible.InvisibleCharacter.Parent then
-                        Invisible.InvisibleCharacter:Destroy()
-                        Invisible.InvisibleCharacter = nil
-                    end
-
-                    if Invisible.OriginalCharacter then
-                        local visibleHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                        local targetCFrame = visibleHRP and visibleHRP.CFrame or (Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") and Invisible.OriginalCharacter.HumanoidRootPart.CFrame)
-
-                        Invisible.OriginalCharacter.Parent = Workspace
-
-                        local origHRP = Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") or Invisible.OriginalCharacter:WaitForChild("HumanoidRootPart", 1)
-                        local humanoid = Invisible.OriginalCharacter:FindFirstChildOfClass("Humanoid")
-
-                        if origHRP and targetCFrame then
-                            origHRP.CFrame = targetCFrame
-                        end
-
-                        for _, part in pairs(Invisible.OriginalCharacter:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                pcall(function()
-                                    part.Anchored = false
-                                    part.CanCollide = true
-                                end)
-                                for _, child in pairs(part:GetChildren()) do
-                                    if child:IsA("BodyVelocity") or child:IsA("BodyAngularVelocity") or child:IsA("BodyForce")
-                                    or child:IsA("VectorForce") or child:IsA("LinearVelocity") then
-                                        pcall(child.Destroy, child)
-                                    end
-                                end
-                            end
-                        end
-
-                        if humanoid then
-                            pcall(function()
-                                humanoid.PlatformStand = false
-                                humanoid.Sit = false
-                                humanoid.WalkSpeed = (humanoid.WalkSpeed and humanoid.WalkSpeed > 0) and humanoid.WalkSpeed or 16
-                                humanoid.JumpPower = (humanoid.JumpPower and humanoid.JumpPower > 0) and humanoid.JumpPower or 50
-                            end)
-                        end
-
-                        player.Character = Invisible.OriginalCharacter
-
-                        local animate = Invisible.OriginalCharacter:FindFirstChild("Animate")
-                        if animate then
-                            animate.Disabled = true
-                            task.wait(0.05)
-                            animate.Disabled = false
-                        end
-                    end
-
-                    fixcam()
-                end)
+        for i,v in pairs(InvisibleCharacter:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if v.Name == "HumanoidRootPart" then
+                    v.Transparency = 1
+                else
+                    v.Transparency = .5
+                end
             end
+        end
 
-            IsInvis = true
-            local CF_1 = Character.HumanoidRootPart.CFrame
-            Character:MoveTo(Vector3.new(0, math.pi*1000000, 0))
-            Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-            task.wait(.2)
-            Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-            Character.Parent = Lighting
-            InvisibleCharacter.Parent = Workspace
-            InvisibleCharacter.HumanoidRootPart.CFrame = CF_1
-            player.Character = InvisibleCharacter
-            fixcam()
-            player.Character.Animate.Disabled = true
-            player.Character.Animate.Disabled = false
-            Invisible.Enabled = true
-
-        else
-            -- TURN VISIBLE
+        Invisible.invisDied = InvisibleCharacter:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
             if Invisible.TurnVisibleFunc then
                 Invisible.TurnVisibleFunc()
             end
+        end)
 
+        function Invisible.TurnVisibleFunc()
+            if not invisRunning then return end
+            invisRunning = false
+            Invisible.Enabled = false
+
+            pcall(function()
+                if Invisible.invisFix then
+                    Invisible.invisFix:Disconnect()
+                    Invisible.invisFix = nil
+                end
+                if Invisible.invisDied then
+                    Invisible.invisDied:Disconnect()
+                    Invisible.invisDied = nil
+                end
+
+                -- destroy the invisible clone
+                if Invisible.InvisibleCharacter and Invisible.InvisibleCharacter.Parent then
+                    Invisible.InvisibleCharacter:Destroy()
+                    Invisible.InvisibleCharacter = nil
+                end
+
+                if Invisible.OriginalCharacter then
+                    local visibleHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    local targetCFrame = visibleHRP and visibleHRP.CFrame or (Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") and Invisible.OriginalCharacter.HumanoidRootPart.CFrame)
+
+                    Invisible.OriginalCharacter.Parent = Workspace
+
+                    local origHRP = Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") or Invisible.OriginalCharacter:WaitForChild("HumanoidRootPart", 1)
+                    local humanoid = Invisible.OriginalCharacter:FindFirstChildOfClass("Humanoid")
+
+                    origHRP.CFrame = targetCFrame
+
+                    for _, part in pairs(Invisible.OriginalCharacter:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            pcall(function()
+                                part.Anchored = false
+                                part.CanCollide = true
+                            end)
+                            for _, child in pairs(part:GetChildren()) do
+                                if child:IsA("BodyVelocity") or child:IsA("BodyAngularVelocity") or child:IsA("BodyForce")
+                                or child:IsA("VectorForce") or child:IsA("LinearVelocity") then
+                                    pcall(child.Destroy, child)
+                                end
+                            end
+                        end
+                    end
+
+                    if humanoid then
+                        pcall(function()
+                            humanoid.PlatformStand = false
+                            humanoid.Sit = false
+                            humanoid.WalkSpeed = (humanoid.WalkSpeed and humanoid.WalkSpeed > 0) and humanoid.WalkSpeed or 16
+                            humanoid.JumpPower = (humanoid.JumpPower and humanoid.JumpPower > 0) and humanoid.JumpPower or 50
+                        end)
+                    end
+
+                    player.Character = Invisible.OriginalCharacter
+
+                    local animate = Invisible.OriginalCharacter:FindFirstChild("Animate")
+                    if animate then
+                        animate.Disabled = true
+                        task.wait(0.05)
+                        animate.Disabled = false
+                    end
+                end
+
+                fixcam()
+            end)
         end
-    end
-)
 
-PlrBypassTab:Label("ESP Tools☄")
+        IsInvis = true
+        local CF_1 = Character.HumanoidRootPart.CFrame
+        Character:MoveTo(Vector3.new(0, math.pi*10000, 0))
+        Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+        task.wait(.2)
+        Workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+        Character.Parent = Lighting
+        InvisibleCharacter.Parent = Workspace
+        InvisibleCharacter.HumanoidRootPart.CFrame = CF_1
+        player.Character = InvisibleCharacter
+        fixcam()
+        player.Character.Animate.Disabled = true
+        player.Character.Animate.Disabled = false
+        Invisible.Enabled = true
+
+    else
+        -- TURN VISIBLE
+        if Invisible.TurnVisibleFunc then
+            Invisible.TurnVisibleFunc()
+        end
+
+    end
+end)
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ESPTab:Label("ESP Tools☄")
 
 -- МОДУЛЬ RAINBOW HIGHLIGHT ESP
 local RainbowHighlightESP = {
@@ -734,7 +671,7 @@ local function toggleRainbowHighlightESP(state)
 end
 
 -- Использование в UI:
-PlrBypassTab:Toggle("Rainbow Highlight ESP", false, function(state)
+ESPTab:Toggle("Rainbow Highlight ESP On/Off", false, function(state)
     toggleRainbowHighlightESP(state)
 end)
 
@@ -899,7 +836,7 @@ local function toggleRainbowNameESP(state)
 end
 
 -- Использование в UI:
-PlrBypassTab:Toggle("Rainbow Name ESP", false, function(state)
+ESPTab:Toggle("Rainbow Name ESP On/Off", false, function(state)
     toggleRainbowNameESP(state)
 end)
 -----------
@@ -954,7 +891,7 @@ end)
 Players.PlayerRemoving:Connect(removeLine)
 
 -- ТВОЙ ПЕРЕКЛЮЧАТЕЛЬ
-PlrBypassTab:Toggle("Tracers ESP (Lines to Head)", false, function (State)
+ESPTab:Toggle("Tracers ESP (Lines to Head) On/Off", false, function (State)
     _G.TracersEnabled = State
     -- Если выключаем — принудительно скрываем все линии сразу
     if not State then
@@ -964,7 +901,9 @@ PlrBypassTab:Toggle("Tracers ESP (Lines to Head)", false, function (State)
     end
 end)
 
-PlrBypassTab:Label("Xray Tools𓁾𓁾")
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+XrayTab:Label("Xray Tools𓁾𓁾")
 
 local xrayEnabled = false
 local function xray()
@@ -974,7 +913,7 @@ local function xray()
         end
     end
 end
-PlrBypassTab:Toggle("XRay (works in some games)", false,
+XrayTab:Toggle("XRay On/Off", false,
     function(State)
         xrayEnabled = State
         if State then
@@ -984,23 +923,15 @@ PlrBypassTab:Toggle("XRay (works in some games)", false,
         end
     end
 )
-local xrayShootEnabled = false
-local function xrayShoot()
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") and not v.Parent:FindFirstChildWhichIsA("Humanoid") and not v.Parent.Parent:FindFirstChildWhichIsA("Humanoid") and not v.Parent.Parent:FindFirstChildWhichIsA("XrayShootPart") then
-            if xrayShootEnabled then
-                v.Position = v.Position + Vector3.new(0, 1000, 0)
-                v.Transparency = 1
-            else
-                v.Position = v.Position - Vector3.new(0, 1000, 0)
-                v.Transparency = 0
-            end
-        end
-    end
-end
-local followConnection = nil
 
-PlrBypassTab:Label("Game Specific Tools⸘")
+XrayTab:Button("Refresh XRay", function()
+    xray()
+end)
+
+XrayTab:Label("More in future updates...")
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+GameSpecificTab:Label("Game Specific Tools⸘")
 
 local RainbowFling = { 
     Enabled = false, 
@@ -1106,99 +1037,147 @@ local function toggleRainbowFling(state)
 end
 
 -- Добавляем слайдер для скорости
-PlrBypassTab:Slider("Rainbow Speed", 0.1, 10, 2, function(value)
+GameSpecificTab:Slider("Rainbow Speed", 0.1, 10, 2, function(value)
     RainbowFling.Speed = value
 end)
 
 -- Использование в UI
-PlrBypassTab:Toggle("Rainbow Fling Tool", false, function(state)
+GameSpecificTab:Toggle("Rainbow Fling Tool On/Off", false, function(state)
     toggleRainbowFling(state)
 end)
+
 -- Spin speed slider
 local spinSpeed = 10
-PlrBypassTab:Slider("Spin Speed", 10, 1000, 100,
-    function(value)
-        spinSpeed = value
-    end
-)
+GameSpecificTab:Slider("Spin Speed", 10, 1000, 100, function(value)
+    spinSpeed = value
+end)
+
 -- Spin
 local Spin = { Conn = nil }
-PlrBypassTab:Toggle("Spin", false,
-    function(State)
-        if State then
-            local p = getPlayerObject()
-            if p then
-                local rp = p:FindFirstChild("HumanoidRootPart")
-                if rp then
-                    if Spin.Conn then Spin.Conn:Disconnect() end
-                    Spin.Conn = RunService.Heartbeat:Connect(function()
-                        if rp and rp.Parent then
-                            rp.CFrame = rp.CFrame * CFrame.Angles(0, math.rad(spinSpeed) * (RunService.Heartbeat and 1/60 or 1/60), 0)
-                        end
-                    end)
-                end
+GameSpecificTab:Toggle("Spin On/Off", false,function(State)
+    if State then
+        local p = getPlayerObject()
+        if p then
+            local rp = p:FindFirstChild("HumanoidRootPart")
+            if rp then
+                if Spin.Conn then Spin.Conn:Disconnect() end
+                Spin.Conn = RunService.Heartbeat:Connect(function()
+                    if rp and rp.Parent then
+                        rp.CFrame = rp.CFrame * CFrame.Angles(0, math.rad(spinSpeed) * (RunService.Heartbeat and 1/60 or 1/60), 0)
+                    end
+                end)
             end
+        end
         else
             if Spin.Conn then Spin.Conn:Disconnect() Spin.Conn = nil end
         end
     end
 )
--- Fling
-local Flinging = false
-local function toggleFling()
-    Flinging = not Flinging
-    
-    local char = player.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not root or not hum then return end
 
-    if Flinging then
-        -- Настройка физики для "разноса" других
-        task.spawn(function()
-            while Flinging and task.wait() do
-                -- Делаем персонажа очень быстрым для движка
-                root.Velocity = Vector3.new(0, -1000, 0) -- Толкаем вниз
-                task.wait(0.01)
-                root.Velocity = Vector3.new(9999, 9999, 9999) -- Резкий рывок
-            end
+-- Giper Flinging
+local walkflinging = false
+
+local function giperWalkFling()
+    if humanoid then
+        humanoid.Died:Connect(function()
+            walkflinging = false
         end)
-        
-        -- Делаем части тела неосязаемыми для нас, но твердыми для других
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-            end
+    end
+
+
+    repeat RunService.Heartbeat:Wait()
+        local root = getRootPart()
+        local vel, movel = nil, 0.1
+
+        while not (character and character.Parent and root and root.Parent) do
+            RunService.Heartbeat:Wait()
+            character = getPlayerObject()
+            root = getRoot(character)
         end
-        
-        -- Чтобы ты не упал сквозь пол
-        local bodyVel = Instance.new("BodyVelocity")
-        bodyVel.Name = "FlingVel"
-        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bodyVel.Velocity = Vector3.new(0, 0, 0)
-        bodyVel.Parent = root
+
+        vel = root.Velocity
+        root.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+
+        RunService.RenderStepped:Wait()
+        if character and character.Parent and root and root.Parent then
+            root.Velocity = vel
+        end
+
+        RunService.Stepped:Wait()
+        if character and character.Parent and root and root.Parent then
+            root.Velocity = vel + Vector3.new(0, movel, 0)
+            movel = movel * -1
+        end
+    until walkflinging == false
+end
+
+
+
+GameSpecificTab:Toggle("Fling On/Off", false,function(State)
+    if State then
+        walkflinging = State
+        giperWalkFling()
     else
-        -- Выключение
-        if root:FindFirstChild("FlingVel") then root.FlingVel:Destroy() end
-        root.Velocity = Vector3.new(0, 0, 0)
-        root.RotVelocity = Vector3.new(0, 0, 0)
-        
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = true
-            end
+        walkflinging = State
+        giperWalkFling()
+    end
+end)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+GameSpecificTab:Label("Teleport Tools✈")
+
+local function GetPlayerNames()
+    local names = {}
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        table.insert(names, player.Name)
+    end
+    return names
+end
+
+local function teleportToPlayer(targetPlayer)
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character
+    local targetCharacter = targetPlayer and targetPlayer.Character
+
+    if character and targetCharacter then
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        local targetRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
+
+        if rootPart and targetRootPart then
+            -- Телепортируем
+            rootPart.CFrame = targetRootPart.CFrame + Vector3.new(0, 5, 0)
         end
     end
 end
-PlrBypassTab:Toggle("Fling", false,
-    function(State)
-        Flinging = State
-        toggleFling()
-    end
-)
 
-PlrBypassTab:Label("☢Master Functions☢")
+local playerList = GetPlayerNames()
+local PlayerSelector = GameSpecificTab:Dropdown("Choose Player", playerList, playerList[1] or "None", function(selected)
+    local target = game:GetService("Players"):FindFirstChild(selected)
+    teleportToPlayer(target)
+end)
+
+local function RefreshPlayerList()
+    local currentPlayers = GetPlayerNames()
+
+    if PlayerSelector and PlayerSelector.Refresh then
+        PlayerSelector:Refresh(currentPlayers)
+    end
+end
+
+local Players = game:GetService("Players")
+table.insert(MenooWindow.Connections, Players.PlayerAdded:Connect(function()
+    task.wait(1)
+    RefreshPlayerList()
+end))
+
+table.insert(MenooWindow.Connections, Players.PlayerRemoving:Connect(RefreshPlayerList))
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MasterFuncTab:Label("☢Master Functions☢")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -1258,20 +1237,20 @@ local function getClosestToMouse()
 end
 
 -- 5. Интерфейс управления
-PlrBypassTab:Toggle("Master Aim", false, function(state)
+MasterFuncTab:Toggle("Master Aim On/Off", false, function(state)
     AIM_SETTINGS.Enabled = state
     fovCircle.Visible = state and AIM_SETTINGS.ShowFOV
 end)
 
-PlrBypassTab:Slider("Aim Radius", 50, 600, 100, function(v)
+MasterFuncTab:Slider("Aim Radius", 50, 600, 100, function(v)
     AIM_SETTINGS.Radius = v
 end)
 
-PlrBypassTab:Slider("Aim Smooth (x100)", 1, 100, 70, function(v)
+MasterFuncTab:Slider("Aim Smooth (x100)", 1, 100, 70, function(v)
     AIM_SETTINGS.Smoothness = v / 100
 end)
 
-PlrBypassTab:Dropdown("Target Part", {"Head", "UpperTorso", "HumanoidRootPart"}, "Head", function(v)
+MasterFuncTab:Dropdown("Target Part", {"Head", "UpperTorso", "HumanoidRootPart"}, "Head", function(v)
     AIM_SETTINGS.Part = v
 end)
 
@@ -1375,14 +1354,14 @@ local function toggleHitbox(state)
         end)
     end
 end
-
-PlrBypassTab:Label("") -- Пустая строка для отступа
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MasterFuncTab:Label("") -- Пустая строка для отступа
 -- 4. GUI Элементы
-PlrBypassTab:Slider("Hitbox Size", 15, 70, 20, function(value)
+MasterFuncTab:Slider("Hitbox Size", 15, 70, 20, function(value)
     BigHeadcfg.Scale = value
 end)
 
-PlrBypassTab:Dropdown("Hitbox Mode", {"FFA Mode", "Team Mode"}, "Team Mode", function(value)
+MasterFuncTab:Dropdown("Hitbox Mode", {"FFA Mode", "Team Mode"}, "Team Mode", function(value)
     BigHeadcfg.Mode = value
     -- Если чит уже включен, перезапускаем его с новым режимом мгновенно
     if BigHeadcfg.Enabled then
@@ -1390,55 +1369,57 @@ PlrBypassTab:Dropdown("Hitbox Mode", {"FFA Mode", "Team Mode"}, "Team Mode", fun
     end
 end)
 
-PlrBypassTab:Toggle("Hitbox Expander", false, function(state)
+MasterFuncTab:Toggle("Hitbox Expander On/Off", false, function(state)
     toggleHitbox(state)
 end)
 
-PlrBypassTab:Label("") -- Пустая строка для отступа
-
-local WallbangActive = false
-
--- Функция для включения/выключения
---[[
-local function setWallbang(state)
-    WallbangActive = state
+MasterFuncTab:Button("Get Jerk Off Tool", function ()
+    -- Создаем предмет
+    local tool = Instance.new("Tool")
+    tool.Name = "Jerk Stick"
+    tool.RequiresHandle = true
     
-    task.spawn(function()
-        while WallbangActive do
-            -- Ищем объекты в радиусе стрельбы или всю карту
-            for _, part in pairs(workspace:GetDescendants()) do
-                if part:IsA("BasePart") and not part:IsDescendantOf(game.Players.LocalPlayer.Character) then
-                    -- Если это не игрок и не земля, убираем коллизию
-                    if part.Name ~= "Terrain" and part.CanCollide == true then
-                        part.CanCollide = false
-                        -- Пометка, чтобы потом вернуть как было
-                        if not part:FindFirstChild("WasCollide") then
-                            local tag = Instance.new("BoolValue", part)
-                            tag.Name = "WasCollide"
-                        end
-                    end
-                end
-            end
-            task.wait(1) -- Проверяем новые части раз в секунду
-        end
-        
-        -- Возвращаем всё назад при выключении
-        if not WallbangActive then
-            for _, part in pairs(workspace:GetDescendants()) do
-                if part:FindFirstChild("WasCollide") then
-                    part.CanCollide = true
-                    part.WasCollide:Destroy()
-                end
-            end
-        end
-    end)
-end
-PlrBypassTab:Toggle("Wallbang (Shoot through walls)", false, function(State)
-    setWallbang(State)
-end)
-]]
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(0.5, 2, 0.5)
+    handle.Parent = tool
+    
+    local toolScript = Instance.new("LocalScript")
+    -- Вставляем логику движения
+    toolScript.Source = [[
+        local tool = script.Parent
+        local char = game.Players.LocalPlayer.Character
+        -- Проверка на R6 или R15 (названия суставов разные)
+        local shoulder = char:FindFirstChild("Right Shoulder", true) or char:FindFirstChild("RightShoulder", true)
+        local origC0 = shoulder.C0
+        local active = false
 
-PlrBypassTab:Label("㊇Other Games Tools㊇")
+        tool.Activated:Connect(function()
+            active = not active
+            while active do
+                -- Движение руки (CFrame видят все)
+                for i = 0, 1, 0.2 do
+                    if not active then break end
+                    shoulder.C0 = origC0 * CFrame.Angles(math.rad(45 + (i * 30)), 0, 0)
+                    task.wait(0.03)
+                end
+                for i = 1, 0, -0.2 do
+                    if not active then break end
+                    shoulder.C0 = origC0 * CFrame.Angles(math.rad(45 + (i * 30)), 0, 0)
+                    task.wait(0.03)
+                end
+            end
+            shoulder.C0 = origC0 -- Возвращаем руку в норму
+        end)
+    ]]
+    toolScript.Parent = tool
+    tool.Parent = game.Players.LocalPlayer.Backpack
+end)
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 OtherToolsTab:Label("Other Useful Tools")
 
@@ -1451,6 +1432,10 @@ OtherToolsTab:Button("Realy Dex V4", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
         Notify("Realy Dex V4 loaded", 5)
 end)
+
+OtherToolsTab:Label("More tools will be added in future updates!")
+
+
 
 SettingsTab:Label("Settings")
 
@@ -1475,33 +1460,42 @@ SettingsTab:Button("Rejoin Server", function()
     ts:Teleport(game.PlaceId, p)
 end, "")
 
-local function serverHop()
+local function ServerHop()
     local HttpService = game:GetService("HttpService")
     local TeleportService = game:GetService("TeleportService")
-    local PlaceId = game.PlaceId
+    local Api = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
     
-    -- Получаем список серверов через Roblox API
-    local success, result = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
-    end)
+    local function GetServers(cursor)
+        local url = Api .. (cursor and "&cursor=" .. cursor or "")
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet(url))
+        end)
+        
+        if success and result then
+            return result
+        end
+        return nil
+    end
 
-    if success and result and result.data then
-        for _, server in pairs(result.data) do
-            -- Ищем сервер, который не полон и не является текущим
+    local servers = GetServers()
+    if servers then
+        for _, server in pairs(servers.data) do
+            -- Проверяем, что сервер не полный и это не наш текущий сервер
             if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(PlaceId, server.id, player)
-                return
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id)
+                return -- Прекращаем поиск, если нашли сервер
             end
         end
     end
-    -- Если не удалось найти сервер через API, просто перезаходим
-    TeleportService:Teleport(PlaceId, player)
+    
+    warn("Не удалось найти подходящий сервер для перехода.")
 end
 
 SettingsTab:Button("Server Hop", function()
-    serverHop()
+    ServerHop()
 end, "")
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 SettingsTab:Label("Client Tools⚙")
 
 SettingsTab:Button("Enable old console (PC only)", function()
@@ -1523,28 +1517,52 @@ SettingsTab:Button("Enable old console (PC only)", function()
     wait(1)
 end, "")
 
--- Функция для сохранения настроек
-local function saveSettings(themeName)
-    local config = {SelectedTheme = themeName}
-    writefile("MenooConfig.json", services.HttpService:JSONEncode(config))
-end
+SettingsTab:Button("Reset Character", function()
+    player.Character.Humanoid.Health = 0
+end, "")
 
+
+local allThemes = GeminiLib:GetThemesList()
 -- Тот самый Dropdown
-SettingsTab:Dropdown("Theme for menus", {"Dark", "Midnight", "Cyberpunk"}, "Dark", function(value)
-    -- Ищем таблицу цветов в библиотеке по названию
-    local themeTable = GeminiLib.Themes[value]
-    if themeTable then
-        MenooWindow:ChangeTheme(themeTable)
-        saveSettings(value) -- Сохраняем выбор в файл
-    end
+SettingsTab:Dropdown("Current Theme", allThemes, currentTheme, function(value)
+    MenooWindow:ChangeTheme(value)
 end)
 
--- Авто-загрузка темы при старте
-task.spawn(function()
-    if isfile("MenooConfig.json") then
-        local data = services.HttpService:JSONDecode(readfile("MenooConfig.json"))
-        if data.SelectedTheme and GeminiLib.Themes[data.SelectedTheme] then
-            MenooWindow:ChangeTheme(GeminiLib.Themes[data.SelectedTheme])
+
+CreditsTab:Label("Menoo ".. GeminiLib:Version() .. " by ")
+CreditsTab:Label("nxs_Bounty - Developer")
+CreditsTab:Label("Thanks to all supporters and testers!")
+CreditsTab:Label("") -- Пустая строка для отступа
+
+CreditsTab:Button("Discord Server Invite (in future)", function()
+    setclipboard("https://discord.gg/nxsBounty")
+end, "Click to copy Discord invite link")
+
+CreditsTab:Button("Join Roblox Group (in future)", function()
+    setclipboard("https://www.roblox.com/groups/15142097")
+end, "Click to copy Roblox Group link")
+
+CreditsTab:Label("")
+CreditsTab:Label("Thanks for using Menoo V6! Enjoy your time!")
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+-- Инициализация плавающей кнопки и горячей клавишы
+
+-- Создаем плавающую кнопку после небольшой задержки
+task.wait(0.5)  -- Даем время загрузиться интерфейсу
+if MenooWindow.CreateFloatingButton then
+    MenooWindow:CreateFloatingButton()
+end
+-- Также добавьте глобальную функцию для переключения меню по горячей клавише
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    
+    -- F5 для открытия/закрытия меню
+    if input.KeyCode == Enum.KeyCode.F5 then
+        if MenooWindow.ToggleVisibility then
+            MenooWindow:ToggleVisibility()
         end
     end
 end)
