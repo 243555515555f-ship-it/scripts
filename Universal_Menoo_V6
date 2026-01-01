@@ -54,19 +54,27 @@ local function Notify(text, duration)
     })
 end
 
+--Window settings
 local currentTheme = "Cyberpunk"
 local MenooWindow = GeminiLib:CreateWindow("Menoo", currentTheme)
 
+--Tabs
 local PlrBypassTab = MenooWindow:CreateTab("Player Bypass", "🎅")
 local ESPTab = MenooWindow:CreateTab("ESP Tools", "🎇")
 local XrayTab = MenooWindow:CreateTab("Xray Tools", "🎄")
 local GameSpecificTab = MenooWindow:CreateTab("Game Specific Tools", "🎄")
 local MasterFuncTab = MenooWindow:CreateTab("Master Functions", "🎇")
+
+local BloxFruitsTab
+if game.PlaceId == 2753915549 then
+    BloxFruitsTab = MenooWindow:CreateTab("Blox Fruits Tab", "🎇")
+end
+
 local OtherToolsTab = MenooWindow:CreateTab("Other Tools", "🧑‍🎄")
 local SettingsTab = MenooWindow:CreateTab("Settings", "🎇")
 local CreditsTab = MenooWindow:CreateTab("Credits", "🎁")
 
-
+-- Main Code
 local oldWalkSpeed = getPlayerHumanoid().WalkSpeed
 local oldJumpPower = getPlayerHumanoid().JumpPower
 local newWalkSpeed = 0
@@ -114,36 +122,9 @@ end, "")
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 local CAS = game:GetService("ContextActionService")
-local ACTION_NAME = "DisableCtrlGameBind"
+local ACTION_NAME = "DisableCtrlGameBind012908746"
 
 PlrBypassTab:Label("Fly Tools (WASD, SPACE, LEFT CTRL) ✈")
-
-local function DisableGameControl()
-    CAS:BindActionAtPriority(
-        ACTION_NAME,
-        function(actionName, inputState, inputObject)
-            -- Проверяем, нажал ли пользователь кнопку или отпустил
-            if inputState == Enum.UserInputState.Begin then
-                _G.FlyDownActive = true  -- Включаем флаг движения вниз
-            elseif inputState == Enum.UserInputState.End then
-                _G.FlyDownActive = false -- Выключаем флаг
-            end
-            
-            -- Возвращаем Sink, чтобы игра (Blox Fruits и др.) не видела Ctrl
-            return Enum.ContextActionResult.Sink
-        end,
-        false, 
-        Enum.ContextActionPriority.High.Value + 1000, 
-        Enum.KeyCode.LeftControl,
-        Enum.KeyCode.RightControl
-    )
-end
-local function EnableGameControl()
-    _G.FlyDownActive = false
-    CAS:UnbindAction(ACTION_NAME)
-end
-
-
 
 local Flight = {
     Enabled = false,
@@ -152,7 +133,35 @@ local Flight = {
     VerticalDown = false,
     Connection = nil,
     ForceName = "FlightForce_" .. math.random(100, 999)
+
 }
+
+local function DisableGameControl()
+    CAS:BindActionAtPriority(
+        ACTION_NAME,
+        function(actionName, inputState, inputObject)
+            -- Напрямую меняем переменную в таблице Flight, которую читает цикл полета
+            if inputState == Enum.UserInputState.Begin then
+                Flight.VerticalDown = true
+            elseif inputState == Enum.UserInputState.End then
+                Flight.VerticalDown = false
+            end
+            
+            -- Sink блокирует нажатие для игры, но мы уже записали его в Flight.VerticalDown
+            return Enum.ContextActionResult.Sink
+        end,
+        false, 
+        Enum.ContextActionPriority.High.Value + 1000, 
+        Enum.KeyCode.LeftControl,
+        Enum.KeyCode.RightControl
+    )
+end
+
+local function EnableGameControl()
+    Flight.VerticalDown = false -- Сброс при выключении
+    CAS:UnbindAction(ACTION_NAME)
+end
+
 
 local KeyState = {W = 0, S = 0, A = 0, D = 0}
 
@@ -162,14 +171,12 @@ UserInputService.InputBegan:Connect(function(input, processed)
     local kc = input.KeyCode
     if KeyState[kc.Name] ~= nil then KeyState[kc.Name] = 1 end
     if kc == Enum.KeyCode.Space then Flight.VerticalUp = true end
-    if kc == Enum.KeyCode.LeftControl then Flight.VerticalDown = true end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
     local kc = input.KeyCode
     if KeyState[kc.Name] ~= nil then KeyState[kc.Name] = 0 end
     if kc == Enum.KeyCode.Space then Flight.VerticalUp = false end
-    if kc == Enum.KeyCode.LeftControl then Flight.VerticalDown = false end
 end)
 
 -- 2. Ядро полета
@@ -183,31 +190,21 @@ local function flightUpdate()
     local cf = cam.CFrame
     
     local moveDir = Vector3.new(0, 0, 0)
-    local vertical = (Flight.VerticalUp and 1 or 0) - (Flight.VerticalDown and 1 or 0)
+    
+    -- ИСПРАВЛЕННАЯ СТРОКА:
+local vertical = (Flight.VerticalUp and 1 or 0) - (Flight.VerticalDown and 1 or 0)
 
-    if UserInputService.TouchEnabled then
-        -- Mobile: берем направление джойстика
-        local joyDir = hum.MoveDirection
-        if joyDir.Magnitude > 0.05 then
-            -- Если тянем джойстик, летим туда, куда смотрит камера
-            moveDir = cf:VectorToWorldSpace(Vector3.new(joyDir.X, 0, -joyDir.Z).Unit)
-            -- Наклон камеры определяет высоту (на мобилках это удобнее)
-            moveDir = (moveDir + Vector3.new(0, cf.LookVector.Y * 1.5, 0)).Unit
-        end
-    else
-        -- PC: Расчет WASD
-        local forward = (KeyState.W - KeyState.S)
-        local side = (KeyState.D - KeyState.A)
+    -- PC: Расчет WASD
+    local forward = (KeyState.W - KeyState.S)
+    local side = (KeyState.D - KeyState.A)
         
-        -- Движение по плоскости XZ
-        local camXZ = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z).Unit
-        local camRightXZ = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z).Unit
+    -- Движение по плоскости XZ
+    local camXZ = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z).Unit
+    local camRightXZ = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z).Unit
         
-        moveDir = (camXZ * forward + camRightXZ * side)
-        if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
-    end
-
-    -- Применяем скорость
+    moveDir = (camXZ * forward + camRightXZ * side)
+    if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
+    
     local force = rp:FindFirstChild(Flight.ForceName)
     if force then
         force.Velocity = (moveDir * Flight.Speed) + Vector3.new(0, vertical * Flight.Speed, 0)
@@ -1415,6 +1412,106 @@ MasterFuncTab:Button("Get Jerk Off Tool", function ()
     toolScript.Parent = tool
     tool.Parent = game.Players.LocalPlayer.Backpack
 end)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+if game.PlaceId == 2753915549 then
+    BloxFruitsTab:Label("Blox Fruits Tools🍉")
+
+    -- Настройки поиска
+    local FruitNames = {"Fruit", "fuit", "fruit"} -- Ключевые слова для поиска
+
+    -- Функция для создания подсветки (ESP)
+    local function CreateFruitESP(obj)
+        if not obj:FindFirstChild("FruitESP") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "FruitESP"
+            highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Красный цвет заливки
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Белая обводка
+            highlight.Parent = obj
+            
+            -- Создаем текст над фруктом
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "FruitLabel"
+            billboard.Size = UDim2.new(0, 200, 0, 50)
+            billboard.Adornee = obj
+            billboard.AlwaysOnTop = true
+            billboard.Parent = obj
+            
+            local text = Instance.new("TextLabel")
+            text.Size = UDim2.new(1, 0, 1, 0)
+            text.BackgroundTransparency = 1
+            text.TextColor3 = Color3.new(1, 1, 1)
+            text.TextStrokeTransparency = 0
+            text.TextSize = 18
+            text.Text = "🍎 " .. obj.Name
+            text.Font = Enum.Font.GothamBold
+            text.Parent = billboard
+        end
+    end
+
+    -- Основная функция сканирования
+    local function ScanAndHop()
+        local foundFruits = {}
+        
+        -- Ищем фрукты в Workspace
+        for _, v in pairs(workspace:GetChildren()) do
+            local isFruit = false
+            for _, name in pairs(FruitNames) do
+                if v.Name:lower():find(name) then
+                    isFruit = true
+                    break
+                end
+            end
+            
+            if isFruit then
+                table.insert(foundFruits, v)
+                CreateFruitESP(v) -- Подсвечиваем
+            end
+        end
+
+        if #foundFruits > 0 then
+            -- Если нашли, выводим уведомление и список
+            local fruitList = ""
+            for _, f in pairs(foundFruits) do
+                fruitList = fruitList .. f.Name .. ", "
+            end
+            
+            --GeminiLib:Notification("Fruit Found!", "На сервере есть: " .. fruitList)
+            print("Найдены фрукты: " .. fruitList)
+        else
+            -- Если не нашли, прыгаем на другой сервер
+            --GeminiLib:Notification("Fruit Finder", "Фруктов нет. Ищу новый сервер...")
+            task.wait(2)
+            
+            local Http = game:GetService("HttpService")
+            local TPS = game:GetService("TeleportService")
+            local PlaceId = game.PlaceId
+            local JobId = game.JobId
+
+            -- Логика Server Hop
+            local function Hop()
+                local success, servers = pcall(function()
+                    return Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+                end)
+                
+                if success then
+                    for _, server in pairs(servers.data) do
+                        if server.playing < server.maxPlayers and server.id ~= JobId then
+                            TPS:TeleportToPlaceInstance(PlaceId, server.id)
+                            return
+                        end
+                    end
+                end
+            end
+            Hop()
+        end
+    end
+
+    -- Добавляем кнопку в твой Menoo V6
+    BloxFruitsTab:Button("Start Fruit Hunter", function()
+        ScanAndHop()
+    end)
+end
 
 
 
