@@ -1794,4 +1794,3 @@ function GeminiLib:CreateWindow(title, themeName)
 end
 
 return GeminiLib
-
