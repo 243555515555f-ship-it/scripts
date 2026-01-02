@@ -406,7 +406,6 @@ function GeminiLib:CreateWindow(title, themeName)
         Size = UDim2.new(1, -10, 0, 60),
         Position = UDim2.new(0, 5, 1, -65),
         BackgroundColor3 = theme.Element,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
         BackgroundTransparency = 0.4,
         ZIndex = 14,
         Parent = SideBar
