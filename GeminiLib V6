@@ -301,10 +301,19 @@ function GeminiLib:CreateWindow(title, themeName)
 
     -- Создаем ScreenGui
     local ScreenGui = UI:Create("ScreenGui", {
-        Name = "GeminiLib_" .. services.HttpService:GenerateGUID(false):sub(1, 8),
-        Parent = services.CoreGui
+        Name = "GeminiLib_" .. services.HttpService:GenerateGUID(false):sub(1, 8)
     })
     WindowObj.ScreenGui = ScreenGui
+
+    -- Защита от отслеживания GUI
+    if syn and syn.protect_gui then
+        syn.protect_gui(ScreenGui)
+        ScreenGui.Parent = game:GetService("CoreGui")
+    elseif gethui then
+        ScreenGui.Parent = gethui()
+    else
+        ScreenGui.Parent = game:GetService("CoreGui")
+    end
 
     -- Главный контейнер
     local Main = UI:Create("Frame", {
