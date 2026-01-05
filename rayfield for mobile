@@ -1,0 +1,1312 @@
+-- Fully working, cleaned and fixed version of your script
+-- Services & cached locals
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
+
+local player = Players.LocalPlayer
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "MenooUI | nxs_Bounty",
+    LoadingTitle = "MenooUI Rayfield",
+    LoadingSubtitle = "by egortt_2023",
+    Theme = "Amethyst",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = nil,
+        FileName = "MenooRayfieldConfig"
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "Menoo",
+        Subtitle = "Key System",
+        Note = "key is egortt.wtf",
+        FileName = "MenooKey",
+        SaveKey = true,
+        Key = "egortt.wtf"
+    },
+})
+
+-- Character references (kept current)
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+local function refreshCharacterRefs()
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    rootPart = character and character:FindFirstChild("HumanoidRootPart")
+end
+
+player.CharacterAdded:Connect(function()
+    task.wait(0.1)
+    refreshCharacterRefs()
+end)
+
+Rayfield:Notify({
+   Title = "Rayfield Notification",
+   Content = "Successfully Loaded MenooUI",
+   Duration = 6.5,
+})
+
+-- Utility getters (safer)
+local function getPlayerObject()
+    return player.Character or workspace:FindFirstChild(player.Name)
+end
+
+local function getPlayerHumanoid()
+    local p = getPlayerObject()
+    return p and p:FindFirstChildOfClass("Humanoid")
+end
+
+local function getRootPart()
+    local p = getPlayerObject()
+    return p and p:FindFirstChild("HumanoidRootPart")
+end
+
+-- UI Tabs
+local BypassTab = Window:CreateTab("Bypass")
+local OtherTab = Window:CreateTab("Other")
+local SettingsTab = Window:CreateTab("Settings")
+
+BypassTab:CreateSection("Bypass tools")
+
+-- WalkSpeed
+BypassTab:CreateSlider({
+    Name = "Walk Speed",
+    Range = {0, 500},
+    Increment = 1,
+    Suffix = "WalkSpeed",
+    CurrentValue = 16,
+    Callback = function(Value)
+        local h = getPlayerHumanoid()
+        if h then h.WalkSpeed = Value end
+    end
+})
+
+-- Enable Jump
+BypassTab:CreateButton({
+    Name = "Enable Jump",
+    Callback = function()
+        local h = getPlayerHumanoid()
+        if h then
+            h.UseJumpPower = true
+            h.AutoJumpEnabled = true
+        end
+    end
+})
+
+-- Jump Power
+BypassTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {0, 500},
+    Increment = 1,
+    Suffix = "JumpPower",
+    CurrentValue = 50,
+    Callback = function(Value)
+        local h = getPlayerHumanoid()
+        if h then h.JumpPower = Value end
+    end
+})
+
+BypassTab:CreateSection("Fly (PC + Mobile)")
+
+-- Flight system
+local Flight = {
+    Enabled = false,
+    Speed = 50,
+    ForceName = "MenooFly",
+    Connection = nil,
+    VerticalUp = false,
+    VerticalDown = false,
+}
+
+-- Flight system input + update (PC keyboard + Mobile camera direction)
+local function clamp(v, a, b) if v < a then return a elseif v > b then return b else return v end end
+local KeyState = {W = false, A = false, S = false, D = false}
+-- replace previous InputBegan/InputEnded handlers with unified handler that tracks WASD and vertical keys
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    local kc = input.KeyCode
+    if kc == Enum.KeyCode.W then KeyState.W = true
+    elseif kc == Enum.KeyCode.A then KeyState.A = true
+    elseif kc == Enum.KeyCode.S then KeyState.S = true
+    elseif kc == Enum.KeyCode.D then KeyState.D = true
+    elseif kc == Enum.KeyCode.Space then Flight.VerticalUp = true
+    elseif kc == Enum.KeyCode.LeftShift then Flight.VerticalDown = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    local kc = input.KeyCode
+    if kc == Enum.KeyCode.W then KeyState.W = false
+    elseif kc == Enum.KeyCode.A then KeyState.A = false
+    elseif kc == Enum.KeyCode.S then KeyState.S = false
+    elseif kc == Enum.KeyCode.D then KeyState.D = false
+    elseif kc == Enum.KeyCode.Space then Flight.VerticalUp = false
+    elseif kc == Enum.KeyCode.LeftShift then Flight.VerticalDown = false
+    end
+end)
+-- new flightUpdate: PC uses WASD + camera for orientation; mobile uses humanoid.MoveDirection + camera pitch for altitude
+local function flightUpdate() 
+    if not Flight.Enabled then return end
+    local rp = getRootPart()
+    local h = getPlayerHumanoid()
+    if not rp or not h then return end
+
+    local cam = workspace.CurrentCamera
+    local look = (cam and cam.CFrame.LookVector) or Vector3.new(0,0,-1)
+    -- project camera axes to XZ plane
+    local forward = Vector3.new(look.X, 0, look.Z)
+    if forward.Magnitude > 0 then forward = forward.Unit else forward = Vector3.new(0,0,-1) end
+    local right = Vector3.new(cam.CFrame.RightVector.X, 0, cam.CFrame.RightVector.Z)
+    if right.Magnitude > 0 then right = right.Unit else right = Vector3.new(1,0,0) end
+
+    local horizontal = Vector3.new()
+    local vertical = 0
+
+    if UserInputService.TouchEnabled then
+        -- Read humanoid.MoveDirection and convert it to camera-relative joystick axes
+        local move = h.MoveDirection or Vector3.new()
+        -- Project move onto camera XZ axes to get input values (range approx -1..1)
+        local inputZ = move:Dot(forward)
+        local inputX = move:Dot(right)
+        local joystickMag = math.clamp(math.sqrt(inputX*inputX + inputZ*inputZ), 0, 1)
+
+        if joystickMag > 0.03 then
+            -- Build horizontal movement in world space aligned with camera orientation
+            horizontal = forward * inputZ + right * inputX
+            horizontal = Vector3.new(horizontal.X, 0, horizontal.Z)
+            if horizontal.Magnitude > 0 then
+                horizontal = horizontal.Unit * (Flight.Speed * joystickMag)
+            else
+                horizontal = Vector3.new(0,0,0)
+            end
+
+            -- Vertical controlled by camera pitch only while joystick is engaged
+            local pitch = math.asin(math.clamp(look.Y, -1, 1)) -- [-pi/2, pi/2]
+            local pitchNorm = -math.clamp(pitch / (math.pi / 2), -1, 1) -- looking up -> positive
+            vertical = -pitchNorm * Flight.Speed * joystickMag
+        else
+            -- Joystick idle: no camera-based altitude changes; allow toggle buttons / keyboard for vertical
+            if Flight.VerticalUp then vertical = Flight.Speed end
+            if Flight.VerticalDown then vertical = -Flight.Speed end
+        end
+    else
+        -- PC: WASD + camera for orientation, keyboard vertical keys control altitude
+        local forwardVal = (KeyState.W and 1 or 0) - (KeyState.S and 1 or 0)
+        local strafeVal  = (KeyState.D and 1 or 0) - (KeyState.A and 1 or 0)
+        horizontal = forward * forwardVal + right * strafeVal
+        horizontal = Vector3.new(horizontal.X, 0, horizontal.Z)
+        if horizontal.Magnitude > 0 then
+            horizontal = horizontal.Unit * Flight.Speed
+        else
+            horizontal = Vector3.new(0,0,0)
+        end
+        if Flight.VerticalUp then vertical = vertical + Flight.Speed end
+        if Flight.VerticalDown then vertical = vertical - Flight.Speed end
+    end
+
+    local desired = Vector3.new(horizontal.X, vertical, horizontal.Z)
+    local bv = rp:FindFirstChild(Flight.ForceName)
+    if bv and bv:IsA("BodyVelocity") then
+        bv.Velocity = desired
+    end
+end
+local function startFlight() 
+    if Flight.Enabled then return end
+    Flight.Enabled = true
+    refreshCharacterRefs()
+    local rp = getRootPart()
+    if not rp then
+        Flight.Enabled = false
+        return
+    end
+
+    local bv = Instance.new("BodyVelocity")
+    bv.Name = Flight.ForceName
+    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bv.P = 1250
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = rp
+
+    Flight.Connection = RunService.RenderStepped:Connect(flightUpdate)
+end
+local function stopFlight()
+    if not Flight.Enabled then return end
+    Flight.Enabled = false
+    if Flight.Connection then
+        Flight.Connection:Disconnect()
+        Flight.Connection = nil
+    end
+    local rp = getRootPart()
+    if rp then
+        local bv = rp:FindFirstChild(Flight.ForceName)
+        if bv then bv:Destroy() end
+    end
+    Flight.VerticalUp = false
+    Flight.VerticalDown = false
+end
+
+-- Keyboard vertical controls
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        Flight.VerticalUp = true
+    elseif input.KeyCode == Enum.KeyCode.LeftShift then
+        Flight.VerticalDown = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then
+        Flight.VerticalUp = false
+    elseif input.KeyCode == Enum.KeyCode.LeftShift then
+        Flight.VerticalDown = false
+    end
+end)
+
+-- Fly UI
+BypassTab:CreateSlider({
+    Name = "Fly Speed",
+    Range = {0, 500},
+    Increment = 1,
+    Suffix = "speed",
+    CurrentValue = 50,
+    Callback = function(Value)
+        Flight.Speed = Value
+    end
+})
+BypassTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then startFlight() else stopFlight() end
+    end
+})
+
+BypassTab:CreateSection("Strange Func")
+-- NoClip Bypass
+local Noclip = { Enabled = false, Conn = nil }
+BypassTab:CreateToggle({
+    Name = "NoClip",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then
+            if Noclip.Conn then Noclip.Conn:Disconnect() end
+            Noclip.Conn = RunService.Stepped:Connect(function()
+                local p = getPlayerObject()
+                if p then
+                    for _, part in ipairs(p:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+            Noclip.Enabled = true
+        else
+            if Noclip.Conn then Noclip.Conn:Disconnect() Noclip.Conn = nil end
+            local p = getPlayerObject()
+            if p then
+                for _, part in ipairs(p:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+            Noclip.Enabled = false
+        end
+    end
+})
+-- Godmode Bypass
+local God = { Enabled = false, Conn = nil }
+BypassTab:CreateToggle({
+    Name = "Invincible || Godmode",
+    CurrentValue = false,
+    Callback = function(State)
+        local h = getPlayerHumanoid()
+        if State then
+            if h then
+                if God.Conn then God.Conn:Disconnect() end
+                God.Conn = h.HealthChanged:Connect(function()
+                    if h and h.Health < 0.5 then
+                        h.Health = h.MaxHealth or 100
+                    end
+                end)
+                God.Enabled = true
+            end
+        else
+            if God.Conn then God.Conn:Disconnect() God.Conn = nil end
+            if h then h.Health = h.MaxHealth or 100 end
+            God.Enabled = false
+        end
+    end
+})
+
+-- Invisible Bypass
+
+local PlayerState = {} do
+	mouseBehavior = ""
+	mouseIconEnabled = ""
+	cameraType = ""
+	cameraFocus = ""
+	cameraCFrame = ""
+	cameraFieldOfView = ""
+
+	function PlayerState.Push()
+		cameraFieldOfView = Camera.FieldOfView
+		Camera.FieldOfView = 70
+
+		cameraType = Camera.CameraType
+		Camera.CameraType = Enum.CameraType.Custom
+
+		cameraCFrame = Camera.CFrame
+		cameraFocus = Camera.Focus
+
+		mouseIconEnabled = UserInputService.MouseIconEnabled
+		UserInputService.MouseIconEnabled = true
+
+		mouseBehavior = UserInputService.MouseBehavior
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	end
+
+	function PlayerState.Pop()
+		Camera.FieldOfView = 70
+
+		Camera.CameraType = cameraType
+		cameraType = nil
+
+		Camera.CFrame = cameraCFrame
+		cameraCFrame = nil
+
+		Camera.Focus = cameraFocus
+		cameraFocus = nil
+
+		UserInputService.MouseIconEnabled = mouseIconEnabled
+		mouseIconEnabled = nil
+
+		UserInputService.MouseBehavior = mouseBehavior
+		mouseBehavior = nil
+	end
+end
+function StopFreecam()
+	if not fcRunning then return end
+	Input.StopCapture()
+	RunService:UnbindFromRenderStep("Freecam")
+	PlayerState.Pop()
+	workspace.Camera.FieldOfView = 70
+	fcRunning = false
+end
+function fixcam()
+    StopFreecam()
+    if viewing ~= nil then
+        viewing = nil
+        Rayfield:Notify('Spectate','View turned off')
+    end
+    if viewDied then
+        viewDied:Disconnect()
+        viewChanged:Disconnect()
+    end
+    
+    -- Fixed: Don't remove camera, just reset it
+    if player.Character and player.Character:FindFirstChildWhichIsA('Humanoid') then
+        workspace.CurrentCamera.CameraSubject = player.Character:FindFirstChildWhichIsA('Humanoid')
+        workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    end
+    
+    player.CameraMinZoomDistance = 0.5
+    player.CameraMaxZoomDistance = 400
+    player.CameraMode = "Classic"
+    
+    if player.Character and player.Character:FindFirstChild("Head") then
+        player.Character.Head.Anchored = false
+    end
+end
+
+local invisRunning = false
+local Invisible = { Enabled = false, Conn = nil, TurnVisibleFunc = nil, invisFix = nil, invisDied = nil, InvisibleCharacter = nil, OriginalCharacter = nil }
+
+BypassTab:CreateToggle({
+    Name = "Invisible",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then
+            -- TURN INVISIBLE
+            if invisRunning then return end
+            invisRunning = true
+            repeat wait(.1) until player.Character
+            
+            local Character = player.Character
+            Character.Archivable = true
+            local IsInvis = false
+            local InvisibleCharacter = Character:Clone()
+            InvisibleCharacter.Parent = Lighting
+            local Void = workspace.FallenPartsDestroyHeight
+
+            InvisibleCharacter.Name = ""
+
+            -- Store references
+            Invisible.InvisibleCharacter = InvisibleCharacter
+            Invisible.OriginalCharacter = Character
+
+            Invisible.invisFix = RunService.Stepped:Connect(function()
+                pcall(function()
+                    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+                    local IsInteger = tostring(Void):find'-' and true or false
+                    local Pos = player.Character.HumanoidRootPart.Position
+                    local Pos_String = tostring(Pos)
+                    local Pos_Seperate = Pos_String:split(', ')
+                    local Y = tonumber(Pos_Seperate[2])
+                    
+                    if (IsInteger and Y <= Void) or (not IsInteger and Y >= Void) then
+                        Invisible.TurnVisibleFunc()
+                    end
+                end)
+            end)
+
+            for i,v in pairs(InvisibleCharacter:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    if v.Name == "HumanoidRootPart" then
+                        v.Transparency = 1
+                    else
+                        v.Transparency = .5
+                    end
+                end
+            end
+
+            Invisible.invisDied = InvisibleCharacter:FindFirstChildOfClass'Humanoid'.Died:Connect(function()
+                if Invisible.TurnVisibleFunc then
+                    Invisible.TurnVisibleFunc()
+                end
+            end)
+
+            function Invisible.TurnVisibleFunc()
+                if not invisRunning then return end
+                invisRunning = false
+                Invisible.Enabled = false
+
+                pcall(function()
+                    if Invisible.invisFix then
+                        Invisible.invisFix:Disconnect()
+                        Invisible.invisFix = nil
+                    end
+                    if Invisible.invisDied then
+                        Invisible.invisDied:Disconnect()
+                        Invisible.invisDied = nil
+                    end
+
+                    -- destroy the invisible clone
+                    if Invisible.InvisibleCharacter and Invisible.InvisibleCharacter.Parent then
+                        Invisible.InvisibleCharacter:Destroy()
+                        Invisible.InvisibleCharacter = nil
+                    end
+
+                    if Invisible.OriginalCharacter then
+                        -- get current visible character (the clone) position if available
+                        local visibleHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                        local targetCFrame = visibleHRP and visibleHRP.CFrame or (Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") and Invisible.OriginalCharacter.HumanoidRootPart.CFrame)
+
+                        -- make sure original is in workspace before moving parts
+                        Invisible.OriginalCharacter.Parent = workspace
+
+                        -- wait briefly for parts
+                        local origHRP = Invisible.OriginalCharacter:FindFirstChild("HumanoidRootPart") or Invisible.OriginalCharacter:WaitForChild("HumanoidRootPart", 1)
+                        local humanoid = Invisible.OriginalCharacter:FindFirstChildOfClass("Humanoid")
+
+                        if origHRP and targetCFrame then
+                            origHRP.CFrame = targetCFrame
+                        end
+
+                        -- restore basepart properties and remove lingering forces
+                        for _, part in pairs(Invisible.OriginalCharacter:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                pcall(function()
+                                    part.Anchored = false
+                                    part.CanCollide = true
+                                end)
+                                for _, child in pairs(part:GetChildren()) do
+                                    if child:IsA("BodyVelocity") or child:IsA("BodyAngularVelocity") or child:IsA("BodyForce")
+                                    or child:IsA("VectorForce") or child:IsA("LinearVelocity") then
+                                        pcall(child.Destroy, child)
+                                    end
+                                end
+                            end
+                        end
+
+                        -- ensure humanoid is controllable
+                        if humanoid then
+                            pcall(function()
+                                humanoid.PlatformStand = false
+                                humanoid.Sit = false
+                                humanoid.WalkSpeed = (humanoid.WalkSpeed and humanoid.WalkSpeed > 0) and humanoid.WalkSpeed or 16
+                                humanoid.JumpPower = (humanoid.JumpPower and humanoid.JumpPower > 0) and humanoid.JumpPower or 50
+                            end)
+                        end
+
+                        -- assign it back to the player
+                        player.Character = Invisible.OriginalCharacter
+
+                        -- re-enable animator safely
+                        local animate = Invisible.OriginalCharacter:FindFirstChild("Animate")
+                        if animate then
+                            animate.Disabled = true
+                            task.wait(0.05)
+                            animate.Disabled = false
+                        end
+                    end
+
+                    fixcam()
+                end)
+            end
+
+            IsInvis = true
+            local CF_1 = Character.HumanoidRootPart.CFrame
+            Character:MoveTo(Vector3.new(0, math.pi*1000000, 0))
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+            wait(.2)
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+            Character.Parent = Lighting
+            InvisibleCharacter.Parent = workspace
+            InvisibleCharacter.HumanoidRootPart.CFrame = CF_1
+            player.Character = InvisibleCharacter
+            fixcam()
+            player.Character.Animate.Disabled = true
+            player.Character.Animate.Disabled = false
+            Invisible.Enabled = true
+
+            Rayfield:Notify({
+                Title = "Invisible Notification",
+                Content = "You are now invisible. You can attack while invisible!",
+                Duration = 1,
+            })
+        else
+            -- TURN VISIBLE
+            if Invisible.TurnVisibleFunc then
+                Invisible.TurnVisibleFunc()
+                Rayfield:Notify({
+                    Title = "Invisible Notification",
+                    Content = "You are now visible.",
+                    Duration = 1,
+                })
+            end
+        end
+    end
+})
+
+BypassTab:CreateSection("ESP tools")
+
+local RainbowHighlightESP = {
+    Enabled = false,
+    Objects = {},
+    Connections = {},
+    RainbowLoop = nil
+}
+
+local function removeRainbowHighlightESP(player)
+    if RainbowHighlightESP.Objects[player] then
+        if RainbowHighlightESP.Objects[player].Highlight then 
+            RainbowHighlightESP.Objects[player].Highlight:Destroy() 
+        end
+        RainbowHighlightESP.Objects[player] = nil
+    end
+end
+
+local function applyRainbowHighlightESP(player)
+    if player == Players.LocalPlayer then return end
+    
+    local character = player.Character
+    if not character then return end
+    
+    local head = character:FindFirstChild("Head")
+    if not head then return end
+    
+    removeRainbowHighlightESP(player)
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "RainbowHighlightESP"
+    highlight.OutlineColor = Color3.fromHSV(0, 1, 1)
+    highlight.FillTransparency = 1
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.OutlineTransparency = 0
+    highlight.Parent = character
+    
+    RainbowHighlightESP.Objects[player] = {
+        Highlight = highlight,
+        Character = character
+    }
+    
+    return highlight
+end
+
+local function manageRainbowHighlightESP(player)
+    if not RainbowHighlightESP.Enabled then return end
+    
+    local function characterAdded()
+        if not RainbowHighlightESP.Enabled then return end
+        task.wait(0.5)
+        applyRainbowHighlightESP(player)
+    end
+    
+    local function characterRemoving()
+        removeRainbowHighlightESP(player)
+    end
+    
+    RainbowHighlightESP.Connections[player] = {
+        Added = player.CharacterAdded:Connect(characterAdded),
+        Removing = player.CharacterRemoving:Connect(characterRemoving)
+    }
+    
+    if player.Character then
+        task.spawn(characterAdded)
+    end
+end
+
+local function startRainbowHighlightLoop()
+    if RainbowHighlightESP.RainbowLoop then
+        RainbowHighlightESP.RainbowLoop:Disconnect()
+    end
+    
+    RainbowHighlightESP.RainbowLoop = RunService.RenderStepped:Connect(function()
+        local hue = (tick() * 0.2) % 1
+        local color = Color3.fromHSV(hue, 1, 1)
+        
+        for _, data in pairs(RainbowHighlightESP.Objects) do
+            if data.Highlight and data.Highlight.Parent then
+                data.Highlight.OutlineColor = color
+            end
+        end
+    end)
+end
+
+-- Функция для переключателя
+local function toggleRainbowHighlightESP(state)
+    RainbowHighlightESP.Enabled = state
+    
+    if state then
+        -- Включаем
+        for _, player in pairs(Players:GetPlayers()) do
+            manageRainbowHighlightESP(player)
+        end
+        
+        RainbowHighlightESP.PlayerAddedConn = Players.PlayerAdded:Connect(function(player)
+            if RainbowHighlightESP.Enabled then
+                manageRainbowHighlightESP(player)
+            end
+        end)
+        
+        startRainbowHighlightLoop()
+        -- Notify("Rainbow Highlight ESP enabled", 5)
+    else
+        -- Выключаем
+        if RainbowHighlightESP.PlayerAddedConn then
+            RainbowHighlightESP.PlayerAddedConn:Disconnect()
+            RainbowHighlightESP.PlayerAddedConn = nil
+        end
+        
+        if RainbowHighlightESP.RainbowLoop then
+            RainbowHighlightESP.RainbowLoop:Disconnect()
+            RainbowHighlightESP.RainbowLoop = nil
+        end
+        
+        for player, connections in pairs(RainbowHighlightESP.Connections) do
+            if connections.Added then connections.Added:Disconnect() end
+            if connections.Removing then connections.Removing:Disconnect() end
+            removeRainbowHighlightESP(player)
+        end
+        
+        RainbowHighlightESP.Objects = {}
+        RainbowHighlightESP.Connections = {}
+        -- Notify("Rainbow Highlight ESP disabled", 5)
+    end
+end
+
+BypassTab:CreateToggle({
+    Name = "Enable Rainbow ESP",
+    CurrentValue = false,
+    Callback = function(State)
+        toggleRainbowHighlightESP(State)
+    end
+})
+
+BigHeadcfg = {
+    Enabled = false,
+    Scale = 20,
+    Mode = "Team Mode" -- Храним выбранный режим тут
+}
+
+-- 2. Функция сброса голов (чтобы не дублировать код)
+local function resetAllHeads()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Character and p.Character:FindFirstChild("Head") then
+            local head = p.Character.Head
+            head.Size = Vector3.new(1.2, 1.2, 1.2)
+            head.Transparency = 0
+            head.CanCollide = true
+        end
+    end
+end
+
+-- 3. Основная функция переключения
+local function toggleHitbox(state)
+    BigHeadcfg.Enabled = state
+    
+    -- Сначала всегда отключаем старое соединение и сбрасываем головы
+    if connections.Hitbox then 
+        connections.Hitbox:Disconnect() 
+        connections.Hitbox = nil
+    end
+    resetAllHeads()
+
+    if BigHeadcfg.Enabled then
+        connections.Hitbox = RunService.RenderStepped:Connect(function()
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.UserId ~= player.UserId and p.Character and p.Character:FindFirstChild("Head") then
+                    local head = p.Character.Head
+                    local isEnemy = true
+
+                    -- Если выбран Team Mode, проверяем команду
+                    if BigHeadcfg.Mode == "Team Mode" then
+                        if player.Team and p.Team then
+                            if p.Team == player.Team then isEnemy = false end
+                        elseif player.TeamColor == p.TeamColor then
+                            isEnemy = false
+                        end
+                    end
+
+                    -- Если это враг (или режим FFA), увеличиваем
+                    if isEnemy then
+                        head.Size = Vector3.new(BigHeadcfg.Scale, BigHeadcfg.Scale, BigHeadcfg.Scale)
+                        head.Transparency = 0.7
+                        head.CanCollide = false
+                        head.Massless = true
+                    else
+                        -- Для союзников в Team Mode возвращаем норму
+                        head.Size = Vector3.new(1.2, 1.2, 1.2)
+                        head.Transparency = 0
+                    end
+                end
+            end
+        end)
+    end
+end
+
+BypassTab:CreateSlider({
+    Name = "Hitbox Size",
+    Range = {15, 70},
+    Increment = 1,
+    CurrentValue = 20,
+    Callback = function(value) BigHeadcfg.Scale = value end
+})
+
+BypassTab:CreateDropdown({
+    Name = "Hitbox Mode",
+    Options = {"FFA Mode", "Team Mode"},
+    CurrentOption = "Team Mode",
+    MultipleOptions = false,
+    Callback = function(Option)
+        BigHeadcfg.Mode = Option
+        -- Если чит уже включен, перезапускаем его с новым режимом мгновенно
+        if BigHeadcfg.Enabled then
+            toggleHitbox(true)
+        end
+    end
+})
+
+BypassTab:CreateToggle({
+    Name = "Hitbox Expander On/Off",
+    CurrentValue = false,
+    Callback = function(state)
+        toggleHitbox(state)
+    end
+})
+
+
+
+-- Name ESP using BillboardGui (stable)
+local NameESP = {
+    Enabled = false,
+    Guis = setmetatable({}, { __mode = "k" }), -- weak keys (models)
+    Conns = {}
+}
+local function makeBillboard(model)
+    if not model or not model:IsA("Model") then return nil end
+    local hrp = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+    if not hrp or not hrp:IsA("BasePart") then return nil end
+
+    local pg = player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui")
+    local bp = Instance.new("BillboardGui")
+    bp.Name = "MenooNameESP"
+    bp.Adornee = hrp
+    bp.Size = UDim2.new(0, 160, 0, 28)
+    bp.AlwaysOnTop = true
+    bp.ResetOnSpawn = false
+
+    local lbl = Instance.new("TextLabel", bp)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextScaled = true
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextStrokeTransparency = 0.6
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    bp.Parent = pg
+    return bp, lbl
+end
+local function updateLabelText(model, lbl)
+    if not model or not lbl then return end
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    local nameText = model.Name
+    if humanoid and humanoid.DisplayName and humanoid.DisplayName ~= "" then
+        nameText = humanoid.DisplayName
+    elseif model.Name and model.Name ~= "" then
+        nameText = model.Name
+    end
+    lbl.Text = tostring(nameText)
+end
+local function addModelNameESP(model)
+    if not model or not model:IsA("Model") then return end
+    if model == getPlayerObject() then return end
+    if NameESP.Guis[model] then return end
+
+    local bp, lbl = makeBillboard(model)
+    if not bp then return end
+    updateLabelText(model, lbl)
+    NameESP.Guis[model] = { Gui = bp, Label = lbl }
+
+    -- keep name updated if humanoid DisplayName changes or model renames
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if hum then
+        local conn = hum:GetPropertyChangedSignal("DisplayName"):Connect(function()
+            if NameESP.Guis[model] and NameESP.Guis[model].Label then
+                updateLabelText(model, NameESP.Guis[model].Label)
+            end
+        end)
+        NameESP.Conns[model] = NameESP.Conns[model] or {}
+        table.insert(NameESP.Conns[model], conn)
+    end
+end
+local function removeModelNameESP(model)
+    local entry = NameESP.Guis[model]
+    if entry and entry.Gui and entry.Gui.Parent then
+        entry.Gui:Destroy()
+    end
+    NameESP.Guis[model] = nil
+
+    if NameESP.Conns[model] then
+        for _, c in ipairs(NameESP.Conns[model]) do
+            if c and c.Disconnect then pcall(c.Disconnect, c) end
+        end
+        NameESP.Conns[model] = nil
+    end
+end
+local function scanAndAddAll()
+    -- add all players' characters first (cheap)
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+            addModelNameESP(pl.Character)
+        end
+    end
+    -- shallow scan workspace children for NPC models
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and obj ~= getPlayerObject() then
+            addModelNameESP(obj)
+        end
+    end
+end
+local function enableNameESP()
+    if NameESP.Enabled then return end
+    NameESP.Enabled = true
+    scanAndAddAll()
+
+    -- listen to players/characters
+    NameESP.playerAddedConn = Players.PlayerAdded:Connect(function(pl)
+        pl.CharacterAdded:Connect(function(char)
+            if NameESP.Enabled then
+                task.wait(0.05)
+                addModelNameESP(char)
+            end
+        end)
+    end)
+    -- existing players' character added connection
+    for _, pl in ipairs(Players:GetPlayers()) do
+        NameESP.Conns[pl] = NameESP.Conns[pl] or {}
+        local conn = pl.CharacterAdded:Connect(function(char)
+            if NameESP.Enabled then
+                task.wait(0.05)
+                addModelNameESP(char)
+            end
+        end)
+        table.insert(NameESP.Conns[pl], conn)
+    end
+
+    -- workspace child add/remove to catch NPCs
+    NameESP.childAddedConn = workspace.ChildAdded:Connect(function(child)
+        if not NameESP.Enabled then return end
+        if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") then
+            task.wait(0.05)
+            addModelNameESP(child)
+        end
+    end)
+    NameESP.childRemovedConn = workspace.ChildRemoved:Connect(function(child)
+        if NameESP.Guis[child] then
+            removeModelNameESP(child)
+        end
+    end)
+
+    -- periodic maintenance (very light)
+    NameESP.heartbeatConn = RunService.Heartbeat:Connect(function(dt)
+        -- update labels for any models (only modifies text, cheap)
+        for model, entry in pairs(NameESP.Guis) do
+            if not model.Parent or not model:IsDescendantOf(workspace) then
+                removeModelNameESP(model)
+            else
+                pcall(updateLabelText, model, entry.Label)
+            end
+        end
+    end)
+end
+local function disableNameESP()
+    if not NameESP.Enabled then return end
+    NameESP.Enabled = false
+
+    if NameESP.playerAddedConn then NameESP.playerAddedConn:Disconnect() NameESP.playerAddedConn = nil end
+    if NameESP.childAddedConn then NameESP.childAddedConn:Disconnect() NameESP.childAddedConn = nil end
+    if NameESP.childRemovedConn then NameESP.childRemovedConn:Disconnect() NameESP.childRemovedConn = nil end
+    if NameESP.heartbeatConn then NameESP.heartbeatConn:Disconnect() NameESP.heartbeatConn = nil end
+
+    -- disconnect per-player/conns
+    for key, conns in pairs(NameESP.Conns) do
+        for _, c in ipairs(conns) do
+            if c and c.Disconnect then pcall(c.Disconnect, c) end
+        end
+        NameESP.Conns[key] = nil
+    end
+
+    -- remove all guis
+    for model, _ in pairs(NameESP.Guis) do
+        removeModelNameESP(model)
+    end
+    NameESP.Guis = setmetatable({}, { __mode = "k" })
+end
+
+BypassTab:CreateToggle({
+    Name = "Enable Name ESP",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then enableNameESP() else disableNameESP() end
+    end
+})
+
+BypassTab:CreateSection("Xray tools")
+
+
+local xrayEnabled = false
+local function xray()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v.Parent:FindFirstChildWhichIsA("Humanoid") and not v.Parent.Parent:FindFirstChildWhichIsA("Humanoid") then
+            v.LocalTransparencyModifier = xrayEnabled and 0.5 or 0
+        end
+    end
+end
+BypassTab:CreateToggle({
+    Name = "XRay (works in some games)",
+    CurrentValue = false,
+    Callback = function(State)
+        xrayEnabled = State
+        if State then
+            xray()
+        else
+            xray()
+        end
+    end
+})
+local xrayShootEnabled = false
+local function xrayShoot()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v.Parent:FindFirstChildWhichIsA("Humanoid") and not v.Parent.Parent:FindFirstChildWhichIsA("Humanoid") and not v.Parent.Parent:FindFirstChildWhichIsA("XrayShootPart") then
+            if xrayShootEnabled then
+                v.Position = v.Position + Vector3.new(0, 1000, 0)
+                v.Transparency = 1
+            else
+                v.Position = v.Position - Vector3.new(0, 1000, 0)
+                v.Transparency = 0
+            end
+            
+        end
+    end
+end
+
+-- Функция для создания голограммы всего
+local function createHologram()
+    local hologramFolder = Instance.new("Folder")
+    hologramFolder.Name = "Hologram_" .. os.time()
+    hologramFolder.Parent = workspace
+    -- Рекурсивная функция для прозрачности
+    local function makeTransparent(object)
+        if object:IsA("BasePart") then
+            object.Transparency = 0.7
+            object.Material = Enum.Material.Neon
+            object.CanCollide = false
+            object.Anchored = true
+            -- Смещаем позицию
+            object.Position = object.Position + Vector3.new(20, 0, 0)
+        end
+        for _, child in pairs(object:GetChildren()) do
+            makeTransparent(child)
+        end
+    end
+    -- Копируем и делаем прозрачными
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj.ClassName ~= "Folder" and obj.ClassName ~= "Camera" and obj.ClassName ~= "Terrain" then
+            local clone = obj:Clone()
+            makeTransparent(clone)
+            clone.Parent = hologramFolder
+        end
+    end
+    return hologramFolder
+end
+
+local followConnection = nil
+BypassTab:CreateToggle({
+    Name = "Xray Shoot v1 (Xray required)",
+    CurrentValue = false,
+    Callback = function(State)
+        xrayShootEnabled = State
+        if xrayEnabled then
+            if State then
+                local part = Instance.new("Part")
+                part.Name = "XrayShootPart"
+                part.Size = Vector3.new(5, 2, 5)
+                part.Position = rootPart.Position
+                part.BrickColor = BrickColor.new("Black")
+                part.Material = Enum.Material.Plastic
+                part.Transparency = 1
+                part.Reflectance = 0
+                part.Anchored = true
+                part.CanCollide = true
+                part.Locked = true
+                part.Parent = character
+                followConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                    if character and character:FindFirstChild("HumanoidRootPart") and part then
+                        local position = rootPart.Position - Vector3.new(0, 4, 0)
+                        part.Position = position
+                    end
+                end)
+                    
+                xrayShoot()
+            
+            else
+                xrayShoot()
+                local part = character:FindFirstChild("XrayShootPart")
+                if part then
+                    part:Destroy()
+                end
+                if followConnection then
+                    followConnection:Disconnect()
+                    followConnection = nil
+                end
+            end
+            if humanoid then
+                humanoid.Died:Connect(function()
+                    if xrayShootEnabled then
+                        xrayShootEnabled = false
+                        xrayShoot()
+                        local part = character:FindFirstChild("XrayShootPart")
+                        if part then
+                            part:Destroy()
+                        end
+                        if followConnection then
+                            followConnection:Disconnect()
+                            followConnection = nil
+                        end
+                        Rayfield:Notify({
+                            Title = "Xray Shoot Notification",
+                            Content = "Xray Shoot disabled due to death.",
+                            Duration = 3.5,
+                        })
+                    end
+                end)
+            end
+        else
+            Rayfield:Notify({
+                Title = "Xray Shoot Notification",
+                Content = "Enable Xray first!",
+                Duration = 3.5,
+            })
+        end
+    end
+})
+
+
+BypassTab:CreateSection("Game specific tools")
+-- Rainbow fling
+local Rainbow = { Enabled = false, Conn = nil }
+BypassTab:CreateToggle({
+    Name = "Rainbow Fling Tool",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then
+            if Rainbow.Conn then Rainbow.Conn:Disconnect() end
+            Rainbow.Conn = RunService.Heartbeat:Connect(function()
+                local p = getPlayerObject()
+                if p then
+                    for _, part in ipairs(p:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.BrickColor = BrickColor.Random()
+                        end
+                    end
+                end
+            end)
+            Rainbow.Enabled = true
+        else
+            Rainbow.Enabled = false
+            if Rainbow.Conn then Rainbow.Conn:Disconnect() Rainbow.Conn = nil end
+        end
+    end
+})
+-- Spin speed slider and toggle
+local spinSpeed = 10
+BypassTab:CreateSlider({
+    Name = "Spin Speed",
+    Range = {0, 500},
+    Increment = 1,
+    CurrentValue = spinSpeed,
+    Callback = function(value) spinSpeed = value end
+})
+-- Spin
+local Spin = { Conn = nil }
+BypassTab:CreateToggle({
+    Name = "Spin",
+    CurrentValue = false,
+    Callback = function(State)
+        if State then
+            local p = getPlayerObject()
+            if p then
+                local rp = p:FindFirstChild("HumanoidRootPart")
+                if rp then
+                    if Spin.Conn then Spin.Conn:Disconnect() end
+                    Spin.Conn = RunService.Heartbeat:Connect(function()
+                        if rp and rp.Parent then
+                            rp.CFrame = rp.CFrame * CFrame.Angles(0, math.rad(spinSpeed) * (RunService.Heartbeat and 1/60 or 1/60), 0)
+                        end
+                    end)
+                end
+            end
+        else
+            if Spin.Conn then Spin.Conn:Disconnect() Spin.Conn = nil end
+        end
+    end
+})
+-- Fling
+local flingDied = nil
+local flinging = false
+BypassTab:CreateToggle({
+    Name = "Fling (like spin but throw wildly)",
+    Callback = function (state)
+        if state then
+            flinging = false
+            for _, child in pairs(character:GetDescendants()) do
+                if child:IsA("BasePart") then
+                    child.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
+                end
+            end
+            wait(.1)
+            local bambam = Instance.new("BodyAngularVelocity")
+            bambam.Name = "MenooFling"
+            bambam.Parent = getRootPart()
+            bambam.AngularVelocity = Vector3.new(0,99999,0)
+            bambam.MaxTorque = Vector3.new(0,math.huge,0)
+            bambam.P = math.huge
+            local Char = character:GetChildren()
+            for i, v in next, Char do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                    v.Massless = true
+                    v.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            flinging = true
+            local function flingDiedF()
+                execCmd('unfling')
+            end
+            flingDied = character:FindFirstChildOfClass('Humanoid').Died:Connect(flingDiedF)
+            repeat
+                bambam.AngularVelocity = Vector3.new(0,99999,0)
+                wait(.2)
+                bambam.AngularVelocity = Vector3.new(0,0,0)
+                wait(.1)
+            until flinging == false
+        else
+            if flingDied then
+                flingDied:Disconnect()
+            end
+            flinging = false
+            wait(.1)
+            if not character or not getRootPart() then return end
+            for i,v in pairs(getRootPart():GetChildren()) do
+                if v.ClassName == 'BodyAngularVelocity' then
+                    v:Destroy()
+                end
+            end
+            for _, child in pairs(character:GetDescendants()) do
+                if child.ClassName == "Part" or child.ClassName == "MeshPart" then
+                    child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
+                end
+            end
+        end
+    end
+})
+
+
+BypassTab:CreateSection("Legends of Speed tools")
+BypassTab:CreateButton({
+    Name = "Farm Orbs",
+    Callback = function()
+        local items = {'outerOrb', 'outerGem', 'Hoop'}
+        local rp = getRootPart()
+        if not rp then return end
+        for _, name in ipairs(items) do
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v.Name == name and v:IsA("BasePart") then
+                    v.CFrame = rp.CFrame
+                    task.wait(0.01)
+                end
+            end
+        end
+    end,
+})
+
+OtherTab:CreateSection("dev tools")
+OtherTab:CreateButton({
+    Name = "Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end,
+})
+OtherTab:CreateButton({
+    Name = "Realy Dex V4",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+    end,
+})
+
+SettingsTab:CreateParagraph({
+    Title = "Settings",
+    Content = "Customize MenooUI Rayfield."
+})
+SettingsTab:CreateDropdown({
+    Name = "Themes",
+    Options = {"Default", "AmberGlow", "Amethyst", "Bloom", "DarkBlue", "Green", "Light", "Ocean", "Serenity"},
+    CurrentOption = "Amethyst",
+    MultipleOptions = false,
+    Callback = function(Option)
+        Window.Theme = Option
+        Rayfield:Notify({
+            Title = "Theme Changed",
+            Content = "Chosen Theme: " .. tostring(Option),
+            Duration = 3,
+            Image = 4483362458,
+        })
+    end
+})
