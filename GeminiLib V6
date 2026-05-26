@@ -498,6 +498,8 @@ function GeminiLib:CreateWindow(title, themeName)
             Tab.ElementCount = Tab.ElementCount + 1
             local currentValue = default or min
             local isDragging = false
+            local isFloat = (max - min) < 5
+
             local SliderFrame = UI:Create("TextButton", {
                 Name = "Slider_" .. text, Size = UDim2.new(1, -16, 0, 60),
                 BackgroundColor3 = theme.Element, BackgroundTransparency = 0.5, Text = "", AutoButtonColor = false,
@@ -533,12 +535,20 @@ function GeminiLib:CreateWindow(title, themeName)
 
             local function updateSlider(val, fromBox)
                 val = math.clamp(val, min, max)
+        
+                -- Если мы в дробном режиме, округляем значение до 2 знаков после запятой ради красоты в UI
+                if isFloat then
+                    val = math.round(val * 100) / 100
+                end
+                
                 if val == currentValue and not fromBox then return end
                 currentValue = val
+                
                 local pos = (val - min) / (max - min)
                 Fill.Size = UDim2.new(pos, 0, 1, 0)
                 SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
                 ValueBox.Text = tostring(val)
+                
                 if showValue then Label.Text = "  " .. text .. ": " .. val end
                 if callback then pcall(callback, val) end
             end
@@ -550,7 +560,17 @@ function GeminiLib:CreateWindow(title, themeName)
 
             local function onBarInput(input)
                 local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local val = math.floor(min + (max - min) * pos)
+                
+                -- ИСПРАВЛЕНИЕ РЫВКОВ:
+                local val
+                if isFloat then
+                    -- Для маленьких диапазонов (например 1-2) получаем точное дробное значение (1.23, 1.54 и т.д.)
+                    val = min + (max - min) * pos
+                else
+                    -- Для больших диапазонов оставляем стандартное пошаговое округление
+                    val = math.floor(min + (max - min) * pos)
+                end
+                
                 updateSlider(val)
             end
 
