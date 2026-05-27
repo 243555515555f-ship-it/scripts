@@ -322,6 +322,13 @@ function GeminiLib:CreateWindow(title, themeName)
     UI:Create("UICorner", {CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2), Parent = ContentContainer})
     UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.6, Parent = ContentContainer})
 
+    function WindowObj:CloseAllDropdowns()
+        for _, dropdown in pairs(self.OpenDropdowns) do
+            if dropdown.Close then pcall(dropdown.Close) end
+        end
+        self.OpenDropdowns = {}
+    end
+
     -- ======================== СОЗДАНИЕ ВКЛАДКИ ========================
     function WindowObj:CreateTab(name, icon)
         local TabBtn = UI:Create("TextButton", {
@@ -359,6 +366,9 @@ function GeminiLib:CreateWindow(title, themeName)
         Tab._refreshCanvas = updatePageSize
 
         local function activateTab()
+            -- Закрыть все открытые выпадающие списки перед сменой вкладки
+            WindowObj:CloseAllDropdowns()
+
             for _, v in pairs(ContentContainer:GetChildren()) do
                 if v:IsA("ScrollingFrame") then v.Visible = false end
             end
@@ -793,6 +803,144 @@ function GeminiLib:CreateWindow(title, themeName)
                 end,
                 Refresh = function() refreshContainer() end,
                 Destroy = function() refreshContainer(); DropFrame:Destroy() end
+            }
+        end
+
+        function Tab:KeyBind(text, defaultKey, callback)
+            Tab.ElementCount = Tab.ElementCount + 1
+            local currentKey = defaultKey or Enum.KeyCode.None
+            local isListening = false
+            local listeningConnection = nil
+
+            local BindFrame = UI:Create("TextButton", {
+                Size = UDim2.new(1, -16, 0, 36),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.5,
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 14,
+                LayoutOrder = Tab.ElementCount,
+                Parent = Page
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = BindFrame})
+            local frameStroke = UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.8, Parent = BindFrame})
+
+            local Label = UI:Create("TextLabel", {
+                Text = "  " .. text,
+                Size = UDim2.new(1, -110, 0, 36),
+                BackgroundTransparency = 1,
+                TextColor3 = theme.Text,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                ZIndex = 15,
+                Parent = BindFrame
+            })
+
+            local KeyButton = UI:Create("TextButton", {
+                Size = UDim2.new(0, 90, 0, 28),
+                Position = UDim2.new(1, -100, 0.5, -14),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.3,
+                Text = currentKey.Name,
+                TextColor3 = theme.Accent,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 12,
+                ZIndex = 15,
+                Parent = BindFrame
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = KeyButton})
+
+            local function updateKeyDisplay()
+                KeyButton.Text = currentKey.Name
+            end
+
+            local function startListening()
+                if listeningConnection then listeningConnection:Disconnect() end
+                isListening = true
+                KeyButton.Text = "..."
+                KeyButton.TextColor3 = theme.Warning
+                services.TweenService:Create(KeyButton, TweenInfo.new(0.15), {BackgroundTransparency = 0.1}):Play()
+                listeningConnection = services.UIS.InputBegan:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        local newKey = input.KeyCode
+                        if newKey == Enum.KeyCode.Escape then
+                            currentKey = Enum.KeyCode.None
+                        else
+                            currentKey = newKey
+                        end
+                        updateKeyDisplay()
+                        if callback then pcall(callback, currentKey) end
+                        stopListening()
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        -- разрешить клик мыши как клавишу? можно добавить поддержку Enum.UserInputType
+                        -- но для простоты оставим только клавиши
+                    end
+                end)
+            end
+
+            local function stopListening()
+                if listeningConnection then
+                    listeningConnection:Disconnect()
+                    listeningConnection = nil
+                end
+                isListening = false
+                KeyButton.Text = currentKey.Name
+                KeyButton.TextColor3 = theme.Accent
+                services.TweenService:Create(KeyButton, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
+            end
+
+            KeyButton.MouseButton1Click:Connect(function()
+                if isListening then
+                    stopListening()
+                else
+                    startListening()
+                end
+            end)
+
+            -- закрыть прослушивание если кликнуть вне (по желанию)
+            local function globalClickHandler(input)
+                if isListening and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local mousePos = services.UIS:GetMouseLocation()
+                    local absPos = KeyButton.AbsolutePosition
+                    local absSize = KeyButton.AbsoluteSize
+                    if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
+                            mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
+                        stopListening()
+                    end
+                end
+            end
+            table.insert(WindowObj.Connections, services.UIS.InputBegan:Connect(globalClickHandler))
+
+            -- анимации при наведении
+            local enter = BindFrame.MouseEnter:Connect(function()
+                services.TweenService:Create(BindFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.4, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.6}):Play()
+            end)
+            local leave = BindFrame.MouseLeave:Connect(function()
+                services.TweenService:Create(BindFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, Size = UDim2.new(1, -16, 0, 36)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+            end)
+            table.insert(WindowObj.Connections, enter)
+            table.insert(WindowObj.Connections, leave)
+
+            table.insert(Tab.Elements, BindFrame)
+            table.insert(WindowObj.Elements, BindFrame)
+            updatePageSize()
+
+            return {
+                SetKey = function(newKey)
+                    if typeof(newKey) == "string" then newKey = Enum.KeyCode[newKey] end
+                    if newKey then
+                        currentKey = newKey
+                        updateKeyDisplay()
+                        if callback then pcall(callback, currentKey) end
+                    end
+                end,
+                GetKey = function() return currentKey end,
+                IsListening = function() return isListening end,
+                StopListening = stopListening
             }
         end
 
