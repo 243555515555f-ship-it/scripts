@@ -861,6 +861,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 KeyButton.Text = "..."
                 KeyButton.TextColor3 = theme.Warning
                 services.TweenService:Create(KeyButton, TweenInfo.new(0.15), {BackgroundTransparency = 0.1}):Play()
+                
+                -- Этот слушатель работает ТОЛЬКО в момент назначения новой клавиши
                 listeningConnection = services.UIS.InputBegan:Connect(function(input, gameProcessed)
                     if gameProcessed then return end
                     if input.UserInputType == Enum.UserInputType.Keyboard then
@@ -871,11 +873,8 @@ function GeminiLib:CreateWindow(title, themeName)
                             currentKey = newKey
                         end
                         updateKeyDisplay()
-                        if callback then pcall(callback, currentKey) end
+                        -- Убрали отсюда вызов callback, чтобы он не срабатывал ложно при самой перезаписи кнопки
                         stopListening()
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
-                        -- разрешить клик мыши как клавишу? можно добавить поддержку Enum.UserInputType
-                        -- но для простоты оставим только клавиши
                     end
                 end)
             end
@@ -899,7 +898,7 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end)
 
-            -- закрыть прослушивание если кликнуть вне (по желанию)
+            -- Закрыть прослушивание если кликнуть вне кнопки
             local function globalClickHandler(input)
                 if isListening and input.UserInputType == Enum.UserInputType.MouseButton1 then
                     local mousePos = services.UIS:GetMouseLocation()
@@ -912,6 +911,23 @@ function GeminiLib:CreateWindow(title, themeName)
                 end
             end
             table.insert(WindowObj.Connections, services.UIS.InputBegan:Connect(globalClickHandler))
+
+            -- ============================================================================
+            -- ДОБАВЛЕНО: Постоянный глобальный слушатель нажатия установленной клавиши в игре
+            -- ============================================================================
+            local gamePlayConnection = services.UIS.InputBegan:Connect(function(input, gameProcessed)
+                -- Если игрок пишет в чат или открыл меню паузы — игнорируем нажатие кейбинда
+                if gameProcessed then return end 
+                
+                -- Если мы прямо сейчас НЕ меняем кнопку, и нажатая клавиша совпадает с установленной
+                if not isListening and input.KeyCode == currentKey and currentKey ~= Enum.KeyCode.None then
+                    if callback then 
+                        pcall(callback) 
+                    end
+                end
+            end)
+            table.insert(WindowObj.Connections, gamePlayConnection) -- Авто-очистка при закрытии меню
+            -- ============================================================================
 
             -- анимации при наведении
             local enter = BindFrame.MouseEnter:Connect(function()
@@ -935,7 +951,6 @@ function GeminiLib:CreateWindow(title, themeName)
                     if newKey then
                         currentKey = newKey
                         updateKeyDisplay()
-                        if callback then pcall(callback, currentKey) end
                     end
                 end,
                 GetKey = function() return currentKey end,
@@ -943,17 +958,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 StopListening = stopListening
             }
         end
-
-        -- Обновление размера страницы при добавлении/удалении детей
-        Page.ChildAdded:Connect(function() task.wait(0.01); updatePageSize() end)
-        Page.ChildRemoved:Connect(function() task.wait(0.01); updatePageSize() end)
-        task.spawn(function() task.wait(0.1); updatePageSize() end)
-
-        table.insert(WindowObj.Tabs, Tab)
-        if #WindowObj.Tabs == 1 then activateTab() end
-        return Tab
     end
-
+    
     -- ======================== ОСТАЛЬНЫЕ МЕТОДЫ ОКНА ========================
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
@@ -1131,5 +1137,6 @@ function GeminiLib:CreateNotification(notificationData)
         notificationFrame:Destroy()
     end)
 end
+
 
 return GeminiLib
