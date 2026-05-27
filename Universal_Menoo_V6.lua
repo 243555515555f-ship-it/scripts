@@ -1,5 +1,5 @@
 -- Menoo GeminiLib V6 - FULLY OPTIMIZED & LAG-FIXED
-local GeminiLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/243555515555f-ship-it/scripts/refs/heads/main/GeminiLib%20V6"))()
+local GeminiLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/243555515555f-ship-it/scripts/refs/heads/main/GeminiLib%20V6.lua"))()
 
 -- Services & cached locals
 local Players = game:GetService("Players")
