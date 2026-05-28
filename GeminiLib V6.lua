@@ -958,6 +958,8 @@ function GeminiLib:CreateWindow(title, themeName)
                 StopListening = stopListening
             }
         end
+        
+        return Tab
     end
     
     -- ======================== ОСТАЛЬНЫЕ МЕТОДЫ ОКНА ========================
