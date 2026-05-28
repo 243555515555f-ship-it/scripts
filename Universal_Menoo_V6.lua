@@ -265,6 +265,8 @@ end)
 ----------------------------------------------------------------
 -- NOCLIP
 ----------------------------------------------------------------
+BypassTab:Label("Others Bypass Features 🛠")
+
 local noclipEnabled = false
 local noclipConnection = nil
 
@@ -297,7 +299,7 @@ local function toggleNoclip(state)
     end
 end
 
-BypassTab:Toggle("NoClip On/Off", false, function(state)
+BypassTab:Toggle("NoClip On/Off (may cause issues)", false, function(state)
     toggleNoclip(state)
 end)
 
@@ -450,15 +452,14 @@ BypassTab:KeyBind("Keybind: ", Enum.KeyCode.F, function()
 end)
 
 -- ====================================================================
---     ESP SYSTEM (Fully optimized with caching and safe cleanup)
+--                         ESP SYSTEM
 -- ====================================================================
 
 VisualsTab:Label("ESP Tools ☄")
 
--- ==================== НАСТРОЙКИ ESP ====================
 local ESP_Settings = {
-    Mode = "Team Mode", -- "Team Mode" или "FFA Mode"
-    RainbowWave = false, -- Глобальная RGB волна
+    Mode = "Team Mode",
+    RainbowWave = false,
     MaxDistance = 1000, 
     Colors = {
         Enemy = Color3.fromRGB(255, 65, 65),
@@ -466,7 +467,6 @@ local ESP_Settings = {
     }
 }
 
--- Хранилище Drawing-объектов и инстансов
 local ESP_Storage = {
     Highlights = {},
     Names = {},
@@ -475,10 +475,8 @@ local ESP_Storage = {
     HealthBars = {}
 }
 
--- Переменная для текущего глобального цвета волны
 local GlobalRainbowColor = Color3.fromRGB(255, 255, 255)
 
--- Вспомогательная функция определения цвета для игрока
 local function getESPColor(plr)
     if ESP_Settings.RainbowWave then
         return GlobalRainbowColor
@@ -491,7 +489,6 @@ local function getESPColor(plr)
     return ESP_Settings.Colors.Enemy
 end
 
--- Функция принудительной полной очистки объектов одного игрока
 local function removePlayerESP(plr)
     if ESP_Storage.Highlights[plr] then pcall(function() ESP_Storage.Highlights[plr]:Destroy() end) ESP_Storage.Highlights[plr] = nil end
     if ESP_Storage.Names[plr] then pcall(function() ESP_Storage.Names[plr]:Destroy() end) ESP_Storage.Names[plr] = nil end
@@ -500,7 +497,6 @@ local function removePlayerESP(plr)
     if ESP_Storage.HealthBars[plr] then pcall(function() ESP_Storage.HealthBars[plr]:Remove() end) ESP_Storage.HealthBars[plr] = nil end
 end
 
--- Очистка категорий при выключении тумблеров
 local function clearCategory(key)
     for plr, obj in pairs(ESP_Storage[key]) do
         pcall(function() if obj.Remove then obj:Remove() else obj:Destroy() end end)
@@ -508,10 +504,8 @@ local function clearCategory(key)
     ESP_Storage[key] = {}
 end
 
--- Состояния туглов
 local Options = { Highlight = false, Name = false, Tracer = false, Box = false, Health = false }
 
--- ==================== ГЛАВНЫЙ ЦИКЛ РЕНДЕРА ====================
 ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function()
     -- Обновление цвета волны
     if ESP_Settings.RainbowWave then
@@ -524,29 +518,58 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == player then continue end
-       
+        
         local char = plr.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         local head = char and char:FindFirstChild("Head")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
-       
+        
         -- Если игрок мёртв или нет важных частей — чистим и пропускаем
         if not char or not root or not head or not hum or hum.Health <= 0 then
             removePlayerESP(plr)
             continue
         end
 
-        -- === НОВОЕ: ПРОВЕРКА ДИСТАНЦИИ ===
+        -- Проверка дистанции
         local distance = (myRoot.Position - root.Position).Magnitude
         if distance > ESP_Settings.MaxDistance then
             removePlayerESP(plr)
             continue
         end
 
-        local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
-        local headPos = Camera:WorldToViewportPoint(head.Position)
+        -- ============================================================================
+        -- ИЗМЕНЕНО: Расчет реальных размеров персонажа с учетом R15/R6 масштабирования
+        -- ============================================================================
+        local boxSize = Vector3.new(4, 6, 2) -- Базовый размер R6 персонажа
+        if hum.RigType == Enum.HumanoidRigType.R15 then
+            -- Динамически считываем масштаб высоты и ширины хитбокса
+            local scaleH = char:FindFirstChild("BodyHeightScale") and char.BodyHeightScale.Value or 1
+            local scaleW = char:FindFirstChild("BodyWidthScale") and char.BodyWidthScale.Value or 1
+            boxSize = Vector3.new(4 * scaleW, 6 * scaleH, 2 * scaleW)
+        end
+
+        -- Проектируем верхнюю и нижнюю точки 3D-модели на 2D-экран
+        local topWorld = (root.CFrame * CFrame.new(0, boxSize.Y / 2, 0)).Position
+        local bottomWorld = (root.CFrame * CFrame.new(0, -boxSize.Y / 2, 0)).Position
+        
+        local topPos, topOnScreen = Camera:WorldToViewportPoint(topWorld)
+        local bottomPos, bottomOnScreen = Camera:WorldToViewportPoint(bottomWorld)
+        
+        -- Общая проверка видимости на экране
+        local onScreen = topPos.Z > 0 or bottomPos.Z > 0
+        if not onScreen then
+            removePlayerESP(plr)
+            continue
+        end
+
+        -- Вычисляем пиксельную высоту и пропорциональную ширину бокса
+        local height = math.abs(topPos.Y - bottomPos.Y)
+        local width = height * (boxSize.X / boxSize.Y)
+        
+        local minY = math.min(topPos.Y, bottomPos.Y)
+        local maxY = math.max(topPos.Y, bottomPos.Y)
         local currentSubColor = getESPColor(plr)
-       
+        
         -- 1. HIGHLIGHT ESP
         if Options.Highlight then
             local hl = ESP_Storage.Highlights[plr]
@@ -562,21 +585,20 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
             end
             hl.OutlineColor = currentSubColor
         end
-       
-        -- 2. BILLBOARD NAME ESP
+        
+        -- 2. BILLBOARD NAME ESP (ПОДПРАВЛЕНО: Теперь привязан к root и динамически поднимается выше бокса)
         if Options.Name then
             local bGui = ESP_Storage.Names[plr]
-            if not bGui or bGui.Parent ~= head then
+            if not bGui or bGui.Parent ~= root then
                 if bGui then pcall(function() bGui:Destroy() end) end
-               
+                
                 bGui = Instance.new("BillboardGui")
                 bGui.Name = "ESPNameGui"
-                bGui.Adornee = head
+                bGui.Adornee = root -- Привязываем к торсу для стабильности осей координат
                 bGui.Size = UDim2.new(10, 0, 3, 0)
-                bGui.StudsOffset = Vector3.new(0, 3.5, 0)
                 bGui.AlwaysOnTop = true
                 bGui.MaxDistance = ESP_Settings.MaxDistance + 50
-               
+                
                 local label = Instance.new("TextLabel")
                 label.Name = "NameLabel"
                 label.Size = UDim2.new(1, 0, 1, 0)
@@ -587,23 +609,27 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
                 label.TextStrokeTransparency = 0.2
                 label.TextStrokeColor3 = Color3.new(0, 0, 0)
                 label.Parent = bGui
-               
-                bGui.Parent = head
+                
+                bGui.Parent = root
                 ESP_Storage.Names[plr] = bGui
             end
-           
+            
+            -- Смещение рассчитывается динамически: половина высоты персонажа + зазор в 0.6 студа
+            bGui.StudsOffset = Vector3.new(0, (boxSize.Y / 2) + 0.6, 0)
+            
             local label = bGui:FindFirstChild("NameLabel")
             if label then 
                 label.TextColor3 = currentSubColor
-                -- Опционально показываем дистанцию
                 if Options.Distance then
                     label.Text = string.format("%s [%.0f]", plr.Name, distance)
+                else
+                    label.Text = plr.Name
                 end
             end
         end
-       
-        -- 3. TRACERS ESP
-        if Options.Tracer and onScreen then
+        
+        -- 3. TRACERS ESP (ПОДПРАВЛЕНО: Указывает ровно в нижнюю середину бокса)
+        if Options.Tracer and bottomOnScreen then
             if not ESP_Storage.Tracers[plr] then
                 local line = Drawing.new("Line")
                 line.Thickness = 1.5
@@ -612,15 +638,15 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
             end
             local line = ESP_Storage.Tracers[plr]
             line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-            line.To = Vector2.new(screenPos.X, screenPos.Y)
+            line.To = Vector2.new(bottomPos.X, bottomPos.Y) -- bottomPos — это и есть нижний центр хитбокса персонажа
             line.Color = currentSubColor
             line.Visible = true
         else
             if ESP_Storage.Tracers[plr] then ESP_Storage.Tracers[plr].Visible = false end
         end
-       
-        -- 4. BOX ESP
-        if Options.Box and onScreen and headPos.Z > 0 then
+        
+        -- 4. BOX ESP (ПОДПРАВЛЕНО: Подравнивается под реальные 2D границы хитбокса)
+        if Options.Box and (topOnScreen or bottomOnScreen) then
             if not ESP_Storage.Boxes[plr] then
                 local sq = Drawing.new("Square")
                 sq.Thickness = 1.5
@@ -628,21 +654,18 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
                 sq.Transparency = 0.8
                 ESP_Storage.Boxes[plr] = sq
             end
-           
+            
             local box = ESP_Storage.Boxes[plr]
-            local height = math.abs(screenPos.Y - headPos.Y) * 2.7
-            local width = height * 0.65
-           
             box.Size = Vector2.new(width, height)
-            box.Position = Vector2.new(screenPos.X - width / 2, headPos.Y - (height * 0.22))
+            box.Position = Vector2.new(topPos.X - width / 2, minY)
             box.Color = currentSubColor
             box.Visible = true
         else
             if ESP_Storage.Boxes[plr] then ESP_Storage.Boxes[plr].Visible = false end
         end
-       
-        -- 5. HEALTH BAR ESP
-        if Options.Health and onScreen and headPos.Z > 0 then
+        
+        -- 5. HEALTH BAR ESP (ОБНОВЛЕНО: Привязано к левой стенке нового динамического бокса)
+        if Options.Health and (topOnScreen or bottomOnScreen) then
             if not ESP_Storage.HealthBars[plr] then
                 local bar = Drawing.new("Square")
                 bar.Filled = true
@@ -651,12 +674,12 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
                 ESP_Storage.HealthBars[plr] = bar
             end
             local bar = ESP_Storage.HealthBars[plr]
-            local height = math.abs(screenPos.Y - headPos.Y) * 1.6
             local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-           
+            
             bar.Size = Vector2.new(4, height * hpPercent)
-            bar.Position = Vector2.new(screenPos.X - (height * 0.6) / 2 - 8, headPos.Y - 5 + (height * (1 - hpPercent)))
-           
+            -- Смещаем полоску влево ровно на край бокса (-6 пикселей)
+            bar.Position = Vector2.new(topPos.X - width / 2 - 6, minY + (height * (1 - hpPercent)))
+            
             if ESP_Settings.RainbowWave then
                 bar.Color = GlobalRainbowColor
             else
@@ -756,7 +779,6 @@ end)
 VisualsTab:Dropdown("Team Color", colorNames, "Green", function(v)
     ESP_Settings.Colors.Team = colorMap[v]
 end)
--- ==================== UI INTERFACE ====================
 
 ----------------------------------------------------------------
 -- XRAY (Major fix - cache + limit)
@@ -847,11 +869,6 @@ VisualsTab:Toggle("Freecam (Camera Flight)", false, toggleFreecam)
 
 VisualsTab:Label("More in future updates...")
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- GAME SPECIFIC TOOLS
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-BypassTab:Label("Game Specific Tools ⸘")
-
 -- SPIN
 local spinSpeed = 10
 local Spin = { Conn = nil }
@@ -885,13 +902,14 @@ local walkflinging = false
 local flingConnection = nil
 local flingBodyVelocity = nil
 local flingBodyAngularVelocity = nil
+local flingBodyGyro = nil
 
 local function toggleFlingPhysics(state)
     local root = getRootPart()
     if not root then return end
 
     if state then
-        -- Создаем бешеную угловую скорость (заставляет хитбокс крутиться на уровне физики)
+        -- 1. Создаем угловую скорость (заставляет хитбокс бешено крутиться)
         if not flingBodyAngularVelocity or not flingBodyAngularVelocity.Parent then
             flingBodyAngularVelocity = Instance.new("BodyAngularVelocity")
             flingBodyAngularVelocity.Name = "FlingAngular"
@@ -900,13 +918,23 @@ local function toggleFlingPhysics(state)
             flingBodyAngularVelocity.Parent = root
         end
 
-        -- Удерживаем персонажа от улетания в небо или падения
+        -- 2. ИСПРАВЛЕНО: Блокируем СТРОГО вертикальную ось Y, чтобы не улетать вверх и не падать
         if not flingBodyVelocity or not flingBodyVelocity.Parent then
             flingBodyVelocity = Instance.new("BodyVelocity")
             flingBodyVelocity.Name = "FlingLinear"
-            flingBodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge) -- Запрещаем изменять высоту (Y = 0)
+            -- Сила прикладывается ТОЛЬКО к оси Y (0, math.huge, 0). X и Z свободны для нормального бега!
+            flingBodyVelocity.MaxForce = Vector3.new(0, math.huge, 0) 
             flingBodyVelocity.Velocity = Vector3.new(0, 0, 0)
             flingBodyVelocity.Parent = root
+        end
+
+        -- 3. ДОБАВЛЕНО: Удерживаем персонажа строго вертикально, чтобы он не заваливался на бок
+        if not flingBodyGyro or not flingBodyGyro.Parent then
+            flingBodyGyro = Instance.new("BodyGyro")
+            flingBodyGyro.Name = "FlingGyro"
+            flingBodyGyro.MaxTorque = Vector3.new(math.huge, 0, math.huge) -- Запрещаем наклоны по X и Z
+            flingBodyGyro.CFrame = CFrame.new() -- Удерживает идеальную вертикаль
+            flingBodyGyro.Parent = root
         end
 
         -- Основной цикл симуляции столкновений через Heartbeat
@@ -920,10 +948,16 @@ local function toggleFlingPhysics(state)
             local hum = getPlayerHumanoid()
             
             if currentRoot and hum then
-                -- Устанавливаем огромную линейную скорость по бокам на долю секунды, чтобы сломать хитбокс врага при касании
-                currentRoot.Velocity = Vector3.new(9999, 0, 9999)
+                -- ИСПРАВЛЕНО: Вместо жесткого вектора (9999, 0, 9999), который ломал ходьбу,
+                -- мы умножаем вектор твоего движения (MoveDirection), сохраняя управление.
+                if hum.MoveDirection.Magnitude > 0 then
+                    currentRoot.AssemblyLinearVelocity = hum.MoveDirection * 15000
+                else
+                    -- Если стоишь на месте, генерируем круговой/импульсный вектор вокруг себя
+                    currentRoot.AssemblyLinearVelocity = Vector3.new(15000, 0, 15000)
+                end
                 
-                -- Маскируем движение для сервера (симулируем падение/вставание)
+                -- Маскируем движение для сервера
                 hum:ChangeState(Enum.HumanoidStateType.Physics)
                 
                 -- Делаем так, чтобы детали не сталкивались с твоими аксессуарами
@@ -939,6 +973,7 @@ local function toggleFlingPhysics(state)
         if flingConnection then flingConnection:Disconnect() flingConnection = nil end
         if flingBodyAngularVelocity then flingBodyAngularVelocity:Destroy() flingBodyAngularVelocity = nil end
         if flingBodyVelocity then flingBodyVelocity:Destroy() flingBodyVelocity = nil end
+        if flingBodyGyro then flingBodyGyro:Destroy() flingBodyGyro = nil end -- Очищаем гироскоп
         
         -- Возвращаем нормальное состояние Humanoid
         local hum = getPlayerHumanoid()
@@ -1028,6 +1063,8 @@ local function toggleClickTP(state)
 end
 
 BypassTab:Toggle("Ctrl + Click Teleport", false, toggleClickTP)
+
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MASTER FUNCTIONS
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1238,64 +1275,51 @@ MasterFuncTab:Label("Trigger Bot 🎯")
 
 local TriggerSettings = {
     Enabled = false,
-    Mode = GlobalMode, -- "Team Mode" или "FFA Mode"
-    Delay = 0,          -- Задержка перед выстрелом в секундах
-    MaxDistance = 1000  -- Максимальная дистанция работы триггербота
+    Mode = GlobalMode,
+    Delay = 0,
+    MaxDistance = 1000
 }
 
--- Кэшируем мышь локального игрока
 local Mouse = player:GetMouse()
 
--- Функция проверки: является ли объект частью живого противника
 local function checkTarget(target)
     if not target or not target:IsDescendantOf(Workspace) then return nil end
     
-    -- Ищем модель персонажа (обычно в ней находится Humanoid)
     local characterModel = target:FindFirstAncestorOfClass("Model")
     if not characterModel then return nil end
     
     local humanoid = characterModel:FindFirstChildOfClass("Humanoid")
     local rootPart = characterModel:FindFirstChild("HumanoidRootPart")
     
-    -- Если структуры персонажа нет или он мертв — игнорируем
     if not humanoid or not rootPart or humanoid.Health <= 0 then return nil end
     
-    -- Проверяем, какому игроку принадлежит персонаж
     local targetPlr = Players:GetPlayerFromCharacter(characterModel)
     if not targetPlr or targetPlr == player then return nil end
     
-    -- Проверка дистанции
     local distance = (Camera.CFrame.Position - rootPart.Position).Magnitude
     if distance > TriggerSettings.MaxDistance then return nil end
     
-    -- Проверка режимов FFA / Team Mode
     if TriggerSettings.Mode == "Team Mode" and player.Team and targetPlr.Team then
         if targetPlr.Team == player.Team then
-            return nil -- Союзник, не стреляем
+            return nil
         end
     end
     
     return characterModel
 end
 
--- Основной цикл триггербота
 ConnectionManager:add("TriggerBot_Loop", RunService.RenderStepped:Connect(function()
     if not TriggerSettings.Enabled then return end
     
-    -- Получаем объект, на который сейчас наведен курсор/прицел мыши
     local target = Mouse.Target
     local validCharacter = checkTarget(target)
     
     if validCharacter then
-        -- Если выставлена задержка, ждем перед выстрелом
         if TriggerSettings.Delay > 0 then
             task.wait(TriggerSettings.Delay)
-            -- Перепроверяем цель после ожидания, вдруг прицел уже ушел
             if Mouse.Target ~= target or not checkTarget(target) then return end
         end
         
-        -- Симуляция клика мыши (Выстрел)
-        -- Используем стандартные функции виртуального ввода Roblox эксплоитов
         if mouse1click then
             mouse1click()
         elseif mouse1press and mouse1release then
@@ -1306,7 +1330,6 @@ ConnectionManager:add("TriggerBot_Loop", RunService.RenderStepped:Connect(functi
     end
 end))
 
--- ==================== UI ЭЛЕМЕНТЫ УПРАВЛЕНИЯ ====================
 MasterFuncTab:Toggle("Enable Trigger Bot", false, function(state)
     TriggerSettings.Enabled = state
 end)
@@ -1314,101 +1337,7 @@ end)
 MasterFuncTab:Separator()
 
 ----------------------------------------------------------------
--- Wallbang
 
--- ====================== WALLBANG / WALLSHOT ======================
-local SmartWallbang = {
-    Enabled = false,
-    CachedParts = {},
-    IsShooting = false,
-    Connection = nil
-}
-
-local function cacheMapParts()
-    SmartWallbang.CachedParts = {}
-    local count = 0
-    
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            -- Пропускаем персонажей и важные объекты
-            if not obj:FindFirstAncestorWhichIsA("Model") or 
-               not obj:FindFirstAncestorWhichIsA("Humanoid") then
-                
-                if obj.CanCollide == true then
-                    table.insert(SmartWallbang.CachedParts, obj)
-                    count += 1
-                end
-            end
-        end
-    end
-    
-    Notify("Wallbang Cache: " .. count .. " объектов сохранено", 4)
-    print("[Wallbang] Cached " .. count .. " parts")
-end
-
-local function setAllCollide(state)
-    for _, part in ipairs(SmartWallbang.CachedParts) do
-        pcall(function()
-            if part and part.Parent then
-                part.CanCollide = state
-            end
-        end)
-    end
-end
-
-local function startWallbang()
-    if SmartWallbang.Connection then return end
-    
-    cacheMapParts() -- Кэшируем карту один раз
-    
-    SmartWallbang.Connection = RunService.RenderStepped:Connect(function()
-        if not SmartWallbang.Enabled then return end
-        
-        local isCurrentlyShooting = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-        
-        if isCurrentlyShooting and not SmartWallbang.IsShooting then
-            -- Нажали ЛКМ → убираем коллизию
-            SmartWallbang.IsShooting = true
-            setAllCollide(false)
-            
-        elseif not isCurrentlyShooting and SmartWallbang.IsShooting then
-            -- Отпустили ЛКМ → возвращаем коллизию
-            SmartWallbang.IsShooting = false
-            setAllCollide(true)
-        end
-    end)
-end
-
-local function stopWallbang()
-    if SmartWallbang.Connection then
-        SmartWallbang.Connection:Disconnect()
-        SmartWallbang.Connection = nil
-    end
-    
-    -- Возвращаем всё как было
-    setAllCollide(true)
-    SmartWallbang.IsShooting = false
-end
-
-SmartWallbang.Toggle = function(state)
-    SmartWallbang.Enabled = state
-    
-    if state then
-        startWallbang()
-        Notify("🧠 Wallbang включён (Cache Mode)", 4)
-    else
-        stopWallbang()
-        Notify("🧠 Wallbang отключён", 3)
-    end
-end
-
-MasterFuncTab:Label("Wallbang / Wallshot")
-
-MasterFuncTab:Toggle("Wallbang (Cache + CanCollide)", false, function(state)
-    SmartWallbang.Toggle(state)
-end)
-
-----------------------------------------------------------------
 -- HITBOX EXPANDER
 BigHeadcfg = {
     Enabled = false,
