@@ -427,9 +427,21 @@ local function turnVisible()
     Invisible.Clone = nil
 end
 
+
 -- Интеграция во вкладку UI
 BypassTab:Toggle("Invisible On/Off", false, function(state)
     if state then
+        local success, err = pcall(turnInvisible)
+        if not success then warn("Invisible Error:", err) turnVisible() end
+    else
+        pcall(turnVisible)
+    end
+end)
+
+local invisState = false
+BypassTab:KeyBind("Keybind: ", Enum.KeyCode.F, function()
+    invisState = not invisState
+    if invisState then
         local success, err = pcall(turnInvisible)
         if not success then warn("Invisible Error:", err) turnVisible() end
     else
@@ -447,6 +459,7 @@ VisualsTab:Label("ESP Tools ☄")
 local ESP_Settings = {
     Mode = "Team Mode", -- "Team Mode" или "FFA Mode"
     RainbowWave = false, -- Глобальная RGB волна
+    MaxDistance = 1000, 
     Colors = {
         Enemy = Color3.fromRGB(255, 65, 65),
         Team = Color3.fromRGB(65, 255, 130)
@@ -500,30 +513,40 @@ local Options = { Highlight = false, Name = false, Tracer = false, Box = false, 
 
 -- ==================== ГЛАВНЫЙ ЦИКЛ РЕНДЕРА ====================
 ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function()
-    -- Обновление цвета волны, если режим включен
+    -- Обновление цвета волны
     if ESP_Settings.RainbowWave then
         local hue = (tick() * 0.25) % 1
         GlobalRainbowColor = Color3.fromHSV(hue, 1, 1)
     end
 
+    local myRoot = getRootPart()
+    if not myRoot then return end
+
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr == player then continue end
-        
+       
         local char = plr.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         local head = char and char:FindFirstChild("Head")
         local hum = char and char:FindFirstChildOfClass("Humanoid")
-        
-        -- Если игрок мертв или исчез персонаж — немедленно сносим его ESP и пропускаем итерацию
+       
+        -- Если игрок мёртв или нет важных частей — чистим и пропускаем
         if not char or not root or not head or not hum or hum.Health <= 0 then
             removePlayerESP(plr)
             continue
         end
-        
+
+        -- === НОВОЕ: ПРОВЕРКА ДИСТАНЦИИ ===
+        local distance = (myRoot.Position - root.Position).Magnitude
+        if distance > ESP_Settings.MaxDistance then
+            removePlayerESP(plr)
+            continue
+        end
+
         local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
         local headPos = Camera:WorldToViewportPoint(head.Position)
         local currentSubColor = getESPColor(plr)
-        
+       
         -- 1. HIGHLIGHT ESP
         if Options.Highlight then
             local hl = ESP_Storage.Highlights[plr]
@@ -539,21 +562,21 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
             end
             hl.OutlineColor = currentSubColor
         end
-        
+       
         -- 2. BILLBOARD NAME ESP
         if Options.Name then
             local bGui = ESP_Storage.Names[plr]
             if not bGui or bGui.Parent ~= head then
                 if bGui then pcall(function() bGui:Destroy() end) end
-                
+               
                 bGui = Instance.new("BillboardGui")
                 bGui.Name = "ESPNameGui"
                 bGui.Adornee = head
                 bGui.Size = UDim2.new(10, 0, 3, 0)
                 bGui.StudsOffset = Vector3.new(0, 3.5, 0)
                 bGui.AlwaysOnTop = true
-                bGui.MaxDistance = 600
-                
+                bGui.MaxDistance = ESP_Settings.MaxDistance + 50
+               
                 local label = Instance.new("TextLabel")
                 label.Name = "NameLabel"
                 label.Size = UDim2.new(1, 0, 1, 0)
@@ -564,15 +587,21 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
                 label.TextStrokeTransparency = 0.2
                 label.TextStrokeColor3 = Color3.new(0, 0, 0)
                 label.Parent = bGui
-                
+               
                 bGui.Parent = head
                 ESP_Storage.Names[plr] = bGui
             end
-            
+           
             local label = bGui:FindFirstChild("NameLabel")
-            if label then label.TextColor3 = currentSubColor end
+            if label then 
+                label.TextColor3 = currentSubColor
+                -- Опционально показываем дистанцию
+                if Options.Distance then
+                    label.Text = string.format("%s [%.0f]", plr.Name, distance)
+                end
+            end
         end
-        
+       
         -- 3. TRACERS ESP
         if Options.Tracer and onScreen then
             if not ESP_Storage.Tracers[plr] then
@@ -589,7 +618,7 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
         else
             if ESP_Storage.Tracers[plr] then ESP_Storage.Tracers[plr].Visible = false end
         end
-        
+       
         -- 4. BOX ESP
         if Options.Box and onScreen and headPos.Z > 0 then
             if not ESP_Storage.Boxes[plr] then
@@ -599,27 +628,19 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
                 sq.Transparency = 0.8
                 ESP_Storage.Boxes[plr] = sq
             end
-            
+           
             local box = ESP_Storage.Boxes[plr]
-            
-            -- Увеличиваем высоту (множитель 2.7 делает бокс значительно шире по вертикали)
             local height = math.abs(screenPos.Y - headPos.Y) * 2.7
-            
-            -- Увеличиваем пропорцию ширины до 0.65, чтобы бокс не был слишком узким
-            local width = height * 0.65 
-            
+            local width = height * 0.65
+           
             box.Size = Vector2.new(width, height)
-            
-            -- Корректируем смещение по Y (height * 0.22), чтобы притянуть верхнюю грань еще выше над головой,
-            -- за счет чего нижняя граница опустится глубоко под ноги игрока
             box.Position = Vector2.new(screenPos.X - width / 2, headPos.Y - (height * 0.22))
-            
             box.Color = currentSubColor
             box.Visible = true
         else
             if ESP_Storage.Boxes[plr] then ESP_Storage.Boxes[plr].Visible = false end
         end
-        
+       
         -- 5. HEALTH BAR ESP
         if Options.Health and onScreen and headPos.Z > 0 then
             if not ESP_Storage.HealthBars[plr] then
@@ -632,11 +653,10 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
             local bar = ESP_Storage.HealthBars[plr]
             local height = math.abs(screenPos.Y - headPos.Y) * 1.6
             local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-            
+           
             bar.Size = Vector2.new(4, height * hpPercent)
             bar.Position = Vector2.new(screenPos.X - (height * 0.6) / 2 - 8, headPos.Y - 5 + (height * (1 - hpPercent)))
-            
-            -- Если волна выключена, делаем красивый переход здоровья от зеленого к красному
+           
             if ESP_Settings.RainbowWave then
                 bar.Color = GlobalRainbowColor
             else
@@ -646,13 +666,14 @@ ConnectionManager:add("ESP_CoreLoop", RunService.RenderStepped:Connect(function(
         else
             if ESP_Storage.HealthBars[plr] then ESP_Storage.HealthBars[plr].Visible = false end
         end
-
-        if not Options.Highlight then clearCategory("Highlights") end
-        if not Options.Name then clearCategory("Names") end
-        if not Options.Tracer then clearCategory("Tracers") end
-        if not Options.Box then clearCategory("Boxes") end
-        if not Options.Health then clearCategory("HealthBars") end
     end
+
+    -- Очистка отключённых категорий
+    if not Options.Highlight then clearCategory("Highlights") end
+    if not Options.Name then clearCategory("Names") end
+    if not Options.Tracer then clearCategory("Tracers") end
+    if not Options.Box then clearCategory("Boxes") end
+    if not Options.Health then clearCategory("HealthBars") end
 end))
 
 -- ==================== ПОДПИСКИ НА СОБЫТИЯ ОЧИСТКИ ====================
@@ -708,6 +729,10 @@ VisualsTab:Label("ESP Customization ⚙")
 -- Глобальный переключатель перелива волной
 VisualsTab:Toggle("Wave Rainbow Mode", false, function(state)
     ESP_Settings.RainbowWave = state
+end)
+
+VisualsTab:Slider("Max ESP Distance", 100, 1500, 200, function(value)
+    ESP_Settings.MaxDistance = value
 end)
 
 VisualsTab:Dropdown("ESP Mode", {"Team Mode", "FFA Mode"}, "Team Mode", function(v)
@@ -785,6 +810,8 @@ VisualsTab:Button("Refresh XRay Cache", function()
     end
 end)
 
+
+-- freecam (camera flight)
 local freecamEnabled = false
 local freecamLoop = nil
 local freecamCFrame = nil
@@ -824,81 +851,6 @@ VisualsTab:Label("More in future updates...")
 -- GAME SPECIFIC TOOLS
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 BypassTab:Label("Game Specific Tools ⸘")
-
---  FLING
-local Fling = { 
-    Enabled = false, 
-    Conn = nil,
-    Offset = 0,
-    Speed = 2
-}
-
-local function applyVertical(character)
-    if not character then return end
-    
-    local parts = {}
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            table.insert(parts, part)
-        end
-    end
-    
-    if #parts == 0 then return end
-    
-    table.sort(parts, function(a, b)
-        return a.Position.Y > b.Position.Y
-    end)
-    
-    local maxY = parts[1].Position.Y
-    local minY = parts[#parts].Position.Y
-    local heightRange = maxY - minY
-    
-    if heightRange <= 0 then return end
-    
-    local timeOffset = tick() * Fling.Speed
-    
-    for i, part in ipairs(parts) do
-        local normalizedY = (part.Position.Y - minY) / heightRange
-        local hue = (normalizedY + timeOffset + Fling.Offset) % 1
-        local color = Color3.fromHSV(hue, 1, 1)
-        part.BrickColor = BrickColor.new(color)
-    end
-end
-
-local function toggleFling(state)
-    Fling.Enabled = state
-    
-    if state then
-        if Fling.Conn then Fling.Conn:Disconnect() end
-        Fling.Conn = RunService.Heartbeat:Connect(function(deltaTime)
-            if not Fling.Enabled then return end
-            local character = getPlayerObject()
-            if not character then return end
-            Fling.Offset = (Fling.Offset + deltaTime * Fling.Speed) % 1
-            applyVertical(character)
-        end)
-    else
-        if Fling.Conn then 
-            Fling.Conn:Disconnect() 
-            Fling.Conn = nil 
-        end
-        local character = getPlayerObject()
-        if character then
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.BrickColor = BrickColor.new("Medium stone grey")
-                end
-            end
-        end
-    end
-end
-
-BypassTab:Slider("Rainbow Speed", 0.1, 2, 0.5, function(value)
-    Fling.Speed = value
-end)
-BypassTab:Toggle(" Fling Tool", false, toggleFling)
-
-BypassTab:Separator()
 
 -- SPIN
 local spinSpeed = 10
@@ -1099,8 +1051,11 @@ local AIM_SETTINGS = {
     Enabled = false,
     Key = Enum.UserInputType.MouseButton2,
     Part = "Head",
-    Smoothness = 0.2, -- Для mousemoverel лучше использовать меньшие значения (например, 0.1 - 0.5)
-    ShowFOV = true
+    Smoothness = 0.4,
+    ShowFOV = true,
+    AggressiveMode = false,
+    WallCheck = true, -- only for aggressive
+    MaxDistance = 500
 }
 
 local isPressing = false
@@ -1126,28 +1081,79 @@ end
 local function getClosestToMouse()
     local target = nil
     local dist = GlobalRadius
+    local currentMode = GlobalMode  -- локальная копия для скорости
 
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local part = plr.Character:FindFirstChild(AIM_SETTINGS.Part)
-            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-            
-            if part and hum and hum.Health > 0 then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                
-                if onScreen then
-                    local mouse = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                    local magnitude = (Vector2.new(screenPos.X, screenPos.Y) - mouse).Magnitude
-                    
-                    if magnitude < dist then
-                        target = part
-                        dist = magnitude
-                    end
+        if plr == player then continue end
+        
+        -- Отсев союзников в Team Mode
+        if currentMode == "Team Mode" and player.Team and plr.Team then
+            if plr.Team == player.Team then
+                continue  -- пропускаем союзника
+            end
+        end
+        
+        local char = plr.Character
+        if not char then continue end
+        
+        local part = char:FindFirstChild(AIM_SETTINGS.Part) or char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        
+        if part and hum and hum.Health > 0 then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            if onScreen then
+                local mouse = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                local magnitude = (Vector2.new(screenPos.X, screenPos.Y) - mouse).Magnitude
+                if magnitude < dist then
+                    target = part
+                    dist = magnitude
                 end
             end
         end
     end
     return target
+end
+
+-- Поиск ближайшего игрока с учётом стен и дистанции
+local function getClosestTargetAggressive()
+    local bestTarget = nil
+    local bestDistance = math.huge
+    local cameraPos = Camera.CFrame.Position
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == player then continue end
+
+        -- Отсев союзников в Team Mode
+        if GlobalMode == "Team Mode" and player.Team and plr.Team then
+            if plr.Team == player.Team then continue end
+        end
+
+        local char = plr.Character
+        if not char then continue end
+
+        local targetPart = char:FindFirstChild(AIM_SETTINGS.Part) or char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not targetPart or not hum or hum.Health <= 0 then continue end
+
+        -- Проверка дистанции
+        local distance = (cameraPos - targetPart.Position).Magnitude
+        if distance > AIM_SETTINGS.MaxDistance then continue end
+
+        -- Проверка стен (Raycast)
+        if AIM_SETTINGS.WallCheck then
+            local ray = Ray.new(cameraPos, (targetPart.Position - cameraPos).Unit * distance)
+            local hit, hitPos = Workspace:FindPartOnRay(ray, player.Character)
+            if hit and not hit:IsDescendantOf(char) then
+                continue -- стена блокирует
+            end
+        end
+
+        if distance < bestDistance then
+            bestDistance = distance
+            bestTarget = targetPart
+        end
+    end
+    return bestTarget
 end
 
 createFovCircle()
@@ -1167,43 +1173,34 @@ end)
 
 -- Основной цикл RenderStepped
 RunService.RenderStepped:Connect(function()
-    -- Отрисовка FOV
-    if fovCircle and fovCircle.Visible then
+    -- Отрисовка FOV (только если не агрессивный режим)
+    if not AIM_SETTINGS.AggressiveMode and fovCircle and fovCircle.Visible then
         fovCircle.Radius = GlobalRadius
         fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
         fovCircle.Color = getColor(0.5)
+    elseif AIM_SETTINGS.AggressiveMode and fovCircle then
+        fovCircle.Visible = false -- скрываем круг в агрессивном режиме
     end
 
-    -- Логика Mouse Aim
-    if AIM_SETTINGS.Enabled and isPressing then
-        local target = getClosestToMouse()
-        if target then
-            -- Получаем позицию цели на экране
-            local targetPos, onScreen = Camera:WorldToViewportPoint(target.Position)
-            
-            if onScreen then
-                if GlobalMode == "Team Mode" and player.Team and target.Parent:FindFirstChild("Humanoid") and target.Parent:FindFirstChild("Humanoid").Team == player.Team then
-                    return -- Игнорируем союзников в Team Mode
-                end
+    if not AIM_SETTINGS.Enabled or not isPressing then return end
 
-                -- Центр экрана (текущее положение прицела)
-                local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                
-                -- Вычисляем дистанцию (дельту), на которую нужно сдвинуть мышь
-                local deltaX = targetPos.X - screenCenter.X
-                local deltaY = targetPos.Y - screenCenter.Y
-                
-                -- Применяем сглаживание
-                -- Чем меньше Smoothness, тем плавнее будет доводка
-                local moveX = deltaX * AIM_SETTINGS.Smoothness
-                local moveY = deltaY * AIM_SETTINGS.Smoothness
-                
-                -- Проверяем наличие функции mousemoverel в экзекуторе и двигаем мышь
-                if mousemoverel then
-                    mousemoverel(moveX, moveY)
-                else
-                    warn("Ваш экзекутор не поддерживает mousemoverel!")
-                end
+    local targetPart = nil
+    if AIM_SETTINGS.AggressiveMode then
+        targetPart = getClosestTargetAggressive()
+    else
+        targetPart = getClosestToMouse() -- ваша старая функция
+    end
+
+    if targetPart then
+        local targetPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+        if onScreen then
+            local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            local deltaX = targetPos.X - screenCenter.X
+            local deltaY = targetPos.Y - screenCenter.Y
+            local moveX = deltaX * AIM_SETTINGS.Smoothness
+            local moveY = deltaY * AIM_SETTINGS.Smoothness
+            if mousemoverel then
+                mousemoverel(moveX, moveY)
             end
         end
     end
@@ -1216,7 +1213,7 @@ MasterFuncTab:Toggle("Master Aim", false, function(state)
     end
 end)
 
-MasterFuncTab:Slider("Aim Smooth", 1, 5, 2, function(v)
+MasterFuncTab:Slider("Aim Smooth", 1, 5, 4, function(v)
     AIM_SETTINGS.Smoothness = v / 10
 end)
 
@@ -1224,119 +1221,18 @@ MasterFuncTab:Dropdown("Target Part", {"Head", "UpperTorso", "HumanoidRootPart"}
     AIM_SETTINGS.Part = v
 end)
 
-MasterFuncTab:Separator()
-
---------------------------Silent Aim----------------------------
-MasterFuncTab:Label("Silent Aim 🎯")
-
--- УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ПОИСКА ЦЕЛИ ДЛЯ AIM / SILENT AIM
-local function getClosestPlayer(maxFOV, targetPartName, teamCheck)
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    
-    -- Получаем текущие координаты курсора/прицела на экране
-    local mousePos = UserInputService:GetMouseLocation()
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        -- Не проверяем самого себя и проверяем наличие персонажа в игре
-        if plr ~= player and plr.Character then
-            
-            -- Проверка на команду (если включен TeamCheck)
-            if teamCheck and player.Team and plr.Team == player.Team then 
-                continue 
-            end
-            
-            -- Ищем нужную часть тела (Head или HumanoidRootPart) и проверяем, жив ли враг
-            local targetPart = plr.Character:FindFirstChild(targetPartName or "Head")
-            local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-            
-            if targetPart and humanoid and humanoid.Health > 0 then
-                -- Переводим 3D координаты игрока в 2D координаты твоего экрана
-                local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-                
-                -- Если враг виден на экране
-                if onScreen then
-                    -- Считаем расстояние от центра прицела до врага на экране (в пикселях)
-                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    
-                    -- Если этот враг ближе предыдущего и входит в радиус FOV
-                    if distance < shortestDistance and distance <= (maxFOV or 150) then
-                        closestPlayer = plr
-                        shortestDistance = distance
-                    end
-                end
-            end
-        end
-    end
-    
-    return closestPlayer
-end
-
-local SilentAimSettings = {
-    Enabled = true,
-    TargetPart = "Head",
-    TeamCheck = true
-}
-
--- Хранилище для оригинального направления камеры
-local originalCameraCFrame = nil
-
--- Привязываемся к приоритету рендера (RenderPriority)
--- Камера развернется прямо перед тем, как скрипт оружия начнет считать траекторию пули
-RunService:BindToRenderStep("SilentAimSnap", Enum.RenderPriority.Camera.Value + 1, function()
-    if not SilentAimSettings.Enabled then return end
-    
-    -- Проверяем, зажата ли левая кнопка мыши (стреляет ли игрок)
-    local isShooting = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-    if not isShooting then 
-        -- Если не стреляем, и камера была изменена — возвращаем управление игроку
-        if originalCameraCFrame then
-            originalCameraCFrame = nil
-        end
-        return 
-    end
-    
-    if GlobalMode == "Team Mode" and player.Team then
-        SilentAimSettings.TeamCheck = true
+MasterFuncTab:Toggle("Aggressive Mode (360° + WallCheck)", false, function(state)
+    AIM_SETTINGS.AggressiveMode = state
+    if state then
+        -- В агрессивном режиме FOV не нужен
+        if fovCircle then fovCircle.Visible = false end
     else
-        SilentAimSettings.TeamCheck = false
+        if fovCircle and AIM_SETTINGS.ShowFOV then fovCircle.Visible = true end
     end
-
-    -- Ищем цель (используй свою функцию getClosestPlayer)
-    local targetPlayer = getClosestPlayer(GlobalRadius, SilentAimSettings.TargetPart, SilentAimSettings.TeamCheck)
-    if targetPlayer and targetPlayer.Character then
-        local targetPart = targetPlayer.Character:FindFirstChild(SilentAimSettings.TargetPart)
-        
-        if targetPart then
-            -- 1. Запоминаем, куда реально смотрел игрок в этот микро-момент
-            originalCameraCFrame = Camera.CFrame
-            
-            -- 2. Мгновенно поворачиваем камеру на деталь противника
-            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, targetPart.Position)
-        end
-    end
-end)
-
--- Второй поток: возвращает камеру обратно СРАЗУ после просчета кадра, 
--- чтобы игрок визуально не заметил резкого дерганья
-RunService.PostSimulation:Connect(function()
-    if SilentAimSettings.Enabled and originalCameraCFrame then
-        -- Возвращаем камеру назад в исходную позицию, которую выбрал сам игрок
-        Camera.CFrame = originalCameraCFrame
-        originalCameraCFrame = nil
-    end
-end)
-
--- Пример добавления в твое меню:
-MasterFuncTab:Toggle("Frame-Perfect Silent Aim", false, function(state)
-    SilentAimSettings.Enabled = state
-end)
-
-MasterFuncTab:Dropdown("Silent Target", {"Head", "HumanoidRootPart"}, "Head", function(v)
-    SilentAimSettings.TargetPart = v
 end)
 
 MasterFuncTab:Separator()
+
 ----------------------------------------------------------------
 MasterFuncTab:Label("Trigger Bot 🎯")
 
@@ -1415,15 +1311,103 @@ MasterFuncTab:Toggle("Enable Trigger Bot", false, function(state)
     TriggerSettings.Enabled = state
 end)
 
-MasterFuncTab:Slider("Trigger Delay (s)", 0, 1, 0, function(v)
-    TriggerSettings.Delay = v
-end)
-
-MasterFuncTab:Slider("Max Distance (studs)", 100, 2000, 1000, function(v)
-    TriggerSettings.MaxDistance = v
-end)
-
 MasterFuncTab:Separator()
+
+----------------------------------------------------------------
+-- Wallbang
+
+-- ====================== WALLBANG / WALLSHOT ======================
+local SmartWallbang = {
+    Enabled = false,
+    CachedParts = {},
+    IsShooting = false,
+    Connection = nil
+}
+
+local function cacheMapParts()
+    SmartWallbang.CachedParts = {}
+    local count = 0
+    
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            -- Пропускаем персонажей и важные объекты
+            if not obj:FindFirstAncestorWhichIsA("Model") or 
+               not obj:FindFirstAncestorWhichIsA("Humanoid") then
+                
+                if obj.CanCollide == true then
+                    table.insert(SmartWallbang.CachedParts, obj)
+                    count += 1
+                end
+            end
+        end
+    end
+    
+    Notify("Wallbang Cache: " .. count .. " объектов сохранено", 4)
+    print("[Wallbang] Cached " .. count .. " parts")
+end
+
+local function setAllCollide(state)
+    for _, part in ipairs(SmartWallbang.CachedParts) do
+        pcall(function()
+            if part and part.Parent then
+                part.CanCollide = state
+            end
+        end)
+    end
+end
+
+local function startWallbang()
+    if SmartWallbang.Connection then return end
+    
+    cacheMapParts() -- Кэшируем карту один раз
+    
+    SmartWallbang.Connection = RunService.RenderStepped:Connect(function()
+        if not SmartWallbang.Enabled then return end
+        
+        local isCurrentlyShooting = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+        
+        if isCurrentlyShooting and not SmartWallbang.IsShooting then
+            -- Нажали ЛКМ → убираем коллизию
+            SmartWallbang.IsShooting = true
+            setAllCollide(false)
+            
+        elseif not isCurrentlyShooting and SmartWallbang.IsShooting then
+            -- Отпустили ЛКМ → возвращаем коллизию
+            SmartWallbang.IsShooting = false
+            setAllCollide(true)
+        end
+    end)
+end
+
+local function stopWallbang()
+    if SmartWallbang.Connection then
+        SmartWallbang.Connection:Disconnect()
+        SmartWallbang.Connection = nil
+    end
+    
+    -- Возвращаем всё как было
+    setAllCollide(true)
+    SmartWallbang.IsShooting = false
+end
+
+SmartWallbang.Toggle = function(state)
+    SmartWallbang.Enabled = state
+    
+    if state then
+        startWallbang()
+        Notify("🧠 Wallbang включён (Cache Mode)", 4)
+    else
+        stopWallbang()
+        Notify("🧠 Wallbang отключён", 3)
+    end
+end
+
+MasterFuncTab:Label("Wallbang / Wallshot")
+
+MasterFuncTab:Toggle("Wallbang (Cache + CanCollide)", false, function(state)
+    SmartWallbang.Toggle(state)
+end)
+
 ----------------------------------------------------------------
 -- HITBOX EXPANDER
 BigHeadcfg = {
@@ -1483,7 +1467,7 @@ local function toggleHitbox(state)
 end
 
 MasterFuncTab:Label("Hitbox Expander 🧠")
-MasterFuncTab:Slider("Hitbox Size", 15, 70, 20, function(value)
+MasterFuncTab:Slider("Hitbox Size", 15, 150, 20, function(value)
     BigHeadcfg.Scale = value
 end)
 
@@ -1496,69 +1480,70 @@ end)
 
 MasterFuncTab:Toggle("Hitbox Expander", false, toggleHitbox)
 
-MasterFuncTab:Button("Get Jerk Off Tool", function()
-    local tool = Instance.new("Tool")
-    tool.Name = "Jerk Stick"
-    tool.RequiresHandle = true
-    
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(0.5, 2, 0.5)
-    handle.Parent = tool
-    
-    local toolScript = Instance.new("LocalScript")
-    toolScript.Source = [[
-        local tool = script.Parent
-        local RunService = game:GetService("RunService")
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-        
-        local connection = nil
-        local shoulder = nil
-        local origC0 = nil
+MasterFuncTab:Separator()
+-- JERK OFF ANIMATION (because why not)
 
-        -- Срабатывает, когда игрок ДОСТАЕТ тул
-        tool.Equipped:Connect(function()
-            local char = player.Character
-            if not char then return end
-            
-            -- Поддержка как R6, так и R15 типов персонажей
-            shoulder = char:FindFirstChild("Right Shoulder", true) or char:FindFirstChild("RightShoulder", true)
-            if not shoulder then return end
-            
-            origC0 = shoulder.C0
-            
-            -- Запускаем плавный цикл движения каждый кадр
-            connection = RunService.Heartbeat:Connect(function()
-                if shoulder and shoulder.Parent then
-                    local speed = 25 -- Скорость движения руки
-                    local amplitude = math.rad(30) -- Размах движения (угол наклона)
-                    
-                    -- math.sin создает плавные колебания туда-обратно
-                    local angle = math.sin(tick() * speed) * amplitude
-                    
-                    -- Изменяем только C0 плеча
-                    shoulder.C0 = origC0 * CFrame.Angles(math.rad(45) + angle, 0, 0)
-                end
-            end)
-        end)
+function r15(plr)
+	if plr.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R15 then
+		return true
+	end
+end
 
-        -- Срабатывает, когда игрок УБИРАЕТ тул
-        tool.Unequipped:Connect(function()
-            if connection then
-                connection:Disconnect()
-                connection = nil
+MasterFuncTab:Toggle("Jerk", false, function(state)
+    if state then 
+        local humanoid = player.Character:FindFirstChildWhichIsA("Humanoid")
+        local backpack = player:FindFirstChildWhichIsA("Backpack")
+        if not humanoid or not backpack then return end
+
+        local tool = Instance.new("Tool")
+        tool.Name = "Jerk Off"
+        tool.ToolTip = "in the stripped club. straight up \"jorking it\" . and by \"it\" , haha, well. let's justr say. My peanits."
+        tool.RequiresHandle = false
+        tool.Parent = backpack
+
+        local jorkin = false
+        local track = nil
+
+        local function stopTomfoolery()
+            jorkin = false
+            if track then
+                track:Stop()
+                track = nil
             end
-            if shoulder then
-                shoulder.C0 = origC0 -- Возвращаем руку в исходное положение
-                shoulder = nil
+        end
+
+        tool.Equipped:Connect(function() jorkin = true end)
+        tool.Unequipped:Connect(stopTomfoolery)
+        humanoid.Died:Connect(stopTomfoolery)
+
+        while task.wait() do
+            if not jorkin then continue end
+
+            local isR15 = r15(player)
+            if not track then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = not isR15 and "rbxassetid://72042024" or "rbxassetid://698251653"
+                track = humanoid:LoadAnimation(anim)
             end
-        end)
-    ]]
-    toolScript.Parent = tool
-    tool.Parent = player.Backpack
+
+            track:Play()
+            track:AdjustSpeed(isR15 and 0.7 or 0.65)
+            track.TimePosition = 0.6
+            task.wait(0.1)
+            while track and track.TimePosition < (not isR15 and 0.65 or 0.7) do task.wait(0.1) end
+            if track then
+                track:Stop()
+                track = nil
+            end
+        end
+    else
+        local backpack = player:FindFirstChildWhichIsA("Backpack")
+        if backpack then
+            local tool = backpack:FindFirstChild("Jerk Off")
+            if tool then tool:Destroy() end
+        end
+    end
 end)
-
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Blox Fruits
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
