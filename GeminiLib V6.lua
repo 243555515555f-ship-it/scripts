@@ -407,10 +407,10 @@ function GeminiLib:CreateWindow(title, themeName)
             return SeparatorFrame
         end
 
-        function Tab:Label(text, size)
+        function Tab:Label(text)
             Tab.ElementCount = Tab.ElementCount + 1
             local LabelFrame = UI:Create("Frame", {Size = UDim2.new(1, -16, 0, 22), BackgroundTransparency = 1, ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page})
-            UI:Create("TextLabel", {Text = text, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = size or 13, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 15, Parent = LabelFrame})
+            UI:Create("TextLabel", {Text = text, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 15, Parent = LabelFrame})
             table.insert(Tab.Elements, LabelFrame); table.insert(WindowObj.Elements, LabelFrame); updatePageSize()
             return LabelFrame
         end
