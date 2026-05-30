@@ -1,7 +1,7 @@
--- GeminiLib V6.4.2 - WITH COLLAPSIBLE SECTIONS
+-- GeminiLib V6.5.0 - HYBRID (collapsible sections + color picker + multi-dropdown + improved slider)
 local GeminiLib = {}
 
--- Кэшированные сервисы для оптимизации
+-- Кэшированные сервисы
 local services = {
     UIS = game:GetService("UserInputService"),
     TweenService = game:GetService("TweenService"),
@@ -13,111 +13,47 @@ local services = {
 }
 
 function GeminiLib:Version()
-    return "V6.4.2"
+    return "V6.5.0"
 end
 
--- УНИВЕРСАЛЬНАЯ СИСТЕМА ТЕМ
+-- ======================== ЕДИНСТВЕННАЯ ТЕМА (ЧЁРНЫЙ + КРАСНЫЙ, ПРОЗРАЧНОСТЬ 25%) ========================
 GeminiLib.Themes = {
-    Dark = {
-        Name = "Dark",
-        Main = Color3.fromRGB(30, 30, 35),
-        Accent = Color3.fromRGB(80, 170, 255),
-        Secondary = Color3.fromRGB(100, 180, 255),
-        Text = Color3.fromRGB(230, 230, 235),
-        TextSecondary = Color3.fromRGB(160, 160, 170),
-        Section = Color3.fromRGB(40, 40, 45),
-        Element = Color3.fromRGB(50, 50, 55),
-        Border = Color3.fromRGB(70, 70, 80),
+    DarkRed = {
+        Name = "DarkRed",
+        Main = Color3.fromRGB(0, 0, 0),
+        Accent = Color3.fromRGB(255, 0, 0),
+        Secondary = Color3.fromRGB(180, 0, 0),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextSecondary = Color3.fromRGB(180, 180, 180),
+        Section = Color3.fromRGB(0, 0, 0),
+        Element = Color3.fromRGB(0, 0, 0),
+        Border = Color3.fromRGB(255, 0, 0),
         Shadow = Color3.fromRGB(0, 0, 0),
-        ShadowAlpha = 0.25,
-        Success = Color3.fromRGB(70, 220, 130),
-        Warning = Color3.fromRGB(255, 190, 50),
-        Error = Color3.fromRGB(240, 90, 90)
-    },
-    Midnight = {
-        Name = "Midnight",
-        Main = Color3.fromRGB(20, 20, 30),
-        Accent = Color3.fromRGB(150, 100, 255),
-        Secondary = Color3.fromRGB(130, 90, 230),
-        Text = Color3.fromRGB(230, 230, 240),
-        TextSecondary = Color3.fromRGB(170, 170, 190),
-        Section = Color3.fromRGB(30, 30, 45),
-        Element = Color3.fromRGB(40, 40, 60),
-        Border = Color3.fromRGB(90, 90, 130),
-        Shadow = Color3.fromRGB(0, 0, 0),
-        ShadowAlpha = 0.3,
-        Success = Color3.fromRGB(80, 220, 160),
-        Warning = Color3.fromRGB(255, 180, 60),
-        Error = Color3.fromRGB(255, 100, 100)
-    },
-    Cyberpunk = {
-        Name = "Cyberpunk",
-        Main = Color3.fromRGB(10, 15, 25),
-        Accent = Color3.fromRGB(0, 220, 220),
-        Secondary = Color3.fromRGB(200, 0, 200),
-        Text = Color3.fromRGB(240, 245, 255),
-        TextSecondary = Color3.fromRGB(180, 190, 220),
-        Section = Color3.fromRGB(20, 25, 40),
-        Element = Color3.fromRGB(30, 35, 55),
-        Border = Color3.fromRGB(0, 180, 180),
-        Shadow = Color3.fromRGB(0, 100, 255),
-        ShadowAlpha = 0.25,
-        Success = Color3.fromRGB(0, 230, 180),
-        Warning = Color3.fromRGB(255, 230, 0),
-        Error = Color3.fromRGB(255, 70, 70)
-    },
-    NeonAbyss = {
-        Name = "NeonAbyss",
-        Main = Color3.fromRGB(10, 10, 15),
-        Accent = Color3.fromRGB(0, 255, 150),
-        Secondary = Color3.fromRGB(255, 0, 100),
-        Text = Color3.fromRGB(240, 255, 250),
-        TextSecondary = Color3.fromRGB(130, 150, 140),
-        Section = Color3.fromRGB(20, 25, 30),
-        Element = Color3.fromRGB(25, 35, 40),
-        Border = Color3.fromRGB(0, 255, 150),
-        Shadow = Color3.fromRGB(0, 255, 150),
-        ShadowAlpha = 0.2
-    },
-    Rampage = {
-        Name = "Rampage",
-        Main = Color3.fromRGB(107, 0, 0),
-        Accent = Color3.fromRGB(140, 0, 0),
-        Secondary = Color3.fromRGB(92, 10, 10),
-        Text = Color3.fromRGB(255, 240, 240),
-        TextSecondary = Color3.fromRGB(135, 64, 64),
-        Section = Color3.fromRGB(18, 10, 10),
-        Element = Color3.fromRGB(25, 12, 12),
-        Border = Color3.fromRGB(200, 20, 20),
-        Shadow = Color3.fromRGB(150, 0, 0),
         ShadowAlpha = 0.4,
-        Success = Color3.fromRGB(255, 70, 70),
-        Warning = Color3.fromRGB(255, 140, 0),
+        Success = Color3.fromRGB(255, 0, 0),
+        Warning = Color3.fromRGB(255, 100, 0),
         Error = Color3.fromRGB(255, 0, 0)
     }
 }
 
--- КОНФИГУРАЦИЯ
 GeminiLib.Config = {
     WindowWidth = 800,
     WindowHeight = 600,
     Roundness = 12,
     EnableShadows = true,
-    DefaultTheme = "Cyberpunk",
+    DefaultTheme = "DarkRed",
     MaxDropdownHeight = 300,
     StatsUpdateInterval = 1
 }
 
--- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+-- ======================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========================
 local function createShadow(parent, color, transparency, sizeMultiplier)
     if not GeminiLib.Config.EnableShadows then return end
-    
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.Image = "rbxassetid://5554237735"
     shadow.ImageColor3 = color
     shadow.ImageTransparency = transparency or 0.7
-    
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceScale = 0.05
     shadow.SliceCenter = Rect.new(10, 10, 118, 118)
@@ -129,7 +65,6 @@ local function createShadow(parent, color, transparency, sizeMultiplier)
     return shadow
 end
 
--- Класс для управления UI элементами
 local UI = {}
 function UI:Create(class, properties)
     local instance = Instance.new(class)
@@ -148,7 +83,6 @@ function UI:Create(class, properties)
     return instance
 end
 
--- Функция возвращает простой массив строк с названиями всех тем
 function GeminiLib:GetThemesList()
     local list = {}
     for themeName, _ in pairs(GeminiLib.Themes) do
@@ -157,7 +91,7 @@ function GeminiLib:GetThemesList()
     return list
 end
 
--- ОСНОВНАЯ ФУНКЦИЯ СОЗДАНИЯ ОКНА
+-- ======================== ОСНОВНАЯ ФУНКЦИЯ СОЗДАНИЯ ОКНА ========================
 function GeminiLib:CreateWindow(title, themeName)
     local theme = GeminiLib.Themes[themeName] or GeminiLib.Themes[GeminiLib.Config.DefaultTheme]
     title = title .. " | by nxs_Bounty"
@@ -176,6 +110,7 @@ function GeminiLib:CreateWindow(title, themeName)
     }
     WindowObj.Connections = {}
     WindowObj.OpenDropdowns = {}
+    WindowObj.ColorPickerWindows = {}
 
     -- Создаем ScreenGui
     local ScreenGui = UI:Create("ScreenGui", {
@@ -185,402 +120,179 @@ function GeminiLib:CreateWindow(title, themeName)
     })
     WindowObj.ScreenGui = ScreenGui
 
-    -- Главный контейнер
+    -- Главный контейнер (окно) – прозрачность 25%
     local Main = UI:Create("Frame", {
         Size = WindowObj.OriginalSize,
         Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2),
         BackgroundColor3 = theme.Main,
+        BackgroundTransparency = 0.25,
         BorderSizePixel = 0,
         ClipsDescendants = true,
         ZIndex = 10,
         Parent = ScreenGui
     })
     WindowObj.OriginalPosition = Main.Position
-    
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness),
-        Parent = Main
-    })
-    
+    UI:Create("UICorner", {CornerRadius = UDim.new(0, GeminiLib.Config.Roundness), Parent = Main})
     createShadow(Main, theme.Shadow, theme.ShadowAlpha, 15)
 
-    -- Верхняя панель
+    -- Верхняя панель – прозрачность 25%
     local TopBar = UI:Create("Frame", {
-        Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, 55),
-        BackgroundColor3 = theme.Section,
-        BackgroundTransparency = 0.4,
-        ZIndex = 12,
-        Parent = Main
+        Name = "TopBar", Size = UDim2.new(1, 0, 0, 55), BackgroundColor3 = theme.Section,
+        BackgroundTransparency = 0.25, ZIndex = 12, Parent = Main
     })
-    
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness),
-        Parent = TopBar
-    })
-    
-    -- Легкий градиент
+    UI:Create("UICorner", {CornerRadius = UDim.new(0, GeminiLib.Config.Roundness), Parent = TopBar})
     UI:Create("UIGradient", {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, theme.Accent),
-            ColorSequenceKeypoint.new(0.5, theme.Section),
-            ColorSequenceKeypoint.new(1, theme.Section)
-        },
-        Transparency = NumberSequence.new(0.8),
-        Rotation = 90,
-        Parent = TopBar
+        Color = ColorSequence.new{ColorSequenceKeypoint.new(0, theme.Accent), ColorSequenceKeypoint.new(0.5, theme.Section), ColorSequenceKeypoint.new(1, theme.Section)},
+        Transparency = NumberSequence.new(0.8), Rotation = 90, Parent = TopBar
     })
-    
-    -- [ПЛАВНЫЙ DRAG]
+
     local dragging, dragInput, dragStart, startPos
     local function update(input)
         local delta = input.Position - dragStart
         local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         services.TweenService:Create(Main, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {Position = targetPos}):Play()
     end
-
     Main.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
+            dragging = true; dragStart = input.Position; startPos = Main.Position
         end
     end)
-
     services.UIS.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            update(input)
-        end
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update(input) end
     end)
-
     services.UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
-    
-    -- Заголовок с FPS и Ping
+
     local Title = UI:Create("TextLabel", {
-        Name = "Title",
-        Text = "  " .. title,
-        Size = UDim2.new(1, -280, 1, 0),
-        TextColor3 = theme.Text,
-        Font = Enum.Font.GothamMedium,
-        TextSize = 18,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        ZIndex = 13,
-        Parent = TopBar
+        Name = "Title", Text = "  " .. title, Size = UDim2.new(1, -280, 1, 0),
+        TextColor3 = theme.Text, Font = Enum.Font.GothamMedium, TextSize = 18,
+        TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, ZIndex = 13, Parent = TopBar
     })
-
-    -- FPS и Ping индикаторы
     local StatsLabel = UI:Create("TextLabel", {
-        Name = "StatsLabel",
-        Text = "FPS: -- | Ping: --",
-        Size = UDim2.new(0, 140, 1, 0),
-        Position = UDim2.new(1, -200, 0, 0),
-        TextColor3 = theme.TextSecondary,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        BackgroundTransparency = 1,
-        ZIndex = 13,
-        Parent = TopBar
+        Name = "StatsLabel", Text = "FPS: -- | Ping: --", Size = UDim2.new(0, 140, 1, 0),
+        Position = UDim2.new(1, -200, 0, 0), TextColor3 = theme.TextSecondary, Font = Enum.Font.Gotham,
+        TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right, BackgroundTransparency = 1, ZIndex = 13, Parent = TopBar
     })
-
-    -- Функция обновления статистики
     local lastUpdate = 0
     local function updateStats()
         local now = tick()
         if now - lastUpdate < GeminiLib.Config.StatsUpdateInterval then return end
         lastUpdate = now
-        
         local fps = math.floor(1 / services.RunService.RenderStepped:Wait())
         local ping = math.random(20, 80)
-        
         StatsLabel.Text = string.format("FPS: %d | Ping: %dms", fps, ping)
-        
-        if fps < 30 then
-            StatsLabel.TextColor3 = theme.Error
-        elseif fps < 60 then
-            StatsLabel.TextColor3 = theme.Warning
-        else
-            StatsLabel.TextColor3 = theme.Success
-        end
+        if fps < 30 then StatsLabel.TextColor3 = theme.Error
+        elseif fps < 60 then StatsLabel.TextColor3 = theme.Warning
+        else StatsLabel.TextColor3 = theme.Success end
     end
-    
-    -- Запускаем обновление статистики
     local function startStatsUpdate()
-        if WindowObj.StatsConnection then
-            WindowObj.StatsConnection:Disconnect()
-        end
-        
+        if WindowObj.StatsConnection then WindowObj.StatsConnection:Disconnect() end
         WindowObj.StatsConnection = services.RunService.RenderStepped:Connect(updateStats)
     end
-    
     local function stopStatsUpdate()
-        if WindowObj.StatsConnection then
-            WindowObj.StatsConnection:Disconnect()
-            WindowObj.StatsConnection = nil
-        end
+        if WindowObj.StatsConnection then WindowObj.StatsConnection:Disconnect(); WindowObj.StatsConnection = nil end
     end
-    
     startStatsUpdate()
 
-    -- Кнопка закрытия
     local CloseBtn = UI:Create("ImageButton", {
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(1, -36, 0.5, -14),
-        Image = "rbxassetid://6031094678",
-        ImageColor3 = theme.Text,
-        BackgroundTransparency = 1,
-        ZIndex = 13,
-        Parent = TopBar
+        Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(1, -36, 0.5, -14), Image = "rbxassetid://6031094678",
+        ImageColor3 = theme.Text, BackgroundTransparency = 1, ZIndex = 13, Parent = TopBar
     })
-
     table.insert(WindowObj.Connections, CloseBtn.MouseEnter:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-            ImageColor3 = theme.Error,
-            Rotation = 90,
-            Size = UDim2.new(0, 30, 0, 30)
-        }):Play()
+        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {ImageColor3 = theme.Error, Rotation = 90, Size = UDim2.new(0, 30, 0, 30)}):Play()
     end))
-    
     table.insert(WindowObj.Connections, CloseBtn.MouseLeave:Connect(function()
-        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-            ImageColor3 = theme.Text,
-            Rotation = 0,
-            Size = UDim2.new(0, 28, 0, 28)
-        }):Play()
+        services.TweenService:Create(CloseBtn, TweenInfo.new(0.15), {ImageColor3 = theme.Text, Rotation = 0, Size = UDim2.new(0, 28, 0, 28)}):Play()
     end))
-    
-    table.insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function()
-        WindowObj:Destroy()
-    end))
+    table.insert(WindowObj.Connections, CloseBtn.MouseButton1Click:Connect(function() WindowObj:Destroy() end))
 
-    -- Боковая панель для вкладок
+    -- Боковая панель – прозрачность 25%
     local SideBar = UI:Create("Frame", {
-        Name = "SideBar",
-        Size = UDim2.new(0, 170, 1, -65),
-        Position = UDim2.new(0, 10, 0, 55),
-        BackgroundColor3 = theme.Section,
-        BackgroundTransparency = 0.6,
-        ZIndex = 12,
-        Parent = Main
+        Name = "SideBar", Size = UDim2.new(0, 170, 1, -65), Position = UDim2.new(0, 10, 0, 55),
+        BackgroundColor3 = theme.Section, BackgroundTransparency = 0.25, ZIndex = 12, Parent = Main
     })
-    
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2),
-        Parent = SideBar
-    })
-    
-    UI:Create("UIStroke", {
-        Color = theme.Accent,
-        Thickness = 1,
-        Transparency = 0.5,
-        Parent = SideBar
-    })
-    
-    -- Прокручиваемая область для вкладок
+    UI:Create("UICorner", {CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2), Parent = SideBar})
+    UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.5, Parent = SideBar})
     local TabScroll = UI:Create("ScrollingFrame", {
-        Name = "TabScroll",
-        Size = UDim2.new(1, -10, 1, -80),
-        Position = UDim2.new(0, 5, 0, 5),
-        BackgroundTransparency = 1,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 3,
-        ScrollBarImageColor3 = theme.Accent,
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-        ZIndex = 13,
-        Parent = SideBar
+        Name = "TabScroll", Size = UDim2.new(1, -10, 1, -80), Position = UDim2.new(0, 5, 0, 5),
+        BackgroundTransparency = 1, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarThickness = 3,
+        ScrollBarImageColor3 = theme.Accent, ScrollingDirection = Enum.ScrollingDirection.Y, ZIndex = 13, Parent = SideBar
     })
-    
-    UI:Create("UIListLayout", {
-        Padding = UDim.new(0, 6),
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = TabScroll
-    })
+    UI:Create("UIListLayout", {Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Parent = TabScroll})
 
-    -- Профиль пользователя
+    -- Профиль – прозрачность 25%
     local ProfileFrame = UI:Create("Frame", {
-        Name = "ProfileFrame",
-        Size = UDim2.new(1, -10, 0, 60),
-        Position = UDim2.new(0, 5, 1, -65),
-        BackgroundColor3 = theme.Element,
-        BackgroundTransparency = 0.4,
-        ZIndex = 14,
-        Parent = SideBar
+        Name = "ProfileFrame", Size = UDim2.new(1, -10, 0, 60), Position = UDim2.new(0, 5, 1, -65),
+        BackgroundColor3 = theme.Element, BackgroundTransparency = 0.25, ZIndex = 14, Parent = SideBar
     })
-
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(0, 10),
-        Parent = ProfileFrame
-    })
-    
-    UI:Create("UIStroke", {
-        Color = theme.Accent,
-        Thickness = 1,
-        Transparency = 0.6,
-        Parent = ProfileFrame
-    })
-
-    -- Аватар
+    UI:Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = ProfileFrame})
+    UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.6, Parent = ProfileFrame})
     local Avatar = UI:Create("ImageLabel", {
-        Name = "Avatar",
-        Size = UDim2.new(0, 40, 0, 40),
-        Position = UDim2.new(0, 8, 0.5, -20),
-        BackgroundColor3 = theme.Main,
-        ZIndex = 15,
-        Parent = ProfileFrame
+        Name = "Avatar", Size = UDim2.new(0, 40, 0, 40), Position = UDim2.new(0, 8, 0.5, -20),
+        BackgroundColor3 = theme.Main, ZIndex = 15, Parent = ProfileFrame
     })
-    
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(1, 0),
-        Parent = Avatar
-    })
-
-    -- Загружаем аватар
+    UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = Avatar})
     local userId = services.Players.LocalPlayer.UserId
-    local success, content = pcall(function()
-        return services.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-    end)
-    if success then
-        Avatar.Image = content
-    else
-        Avatar.Image = "rbxassetid://0"
-    end
-
-    -- Имя пользователя
+    local success, content = pcall(function() return services.Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100) end)
+    Avatar.Image = success and content or "rbxassetid://0"
     local usernameLabel = UI:Create("TextLabel", {
-        Name = "Username",
-        Text = services.Players.LocalPlayer.Name,
-        Size = UDim2.new(1, -55, 0, 20),
-        Position = UDim2.new(0, 55, 0, 10),
-        TextColor3 = theme.Text,
-        Font = Enum.Font.GothamMedium,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        TextTruncate = Enum.TextTruncate.AtEnd,
-        ZIndex = 15,
-        Parent = ProfileFrame
+        Name = "Username", Text = services.Players.LocalPlayer.Name, Size = UDim2.new(1, -55, 0, 20),
+        Position = UDim2.new(0, 55, 0, 10), TextColor3 = theme.Text, Font = Enum.Font.GothamMedium,
+        TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
+        TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 15, Parent = ProfileFrame
     })
-
-    -- Декоративная линия под ником
     local decorText = UI:Create("TextLabel", {
-        Name = "Decor",
-        Text = "⊹⊱•••《 ✮ 》•••⊰⊹",
-        Position = UDim2.new(0, 0, 0, 30),
-        Size = UDim2.new(1, 0, 0, 20),
-        BackgroundTransparency = 1,
-        TextColor3 = theme.Accent,
-        TextSize = 10,
-        Font = Enum.Font.GothamBold,
-        TextScaled = false,
-        TextWrapped = true,
-        ZIndex = 15,
-        Parent = ProfileFrame
+        Name = "Decor", Text = "⊹⊱•••《 ✮ 》•••⊰⊹", Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, TextColor3 = theme.Accent,
+        TextSize = 10, Font = Enum.Font.GothamBold, TextWrapped = true, ZIndex = 15, Parent = ProfileFrame
     })
-
     local function updateDecor()
         local nameLength = string.len(services.Players.LocalPlayer.Name)
         local dotsCount = math.min(math.max(3, math.floor(nameLength / 4)), 8)
         local dots = string.rep("•", dotsCount)
         decorText.Text = string.format("⊹⊱%s《 ✮ 》%s⊰⊹", dots, dots)
     end
-    
     updateDecor()
 
-    -- Контейнер для контента вкладок
+    -- Контейнер контента – прозрачность 25%
     local ContentContainer = UI:Create("Frame", {
-        Name = "ContentContainer",
-        Size = UDim2.new(1, -190, 1, -65),
-        Position = UDim2.new(0, 185, 0, 55),
-        BackgroundColor3 = theme.Section,
-        BackgroundTransparency = 0.7,
-        ZIndex = 12,
-        Parent = Main
+        Name = "ContentContainer", Size = UDim2.new(1, -190, 1, -65), Position = UDim2.new(0, 185, 0, 55),
+        BackgroundColor3 = theme.Section, BackgroundTransparency = 0.25, ZIndex = 12, Parent = Main
     })
-    
-    UI:Create("UICorner", {
-        CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2),
-        Parent = ContentContainer
-    })
-    
-    UI:Create("UIStroke", {
-        Color = theme.Accent,
-        Thickness = 1,
-        Transparency = 0.6,
-        Parent = ContentContainer
-    })
+    UI:Create("UICorner", {CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2), Parent = ContentContainer})
+    UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.6, Parent = ContentContainer})
 
-    -- ФУНКЦИЯ СОЗДАНИЯ ВКЛАДКИ
+    function WindowObj:CloseAllDropdowns()
+        for _, dropdown in pairs(self.OpenDropdowns) do
+            if dropdown.Close then pcall(dropdown.Close) end
+        end
+        self.OpenDropdowns = {}
+    end
+
+    -- ======================== СОЗДАНИЕ ВКЛАДКИ ========================
     function WindowObj:CreateTab(name, icon)
         local TabBtn = UI:Create("TextButton", {
-            Name = "TabBtn_" .. name,
-            Size = UDim2.new(1, 0, 0, 38),
-            BackgroundColor3 = theme.Element,
-            BackgroundTransparency = 0.6,
-            Text = (icon or "📱") .. "  " .. name,
-            TextColor3 = theme.TextSecondary,
-            Font = Enum.Font.GothamMedium,
-            TextSize = 13,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 14,
-            LayoutOrder = #WindowObj.Tabs + 1,
-            Parent = TabScroll
+            Name = "TabBtn_" .. name, Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = theme.Element,
+            BackgroundTransparency = 0.6, Text = (icon or "📱") .. "  " .. name,
+            TextColor3 = theme.TextSecondary, Font = Enum.Font.GothamMedium, TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 14,
+            LayoutOrder = #WindowObj.Tabs + 1, Parent = TabScroll
         })
-        
-        UI:Create("UIPadding", {
-            PaddingLeft = UDim.new(0, 12),
-            Parent = TabBtn
-        })
-        
-        UI:Create("UICorner", {
-            CornerRadius = UDim.new(0, 8),
-            Parent = TabBtn
-        })
-        
-        -- Страница вкладки
-        local Page = UI:Create("ScrollingFrame", {
-            Name = "Page_" .. name,
-            Size = UDim2.new(1, -15, 1, -15),
-            Position = UDim2.new(0, 7.5, 0, 7.5),
-            BackgroundTransparency = 1,
-            Visible = false,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = theme.Accent,
-            ScrollingDirection = Enum.ScrollingDirection.Y,
-            ZIndex = 13,
-            Parent = ContentContainer
-        })
-        
-        UI:Create("UIListLayout", {
-            Padding = UDim.new(0, 10),
-            HorizontalAlignment = Enum.HorizontalAlignment.Left,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = Page
-        })
-        
-        UI:Create("UIPadding", {
-            PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 8),
-            Parent = Page
-        })
-        
-        -- Объект вкладки
-        local Tab = {
-            Name = name,
-            Page = Page,
-            Button = TabBtn,
-            Elements = {},
-            ElementCount = 0,
-            Dropdowns = {}
-        }
+        UI:Create("UIPadding", {PaddingLeft = UDim.new(0, 12), Parent = TabBtn})
+        UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = TabBtn})
 
-        -- Обновление размера страницы (CanvasSize)
+        local Page = UI:Create("ScrollingFrame", {
+            Name = "Page_" .. name, Size = UDim2.new(1, -15, 1, -15), Position = UDim2.new(0, 7.5, 0, 7.5),
+            BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 0),
+            ScrollBarThickness = 3, ScrollBarImageColor3 = theme.Accent,
+            ScrollingDirection = Enum.ScrollingDirection.Y, ZIndex = 13, Parent = ContentContainer
+        })
+        UI:Create("UIListLayout", {Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Left, SortOrder = Enum.SortOrder.LayoutOrder, Parent = Page})
+        UI:Create("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = Page})
+
+        local Tab = { Name = name, Page = Page, Button = TabBtn, Elements = {}, ElementCount = 0, Dropdowns = {} }
+
         local function updatePageSize()
             local totalHeight = 0
             for _, child in pairs(Page:GetChildren()) do
@@ -592,325 +304,127 @@ function GeminiLib:CreateWindow(title, themeName)
             end
             Page.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 15)
         end
-        
         Tab._refreshCanvas = updatePageSize
 
-        -- Активация вкладки
         local function activateTab()
+            WindowObj:CloseAllDropdowns()
             for _, v in pairs(ContentContainer:GetChildren()) do
-                if v:IsA("ScrollingFrame") then
-                    v.Visible = false
-                end
+                if v:IsA("ScrollingFrame") then v.Visible = false end
             end
-            
             Page.Visible = true
             WindowObj.CurrentTab = TabBtn
-            
             for _, btn in pairs(TabScroll:GetChildren()) do
                 if btn:IsA("TextButton") and btn ~= TabBtn then
-                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.6,
-                        TextColor3 = theme.TextSecondary
-                    }):Play()
+                    services.TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.6, TextColor3 = theme.TextSecondary}):Play()
                 end
             end
-            
-            services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
-                BackgroundTransparency = 0.3,
-                TextColor3 = theme.Accent
-            }):Play()
+            services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3, TextColor3 = theme.Accent}):Play()
         end
 
-        -- Анимации кнопки
         table.insert(WindowObj.Connections, TabBtn.MouseEnter:Connect(function()
             if TabBtn ~= WindowObj.CurrentTab then
-                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.4,
-                    TextColor3 = theme.Text
-                }):Play()
+                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.4, TextColor3 = theme.Text}):Play()
             end
         end))
-        
         table.insert(WindowObj.Connections, TabBtn.MouseLeave:Connect(function()
             if TabBtn ~= WindowObj.CurrentTab then
-                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.6,
-                    TextColor3 = theme.TextSecondary
-                }):Play()
+                services.TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.6, TextColor3 = theme.TextSecondary}):Play()
             end
         end))
-        
         table.insert(WindowObj.Connections, TabBtn.MouseButton1Click:Connect(activateTab))
 
-        -- ФУНКЦИЯ РАЗДЕЛИТЕЛЯ (на уровне вкладки)
+        -- ========== БАЗОВЫЕ МЕТОДЫ ВКЛАДКИ ==========
         function Tab:Separator(text)
             Tab.ElementCount = Tab.ElementCount + 1
-            
-            local SeparatorFrame = UI:Create("Frame", {
-                Size = UDim2.new(1, -16, 0, 30),
-                BackgroundTransparency = 1,
-                ZIndex = 14,
-                LayoutOrder = Tab.ElementCount,
-                Parent = Page
-            })
-            
-            local Line = UI:Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 1),
-                Position = UDim2.new(0, 0, 0.5, 0),
-                BackgroundColor3 = theme.Accent,
-                BackgroundTransparency = 0.5,
-                ZIndex = 15,
-                Parent = SeparatorFrame
-            })
-            
+            local SeparatorFrame = UI:Create("Frame", {Size = UDim2.new(1, -16, 0, 30), BackgroundTransparency = 1, ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page})
+            UI:Create("Frame", {Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0.5, 0), BackgroundColor3 = theme.Accent, BackgroundTransparency = 0.5, ZIndex = 15, Parent = SeparatorFrame})
             if text then
-                local TextLabel = UI:Create("TextLabel", {
-                    Text = text,
-                    Size = UDim2.new(0, 0, 0, 20),
-                    Position = UDim2.new(0.5, 0, 0.5, -10),
-                    BackgroundColor3 = theme.Section,
-                    TextColor3 = theme.TextSecondary,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 11,
-                    ZIndex = 16,
-                    Parent = SeparatorFrame
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 4),
-                    Parent = TextLabel
-                })
+                local TextLabel = UI:Create("TextLabel", {Text = text, Size = UDim2.new(0, 0, 0, 20), Position = UDim2.new(0.5, 0, 0.5, -10), BackgroundColor3 = theme.Section, TextColor3 = theme.TextSecondary, Font = Enum.Font.Gotham, TextSize = 11, ZIndex = 16, Parent = SeparatorFrame})
+                UI:Create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = TextLabel})
             end
-            
-            table.insert(Tab.Elements, SeparatorFrame)
-            table.insert(WindowObj.Elements, SeparatorFrame)
-            updatePageSize()
+            table.insert(Tab.Elements, SeparatorFrame); table.insert(WindowObj.Elements, SeparatorFrame); updatePageSize()
             return SeparatorFrame
         end
 
-        -- ФУНКЦИЯ ЛЕЙБЛА (на уровне вкладки)
-        function Tab:Label(text, size)
+        function Tab:Label(text)
             Tab.ElementCount = Tab.ElementCount + 1
-            
-            local fontSize = size or 13
-            
-            local LabelFrame = UI:Create("Frame", {
-                Size = UDim2.new(1, -16, 0, 22),
-                BackgroundTransparency = 1,
-                ZIndex = 14,
-                LayoutOrder = Tab.ElementCount,
-                Parent = Page
-            })
-            
-            UI:Create("TextLabel", {
-                Text = text,
-                Size = UDim2.new(1, 0, 1, 0),
-                BackgroundTransparency = 1,
-                TextColor3 = theme.Text,
-                Font = Enum.Font.Gotham,
-                TextSize = fontSize,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 15,
-                Parent = LabelFrame
-            })
-            
-            table.insert(Tab.Elements, LabelFrame)
-            table.insert(WindowObj.Elements, LabelFrame)
-            updatePageSize()
+            local LabelFrame = UI:Create("Frame", {Size = UDim2.new(1, -16, 0, 22), BackgroundTransparency = 1, ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page})
+            UI:Create("TextLabel", {Text = text, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 15, Parent = LabelFrame})
+            table.insert(Tab.Elements, LabelFrame); table.insert(WindowObj.Elements, LabelFrame); updatePageSize()
             return LabelFrame
         end
 
-        -- ФУНКЦИЯ КНОПКИ (на уровне вкладки)
         function Tab:Button(text, callback, icon)
             Tab.ElementCount = Tab.ElementCount + 1
-            
             local Btn = UI:Create("TextButton", {
-                Size = UDim2.new(1, -16, 0, 36),
-                BackgroundColor3 = theme.Element,
-                BackgroundTransparency = 0.5,
-                Text = (icon or "•") .. "  " .. text,
-                TextColor3 = theme.Text,
-                Font = Enum.Font.Gotham,
-                TextSize = 13,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 14,
-                LayoutOrder = Tab.ElementCount,
-                Parent = Page
+                Size = UDim2.new(1, -16, 0, 36), BackgroundColor3 = theme.Element, BackgroundTransparency = 0.5,
+                Text = (icon or "•") .. "  " .. text, TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page
             })
-            
-            UI:Create("UIPadding", {
-                PaddingLeft = UDim.new(0, 12),
-                Parent = Btn
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, 8),
-                Parent = Btn
-            })
-            
-            local btnStroke = UI:Create("UIStroke", {
-                Color = theme.Accent,
-                Thickness = 1,
-                Transparency = 0.8,
-                Parent = Btn
-            })
-            
-            table.insert(WindowObj.Connections, Btn.MouseEnter:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.3,
-                    Size = UDim2.new(1, -12, 0, 38)
-                }):Play()
-                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
-                    Transparency = 0.6
-                }):Play()
-            end))
-            
-            table.insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.5,
-                    Size = UDim2.new(1, -16, 0, 36)
-                }):Play()
-                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
-                    Transparency = 0.8
-                }):Play()
-            end))
-            
-            table.insert(WindowObj.Connections, Btn.MouseButton1Click:Connect(function()
-                services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                    BackgroundTransparency = 0.2,
-                    Size = UDim2.new(1, -18, 0, 34)
-                }):Play()
+            UI:Create("UIPadding", {PaddingLeft = UDim.new(0, 12), Parent = Btn})
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = Btn})
+            local btnStroke = UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.8, Parent = Btn})
+            local enter = Btn.MouseEnter:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 0.6}):Play()
+            end)
+            local leave = Btn.MouseLeave:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, Size = UDim2.new(1, -16, 0, 36)}):Play()
+                services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+            end)
+            local click = Btn.MouseButton1Click:Connect(function()
+                services.TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.2, Size = UDim2.new(1, -18, 0, 34)}):Play()
                 task.wait(0.1)
-                services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                    BackgroundTransparency = 0.3,
-                    Size = UDim2.new(1, -12, 0, 38)
-                }):Play()
-                
-                if callback then
-                    local success, err = pcall(callback)
-                    if not success then
-                        warn("Button callback error:", err)
-                    end
-                end
-            end))
-            
-            table.insert(Tab.Elements, Btn)
-            table.insert(WindowObj.Elements, Btn)
-            updatePageSize()
+                services.TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.3, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                if callback then pcall(callback) end
+            end)
+            table.insert(WindowObj.Connections, enter); table.insert(WindowObj.Connections, leave); table.insert(WindowObj.Connections, click)
+            table.insert(Tab.Elements, Btn); table.insert(WindowObj.Elements, Btn); updatePageSize()
             return Btn
         end
 
-        -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ (на уровне вкладки)
         function Tab:Toggle(text, default, callback)
             Tab.ElementCount = Tab.ElementCount + 1
-            
             local state = default or false
-            
             local ToggleFrame = UI:Create("TextButton", {
-                Size = UDim2.new(1, -16, 0, 36),
-                BackgroundColor3 = theme.Element,
-                BackgroundTransparency = 0.5,
-                Text = "  " .. text,
-                TextColor3 = theme.Text,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Font = Enum.Font.Gotham,
-                TextSize = 13,
-                ZIndex = 14,
-                LayoutOrder = Tab.ElementCount,
-                Parent = Page
+                Size = UDim2.new(1, -16, 0, 36), BackgroundColor3 = theme.Element, BackgroundTransparency = 0.5,
+                Text = "  " .. text, TextColor3 = theme.Text, TextXAlignment = Enum.TextXAlignment.Left,
+                Font = Enum.Font.Gotham, TextSize = 13, ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page
             })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, 8),
-                Parent = ToggleFrame
-            })
-            
-            local frameStroke = UI:Create("UIStroke", {
-                Color = theme.Accent,
-                Thickness = 1,
-                Transparency = 0.8,
-                Parent = ToggleFrame
-            })
-            
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = ToggleFrame})
+            local frameStroke = UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.8, Parent = ToggleFrame})
             local SliderTrack = UI:Create("Frame", {
-                Size = UDim2.new(0, 48, 0, 20),
-                Position = UDim2.new(1, -60, 0.5, -10),
-                BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 90),
-                ZIndex = 15,
-                Parent = ToggleFrame
+                Size = UDim2.new(0, 48, 0, 20), Position = UDim2.new(1, -60, 0.5, -10),
+                BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 90), ZIndex = 15, Parent = ToggleFrame
             })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = SliderTrack
-            })
-            
+            UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = SliderTrack})
             local SliderDot = UI:Create("Frame", {
-                Size = UDim2.new(0, 16, 0, 16),
-                Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
-                BackgroundColor3 = Color3.fromRGB(240, 240, 245),
-                ZIndex = 16,
-                Parent = SliderTrack
+                Size = UDim2.new(0, 16, 0, 16), Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+                BackgroundColor3 = Color3.fromRGB(240, 240, 245), ZIndex = 16, Parent = SliderTrack
             })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = SliderDot
-            })
-            
-            table.insert(WindowObj.Connections, ToggleFrame.MouseEnter:Connect(function()
-                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.4,
-                    Size = UDim2.new(1, -12, 0, 38)
-                }):Play()
-                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                    Transparency = 0.6
-                }):Play()
-            end))
-            
-            table.insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
-                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.5,
-                    Size = UDim2.new(1, -16, 0, 36)
-                }):Play()
-                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                    Transparency = 0.8
-                }):Play()
-            end))
-            
+            UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = SliderDot})
+            local enter = ToggleFrame.MouseEnter:Connect(function()
+                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.4, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.6}):Play()
+            end)
+            local leave = ToggleFrame.MouseLeave:Connect(function()
+                services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, Size = UDim2.new(1, -16, 0, 36)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+            end)
             local function toggleState()
                 state = not state
-                
                 if state then
-                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
-                        BackgroundColor3 = theme.Accent
-                    }):Play()
-                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
-                        Position = UDim2.new(1, -18, 0.5, -8)
-                    }):Play()
+                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {BackgroundColor3 = theme.Accent}):Play()
+                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {Position = UDim2.new(1, -18, 0.5, -8)}):Play()
                 else
-                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
-                        BackgroundColor3 = Color3.fromRGB(80, 80, 90)
-                    }):Play()
-                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
-                        Position = UDim2.new(0, 2, 0.5, -8)
-                    }):Play()
+                    services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(80, 80, 90)}):Play()
+                    services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {Position = UDim2.new(0, 2, 0.5, -8)}):Play()
                 end
-                
-                if callback then
-                    local success, err = pcall(callback, state)
-                    if not success then
-                        warn("Toggle callback error:", err)
-                    end
-                end
+                if callback then pcall(callback, state) end
             end
-            
-            table.insert(WindowObj.Connections, ToggleFrame.MouseButton1Click:Connect(toggleState))
-            
-            table.insert(Tab.Elements, ToggleFrame)
-            table.insert(WindowObj.Elements, ToggleFrame)
-            updatePageSize()
-            
+            local click = ToggleFrame.MouseButton1Click:Connect(toggleState)
+            table.insert(WindowObj.Connections, enter); table.insert(WindowObj.Connections, leave); table.insert(WindowObj.Connections, click)
+            table.insert(Tab.Elements, ToggleFrame); table.insert(WindowObj.Elements, ToggleFrame); updatePageSize()
             return {
                 Set = function(val)
                     if val ~= state then
@@ -928,16 +442,301 @@ function GeminiLib:CreateWindow(title, themeName)
             }
         end
 
-        -- ФУНКЦИЯ СЛАЙДЕРА (на уровне вкладки)
         function Tab:Slider(text, min, max, default, callback, showValue)
             Tab.ElementCount = Tab.ElementCount + 1
-    
-            local currentValue = default
+            local currentValue = default or min
             local isDragging = false
-            
+            local isFloat = (max - min) < 5
+
             local SliderFrame = UI:Create("TextButton", {
-                Name = "Slider_" .. text,
-                Size = UDim2.new(1, -16, 0, 60),
+                Name = "Slider_" .. text, Size = UDim2.new(1, -16, 0, 60),
+                BackgroundColor3 = theme.Element, BackgroundTransparency = 0.5, Text = "", AutoButtonColor = false,
+                ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = SliderFrame})
+            local Label = UI:Create("TextLabel", {
+                Text = "  " .. text .. (showValue and (": " .. default) or ""), Size = UDim2.new(1, -50, 0, 22),
+                BackgroundTransparency = 1, TextColor3 = theme.Text, TextXAlignment = Enum.TextXAlignment.Left,
+                Font = Enum.Font.Gotham, TextSize = 12, ZIndex = 15, Parent = SliderFrame
+            })
+            local ValueBox = UI:Create("TextBox", {
+                Text = tostring(default), Size = UDim2.new(0, 40, 0, 22), Position = UDim2.new(1, -45, 0, 0),
+                BackgroundColor3 = theme.Element, BackgroundTransparency = 0.3, TextColor3 = theme.Accent,
+                Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Center,
+                ZIndex = 15, Parent = SliderFrame
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = ValueBox})
+            local Bar = UI:Create("Frame", {
+                Size = UDim2.new(1, -28, 0, 5), Position = UDim2.new(0, 14, 1, -20),
+                BackgroundColor3 = Color3.fromRGB(70, 70, 80), ZIndex = 15, Parent = SliderFrame
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = Bar})
+            local Fill = UI:Create("Frame", {
+                Size = UDim2.new((currentValue-min)/(max-min), 0, 1, 0), BackgroundColor3 = theme.Accent, ZIndex = 16, Parent = Bar
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = Fill})
+            local SliderDot = UI:Create("Frame", {
+                Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new((currentValue-min)/(max-min), -7, 0.5, -7),
+                BackgroundColor3 = Color3.fromRGB(240, 240, 245), ZIndex = 17, Parent = Bar
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = SliderDot})
+
+            local function updateSlider(val, fromBox)
+                val = math.clamp(val, min, max)
+                if isFloat then
+                    val = math.round(val * 100) / 100
+                end
+                if val == currentValue and not fromBox then return end
+                currentValue = val
+                local pos = (val - min) / (max - min)
+                Fill.Size = UDim2.new(pos, 0, 1, 0)
+                SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
+                ValueBox.Text = tostring(val)
+                if showValue then Label.Text = "  " .. text .. ": " .. val end
+                if callback then pcall(callback, val) end
+            end
+
+            ValueBox.FocusLost:Connect(function()
+                local num = tonumber(ValueBox.Text)
+                if num then updateSlider(num, true) else ValueBox.Text = tostring(currentValue) end
+            end)
+
+            local function onBarInput(input)
+                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                local val = isFloat and (min + (max - min) * pos) or math.floor(min + (max - min) * pos)
+                updateSlider(val)
+            end
+
+            local barConn = Bar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    isDragging = true
+                    onBarInput(input)
+                    local conn
+                    conn = services.UIS.InputChanged:Connect(function(inp)
+                        if isDragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                            onBarInput(inp)
+                        end
+                    end)
+                    local endedConn = services.UIS.InputEnded:Connect(function(inp)
+                        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                            isDragging = false
+                            if conn then conn:Disconnect() end
+                            endedConn:Disconnect()
+                        end
+                    end)
+                    table.insert(WindowObj.Connections, conn)
+                    table.insert(WindowObj.Connections, endedConn)
+                end
+            end)
+            table.insert(WindowObj.Connections, barConn)
+            table.insert(Tab.Elements, SliderFrame); table.insert(WindowObj.Elements, SliderFrame); updatePageSize()
+            return { Set = function(v) updateSlider(v) end, Get = function() return currentValue end }
+        end
+
+        -- DROPDOWN с поддержкой мультивыбора (параметр `multi`)
+        function Tab:Dropdown(text, options, default, callback, multi)
+            Tab.ElementCount = Tab.ElementCount + 1
+            local selectedMap = {}
+            local selectedList = {}
+            if type(default) == "table" then
+                for _, v in ipairs(default) do selectedMap[v] = true; table.insert(selectedList, v) end
+            elseif default then
+                selectedMap[default] = true; selectedList = {default}
+            elseif options[1] then
+                selectedMap[options[1]] = true; selectedList = {options[1]}
+            end
+            local multiSelect = multi or false
+            local isOpen = false
+            local dropdownContainer = nil
+
+            local DropFrame = UI:Create("Frame", {
+                Name = "Dropdown_" .. text, Size = UDim2.new(1, -16, 0, 36),
+                BackgroundColor3 = theme.Element, BackgroundTransparency = 0.5,
+                ZIndex = 14, LayoutOrder = Tab.ElementCount, Parent = Page
+            })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = DropFrame})
+            local frameStroke = UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.8, Parent = DropFrame})
+            local DropBtn = UI:Create("TextButton", {
+                Name = "DropBtn", Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1,
+                Text = "  " .. text .. ": " .. (multiSelect and table.concat(selectedList, ", ") or (selectedList[1] or "None")),
+                TextColor3 = theme.Text, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 15, Parent = DropFrame
+            })
+            local Arrow = UI:Create("TextLabel", {
+                Text = "▼", Size = UDim2.new(0, 20, 1, 0), Position = UDim2.new(1, -25, 0, 0),
+                BackgroundTransparency = 1, TextColor3 = theme.TextSecondary, Font = Enum.Font.GothamMedium,
+                TextSize = 12, ZIndex = 15, Parent = DropFrame
+            })
+
+            local function updateDisplay()
+                if multiSelect then
+                    local str = table.concat(selectedList, ", ")
+                    DropBtn.Text = "  " .. text .. ": " .. (str ~= "" and str or "None")
+                else
+                    DropBtn.Text = "  " .. text .. ": " .. (selectedList[1] or "None")
+                end
+            end
+
+            local function refreshContainer()
+                if dropdownContainer then dropdownContainer:Destroy(); dropdownContainer = nil end
+            end
+
+            local function createContainer()
+                refreshContainer()
+                local dropAbsPos = DropFrame.AbsolutePosition
+                local dropAbsSize = DropFrame.AbsoluteSize
+                local viewportSize = workspace.CurrentCamera.ViewportSize
+                dropdownContainer = UI:Create("Frame", {
+                    BackgroundColor3 = theme.Element, BackgroundTransparency = 0.1,
+                    BorderSizePixel = 0, ZIndex = 1000, Parent = ScreenGui
+                })
+                local relativeX = dropAbsPos.X
+                local relativeY = dropAbsPos.Y + dropAbsSize.Y + 5
+                if relativeY + 180 > viewportSize.Y then relativeY = dropAbsPos.Y - 180 - 5 end
+                relativeY = math.clamp(relativeY, 10, viewportSize.Y - 180 - 10)
+                dropdownContainer.Position = UDim2.new(0, relativeX, 0, relativeY)
+                dropdownContainer.Size = UDim2.new(0, dropAbsSize.X, 0, 0)
+                UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = dropdownContainer})
+                UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.5, Parent = dropdownContainer})
+                createShadow(dropdownContainer, theme.Shadow, 0.3, 6)
+                local OptionsList = UI:Create("ScrollingFrame", {
+                    Size = UDim2.new(1, -8, 1, -8), Position = UDim2.new(0, 4, 0, 4),
+                    BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4,
+                    ScrollBarImageColor3 = theme.Accent, CanvasSize = UDim2.new(0, 0, 0, #options * 32),
+                    ZIndex = 1001, Parent = dropdownContainer
+                })
+                UI:Create("UIListLayout", {Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder, Parent = OptionsList})
+                for i, option in ipairs(options) do
+                    local isSelected = selectedMap[option] == true
+                    local OptionBtn = UI:Create("TextButton", {
+                        Name = "Option_" .. option, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = i,
+                        BackgroundColor3 = theme.Element, BackgroundTransparency = isSelected and 0.3 or 0.6,
+                        Text = (multiSelect and (isSelected and "✔ " or "◻ ") or "") .. option,
+                        TextColor3 = isSelected and theme.Accent or theme.TextSecondary,
+                        Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                        ZIndex = 1002, Parent = OptionsList
+                    })
+                    UI:Create("UIPadding", {PaddingLeft = UDim.new(0, 10), Parent = OptionBtn})
+                    UI:Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = OptionBtn})
+                    OptionBtn.MouseEnter:Connect(function()
+                        if not selectedMap[option] then
+                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.4, TextColor3 = theme.Text}):Play()
+                        end
+                    end)
+                    OptionBtn.MouseLeave:Connect(function()
+                        if not selectedMap[option] then
+                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.6, TextColor3 = theme.TextSecondary}):Play()
+                        end
+                    end)
+                    OptionBtn.MouseButton1Click:Connect(function()
+                        if multiSelect then
+                            if selectedMap[option] then
+                                selectedMap[option] = nil
+                                for j, v in ipairs(selectedList) do if v == option then table.remove(selectedList, j) break end end
+                            else
+                                selectedMap[option] = true
+                                table.insert(selectedList, option)
+                            end
+                            for _, btn in pairs(OptionsList:GetChildren()) do
+                                if btn:IsA("TextButton") then
+                                    local opt = btn.Text:gsub("^[✔◻] ", "")
+                                    local sel = selectedMap[opt] == true
+                                    btn.Text = (multiSelect and (sel and "✔ " or "◻ ") or "") .. opt
+                                    btn.BackgroundTransparency = sel and 0.3 or 0.6
+                                    btn.TextColor3 = sel and theme.Accent or theme.TextSecondary
+                                end
+                            end
+                            updateDisplay()
+                            if callback then pcall(callback, multiSelect and selectedList or selectedList[1]) end
+                        else
+                            for k in pairs(selectedMap) do selectedMap[k] = nil end
+                            selectedMap[option] = true
+                            selectedList = {option}
+                            updateDisplay()
+                            for _, btn in pairs(OptionsList:GetChildren()) do
+                                if btn:IsA("TextButton") then
+                                    local opt = btn.Text:gsub("^[✔◻] ", "")
+                                    local sel = (opt == option)
+                                    btn.Text = (multiSelect and (sel and "✔ " or "◻ ") or "") .. opt
+                                    btn.BackgroundTransparency = sel and 0.3 or 0.6
+                                    btn.TextColor3 = sel and theme.Accent or theme.TextSecondary
+                                end
+                            end
+                            if callback then pcall(callback, option) end
+                            toggleDropdown()
+                        end
+                    end)
+                end
+            end
+
+            local function toggleDropdown()
+                isOpen = not isOpen
+                if isOpen then
+                    for _, other in pairs(WindowObj.OpenDropdowns) do
+                        if other ~= DropFrame then other.Close() end
+                    end
+                    createContainer()
+                    dropdownContainer.Visible = true
+                    services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 180)}):Play()
+                    services.TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 180, TextColor3 = theme.Accent}):Play()
+                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.2, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.4}):Play()
+                    WindowObj.OpenDropdowns[DropFrame] = {Close = function() if isOpen then toggleDropdown() end end}
+                else
+                    if dropdownContainer then
+                        services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)}):Play()
+                        services.TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 0, TextColor3 = theme.TextSecondary}):Play()
+                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, Size = UDim2.new(1, -16, 0, 36)}):Play()
+                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+                        task.wait(0.2)
+                        dropdownContainer:Destroy()
+                        dropdownContainer = nil
+                    end
+                    WindowObj.OpenDropdowns[DropFrame] = nil
+                end
+            end
+
+            DropBtn.MouseButton1Click:Connect(toggleDropdown)
+            table.insert(Tab.Elements, DropFrame); table.insert(WindowObj.Elements, DropFrame); updatePageSize()
+            return {
+                Set = function(value)
+                    if multiSelect then
+                        for k in pairs(selectedMap) do selectedMap[k] = nil end
+                        selectedList = {}
+                        if type(value) == "table" then
+                            for _, v in ipairs(value) do selectedMap[v] = true; table.insert(selectedList, v) end
+                        end
+                        updateDisplay()
+                        if callback then pcall(callback, selectedList) end
+                    else
+                        if table.find(options, value) then
+                            for k in pairs(selectedMap) do selectedMap[k] = nil end
+                            selectedMap[value] = true
+                            selectedList = {value}
+                            updateDisplay()
+                            if callback then pcall(callback, value) end
+                        end
+                    end
+                end,
+                Get = function() return multiSelect and selectedList or selectedList[1] end,
+                GetOptions = function() return options end,
+                AddOption = function(opt) if not table.find(options, opt) then table.insert(options, opt) end end,
+                RemoveOption = function(opt)
+                    for i,v in ipairs(options) do if v == opt then table.remove(options,i); if selectedMap[opt] then selectedMap[opt]=nil; for j,w in ipairs(selectedList) do if w==opt then table.remove(selectedList,j) break end end; updateDisplay(); if callback then pcall(callback, multiSelect and selectedList or selectedList[1]) end end break end end
+                end,
+                Refresh = function() refreshContainer() end,
+                Destroy = function() refreshContainer(); DropFrame:Destroy() end
+            }
+        end
+
+        function Tab:KeyBind(text, defaultKey, callback)
+            Tab.ElementCount = Tab.ElementCount + 1
+            local currentKey = defaultKey or Enum.KeyCode.None
+            local isListening = false
+            local listeningConnection = nil
+
+            local BindFrame = UI:Create("TextButton", {
+                Size = UDim2.new(1, -16, 0, 36),
                 BackgroundColor3 = theme.Element,
                 BackgroundTransparency = 0.5,
                 Text = "",
@@ -946,1606 +745,149 @@ function GeminiLib:CreateWindow(title, themeName)
                 LayoutOrder = Tab.ElementCount,
                 Parent = Page
             })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, 8),
-                Parent = SliderFrame
-            })
-            
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = BindFrame})
+            local frameStroke = UI:Create("UIStroke", {Color = theme.Accent, Thickness = 1, Transparency = 0.8, Parent = BindFrame})
+
             local Label = UI:Create("TextLabel", {
-                Text = "  " .. text .. (showValue and (": " .. default) or ""),
-                Size = UDim2.new(1, 0, 0, 22),
+                Text = "  " .. text,
+                Size = UDim2.new(1, -110, 0, 36),
                 BackgroundTransparency = 1,
                 TextColor3 = theme.Text,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Font = Enum.Font.Gotham,
-                TextSize = 12,
+                TextSize = 13,
                 ZIndex = 15,
-                Parent = SliderFrame
+                Parent = BindFrame
             })
 
-            local ValueLabel = UI:Create("TextLabel", {
-                Text = tostring(default),
-                Size = UDim2.new(0, 36, 0, 22),
-                Position = UDim2.new(1, -40, 0, 0),
-                BackgroundTransparency = 1,
+            local KeyButton = UI:Create("TextButton", {
+                Size = UDim2.new(0, 90, 0, 28),
+                Position = UDim2.new(1, -100, 0.5, -14),
+                BackgroundColor3 = theme.Element,
+                BackgroundTransparency = 0.3,
+                Text = currentKey.Name,
                 TextColor3 = theme.Accent,
                 Font = Enum.Font.GothamMedium,
                 TextSize = 12,
                 ZIndex = 15,
-                Parent = SliderFrame
+                Parent = BindFrame
             })
+            UI:Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = KeyButton})
 
-            local Bar = UI:Create("Frame", {
-                Size = UDim2.new(1, -28, 0, 5),
-                Position = UDim2.new(0, 14, 1, -20),
-                BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                ZIndex = 15,
-                Parent = SliderFrame
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = Bar
-            })
-            
-            local Fill = UI:Create("Frame", {
-                Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
-                BackgroundColor3 = theme.Accent,
-                ZIndex = 16,
-                Parent = Bar
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = Fill
-            })
-            
-            local SliderDot = UI:Create("Frame", {
-                Size = UDim2.new(0, 14, 0, 14),
-                Position = UDim2.new((default - min) / (max - min), -7, 0.5, -7),
-                BackgroundColor3 = Color3.fromRGB(240, 240, 245),
-                ZIndex = 17,
-                Parent = Bar
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = SliderDot
-            })
-
-            local function updateSlider(input)
-                if not input then return end
-                
-                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local val = math.floor(min + (max - min) * pos)
-                
-                if val ~= currentValue then
-                    currentValue = val
-                    
-                    Fill.Size = UDim2.new(pos, 0, 1, 0)
-                    SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
-                    ValueLabel.Text = tostring(val)
-                    
-                    if showValue then
-                        Label.Text = "  " .. text .. ": " .. val
-                    end
-                    
-                    if callback then
-                        local success, err = pcall(callback, val)
-                        if not success then
-                            warn("Slider callback error:", err)
-                        end
-                    end
-                end
+            local function updateKeyDisplay()
+                KeyButton.Text = currentKey.Name
             end
 
-            table.insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    isDragging = true
-                    updateSlider(input)
-                    
-                    local connection
-                    connection = services.UIS.InputChanged:Connect(function(input)
-                        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                            updateSlider(input)
-                        end
-                    end)
-                    
-                    table.insert(WindowObj.Connections, services.UIS.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            isDragging = false
-                            if connection then
-                                connection:Disconnect()
-                            end
-                        end
-                    end))
-                end
-            end))
-            
-            table.insert(Tab.Elements, SliderFrame)
-            table.insert(WindowObj.Elements, SliderFrame)
-            updatePageSize()
-            
-            return {
-                Set = function(val)
-                    val = math.clamp(val, min, max)
-                    currentValue = val
-                    local pos = (val - min) / (max - min)
-                    Fill.Size = UDim2.new(pos, 0, 1, 0)
-                    SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
-                    ValueLabel.Text = tostring(val)
-                    if showValue then
-                        Label.Text = "  " .. text .. ": " .. val
-                    end
-                end,
-                Get = function()
-                    return currentValue
-                end
-            }
-        end
-
-        -- ФУНКЦИЯ DROPDOWN (на уровне вкладки)
-        function Tab:Dropdown(text, options, default, callback)
-            Tab.ElementCount = Tab.ElementCount + 1
-            
-            local selected = default or options[1]
-            local isOpen = false
-            local dropdownContainer
-            local dropdownOptions = {}
-            
-            local DropFrame = UI:Create("Frame", {
-                Name = "Dropdown_" .. text,
-                Size = UDim2.new(1, -16, 0, 36),
-                BackgroundColor3 = theme.Element,
-                BackgroundTransparency = 0.5,
-                ZIndex = 14,
-                LayoutOrder = Tab.ElementCount,
-                Parent = Page
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, 8),
-                Parent = DropFrame
-            })
-            
-            local frameStroke = UI:Create("UIStroke", {
-                Color = theme.Accent,
-                Thickness = 1,
-                Transparency = 0.8,
-                Parent = DropFrame
-            })
-            
-            local DropBtn = UI:Create("TextButton", {
-                Name = "DropBtn",
-                Size = UDim2.new(1, 0, 0, 36),
-                BackgroundTransparency = 1,
-                Text = "  " .. text .. ": " .. selected,
-                TextColor3 = theme.Text,
-                Font = Enum.Font.Gotham,
-                TextSize = 13,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 15,
-                Parent = DropFrame
-            })
-            
-            local Arrow = UI:Create("TextLabel", {
-                Text = "▼",
-                Size = UDim2.new(0, 20, 1, 0),
-                Position = UDim2.new(1, -25, 0, 0),
-                BackgroundTransparency = 1,
-                TextColor3 = theme.TextSecondary,
-                Font = Enum.Font.GothamMedium,
-                TextSize = 12,
-                ZIndex = 15,
-                Parent = DropFrame
-            })
-            
-            local function refreshOptions()
-                if dropdownContainer then
-                    dropdownContainer:Destroy()
-                    dropdownContainer = nil
-                end
-            end
-            
-            local function createDropdownContainer()
-                refreshOptions()
-                
-                local dropAbsPos = DropFrame.AbsolutePosition
-                local dropAbsSize = DropFrame.AbsoluteSize
-                local viewportSize = workspace.CurrentCamera.ViewportSize
-                
-                dropdownContainer = UI:Create("Frame", {
-                    Name = "DropdownContainer_" .. text,
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.1,
-                    BorderSizePixel = 0,
-                    ZIndex = 1000,
-                    Parent = ScreenGui
-                })
-                
-                local relativeX = dropAbsPos.X
-                local relativeY = dropAbsPos.Y + dropAbsSize.Y + 5
-                
-                if relativeY + 180 > viewportSize.Y then
-                    relativeY = dropAbsPos.Y - 180 - 5
-                end
-                
-                relativeY = math.clamp(relativeY, 10, viewportSize.Y - 180 - 10)
-                
-                dropdownContainer.Position = UDim2.new(0, relativeX, 0, relativeY)
-                dropdownContainer.Size = UDim2.new(0, dropAbsSize.X, 0, 0)
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 8),
-                    Parent = dropdownContainer
-                })
-                
-                UI:Create("UIStroke", {
-                    Color = theme.Accent,
-                    Thickness = 1,
-                    Transparency = 0.5,
-                    Parent = dropdownContainer
-                })
-                
-                createShadow(dropdownContainer, theme.Shadow, 0.3, 6)
-                
-                local OptionsList = UI:Create("ScrollingFrame", {
-                    Name = "OptionsList",
-                    Size = UDim2.new(1, -8, 1, -8),
-                    Position = UDim2.new(0, 4, 0, 4),
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    ScrollBarThickness = 4,
-                    ScrollBarImageColor3 = theme.Accent,
-                    CanvasSize = UDim2.new(0, 0, 0, #options * 32),
-                    ZIndex = 1001,
-                    Parent = dropdownContainer
-                })
-                
-                UI:Create("UIListLayout", {
-                    Padding = UDim.new(0, 2),
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                    Parent = OptionsList
-                })
-                
-                dropdownOptions = {}
-                for i, option in ipairs(options) do
-                    local OptionBtn = UI:Create("TextButton", {
-                        Name = "Option_" .. option,
-                        Size = UDim2.new(1, 0, 0, 28),
-                        LayoutOrder = i,
-                        BackgroundColor3 = theme.Element,
-                        BackgroundTransparency = option == selected and 0.3 or 0.6,
-                        Text = option,
-                        TextColor3 = option == selected and theme.Accent or theme.TextSecondary,
-                        Font = Enum.Font.Gotham,
-                        TextSize = 12,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        ZIndex = 1002,
-                        Parent = OptionsList
-                    })
-                    
-                    UI:Create("UIPadding", {
-                        PaddingLeft = UDim.new(0, 10),
-                        Parent = OptionBtn
-                    })
-                    
-                    UI:Create("UICorner", {
-                        CornerRadius = UDim.new(0, 6),
-                        Parent = OptionBtn
-                    })
-                    
-                    table.insert(WindowObj.Connections, OptionBtn.MouseEnter:Connect(function()
-                        if option ~= selected then
-                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                BackgroundTransparency = 0.4,
-                                TextColor3 = theme.Text
-                            }):Play()
-                        end
-                    end))
-                    
-                    table.insert(WindowObj.Connections, OptionBtn.MouseLeave:Connect(function()
-                        if option ~= selected then
-                            services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                BackgroundTransparency = 0.6,
-                                TextColor3 = theme.TextSecondary
-                            }):Play()
-                        end
-                    end))
-                    
-                    table.insert(WindowObj.Connections, OptionBtn.MouseButton1Click:Connect(function()
-                        selected = option
-                        DropBtn.Text = "  " .. text .. ": " .. selected
-                        
-                        for _, btn in pairs(OptionsList:GetChildren()) do
-                            if btn:IsA("TextButton") then
-                                if btn.Text == selected then
-                                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
-                                        BackgroundTransparency = 0.3,
-                                        TextColor3 = theme.Accent
-                                    }):Play()
-                                else
-                                    services.TweenService:Create(btn, TweenInfo.new(0.15), {
-                                        BackgroundTransparency = 0.6,
-                                        TextColor3 = theme.TextSecondary
-                                    }):Play()
-                                end
-                            end
-                        end
-                        
-                        if callback then
-                            local success, err = pcall(callback, selected)
-                            if not success then
-                                warn("Dropdown callback error:", err)
-                            end
-                        end
-                        
-                        toggleDropdown()
-                    end))
-                    
-                    table.insert(dropdownOptions, OptionBtn)
-                end
-            end
-            
-            local function toggleDropdown()
-                isOpen = not isOpen
-    
-                if isOpen then
-                    for _, otherDropdown in pairs(WindowObj.OpenDropdowns) do
-                        if otherDropdown ~= DropFrame then
-                            otherDropdown.Close()
-                        end
-                    end
-                    
-                    createDropdownContainer()
-                    
-                    dropdownContainer.Visible = true
-                    services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
-                        Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 180)
-                    }):Play()
-                    
-                    services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                        Rotation = 180,
-                        TextColor3 = theme.Accent
-                    }):Play()
-                    
-                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.2,
-                        Size = UDim2.new(1, -12, 0, 38)
-                    }):Play()
-                    
-                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.4
-                    }):Play()
-                    
-                    WindowObj.OpenDropdowns[DropFrame] = {
-                        Close = function()
-                            if isOpen then
-                                toggleDropdown()
-                            end
-                        end
-                    }
-                else
-                    if dropdownContainer then
-                        services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
-                            Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
-                        }):Play()
-                        
-                        services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                            Rotation = 0,
-                            TextColor3 = theme.TextSecondary
-                        }):Play()
-                        
-                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                            BackgroundTransparency = 0.5,
-                            Size = UDim2.new(1, -16, 0, 36)
-                        }):Play()
-                        
-                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                            Transparency = 0.8
-                        }):Play()
-                        
-                        task.wait(0.2)
-                        dropdownContainer:Destroy()
-                        dropdownContainer = nil
-                    end
-                    
-                    WindowObj.OpenDropdowns[DropFrame] = nil
-                end
-            end
-            
-            table.insert(WindowObj.Connections, DropBtn.MouseEnter:Connect(function()
-                if not isOpen then
-                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.4,
-                        Size = UDim2.new(1, -12, 0, 38)
-                    }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.6
-                    }):Play()
-                end
-            end))
-            
-            table.insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
-                if not isOpen then
-                    services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.5,
-                        Size = UDim2.new(1, -16, 0, 36)
-                    }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.8
-                    }):Play()
-                end
-            end))
-            
-            table.insert(WindowObj.Connections, DropBtn.MouseButton1Click:Connect(toggleDropdown))
-            
-            local function closeOnClickOutside(input)
-                if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 and dropdownContainer then
-                    local mousePos = input.Position
-                    local dropAbsPos = DropFrame.AbsolutePosition
-                    local dropAbsSize = DropFrame.AbsoluteSize
-                    local containerAbsPos = dropdownContainer.AbsolutePosition
-                    local containerAbsSize = dropdownContainer.AbsoluteSize
-                    
-                    local clickedInsideDropdown = 
-                        mousePos.X >= dropAbsPos.X and mousePos.X <= dropAbsPos.X + dropAbsSize.X and
-                        mousePos.Y >= dropAbsPos.Y and mousePos.Y <= dropAbsPos.Y + dropAbsSize.Y
-                    
-                    local clickedInsideContainer = 
-                        containerAbsPos and 
-                        mousePos.X >= containerAbsPos.X and mousePos.X <= containerAbsPos.X + containerAbsSize.X and
-                        mousePos.Y >= containerAbsPos.Y and mousePos.Y <= containerAbsPos.Y + containerAbsSize.Y
-                    
-                    if not clickedInsideDropdown and not clickedInsideContainer then
-                        toggleDropdown()
-                    end
-                end
-            end
-            
-            local closeConnection = services.UIS.InputBegan:Connect(closeOnClickOutside)
-            table.insert(WindowObj.Connections, closeConnection)
-            
-            table.insert(Tab.Elements, DropFrame)
-            table.insert(WindowObj.Elements, DropFrame)
-            table.insert(Tab.Dropdowns, DropFrame)
-            updatePageSize()
-            
-            local dropdownObj = {
-                Set = function(value)
-                    local found = false
-                    for _, v in ipairs(options) do
-                        if v == value then
-                            found = true
-                            break
-                        end
-                    end
-                    
-                    if found then
-                        selected = value
-                        DropBtn.Text = "  " .. text .. ": " .. value
-                        
-                        if callback then
-                            pcall(callback, value)
-                        end
-                    else
-                        warn("Dropdown: invalid value '" .. tostring(value) .. "'. Available:", options)
-                    end
-                end,
-                Get = function()
-                    return selected
-                end,
-                GetOptions = function()
-                    return options
-                end,
-                AddOption = function(newOption)
-                    local exists = false
-                    for _, v in ipairs(options) do
-                        if v == newOption then
-                            exists = true
-                            break
-                        end
-                    end
-                    
-                    if not exists then
-                        table.insert(options, newOption)
-                    end
-                end,
-                RemoveOption = function(optionToRemove)
-                    for i, v in ipairs(options) do
-                        if v == optionToRemove then
-                            table.remove(options, i)
-                            if selected == optionToRemove then
-                                selected = options[1] or ""
-                                DropBtn.Text = "  " .. text .. ": " .. selected
-                            end
-                            break
-                        end
-                    end
-                end,
-                Refresh = function()
-                    refreshOptions()
-                end,
-                Destroy = function()
-                    if closeConnection then
-                        closeConnection:Disconnect()
-                    end
-                    if dropdownContainer then
-                        dropdownContainer:Destroy()
-                    end
-                    DropFrame:Destroy()
-                end
-            }
-            
-            return dropdownObj
-        end
-
-        -- НОВЫЙ МЕТОД: СОЗДАНИЕ КОЛЛАПСИРУЕМОЙ СЕКЦИИ
-        function Tab:CreateSection(name, defaultExpanded)
-            defaultExpanded = (defaultExpanded == nil) or defaultExpanded
-            
-            Tab.ElementCount = Tab.ElementCount + 1
-            local sectionOrder = Tab.ElementCount
-            
-            -- Основной контейнер секции
-            local SectionFrame = UI:Create("Frame", {
-                Name = "Section_" .. name,
-                Size = UDim2.new(1, -16, 0, 0), -- высота будет меняться
-                BackgroundColor3 = theme.Section,
-                BackgroundTransparency = 0.3,
-                ZIndex = 14,
-                LayoutOrder = sectionOrder,
-                Parent = Page
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, GeminiLib.Config.Roundness - 2),
-                Parent = SectionFrame
-            })
-            
-            UI:Create("UIStroke", {
-                Color = theme.Accent,
-                Thickness = 1,
-                Transparency = 0.6,
-                Parent = SectionFrame
-            })
-            
-            createShadow(SectionFrame, theme.Shadow, 0.2, 8)
-            
-            -- Заголовок секции (кнопка)
-            local Header = UI:Create("TextButton", {
-                Name = "Header",
-                Size = UDim2.new(1, 0, 0, 40),
-                BackgroundColor3 = theme.Element,
-                BackgroundTransparency = 0.5,
-                Text = "  " .. name,
-                TextColor3 = theme.Text,
-                Font = Enum.Font.GothamMedium,
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 15,
-                Parent = SectionFrame
-            })
-            
-            UI:Create("UICorner", {
-                CornerRadius = UDim.new(0, 8),
-                Parent = Header
-            })
-            
-            -- Стрелка
-            local Arrow = UI:Create("TextLabel", {
-                Text = "▼",
-                Size = UDim2.new(0, 20, 1, 0),
-                Position = UDim2.new(1, -25, 0, 0),
-                BackgroundTransparency = 1,
-                TextColor3 = theme.TextSecondary,
-                Font = Enum.Font.GothamMedium,
-                TextSize = 14,
-                ZIndex = 16,
-                Parent = Header
-            })
-            
-            -- Контейнер для содержимого
-            local ContentContainer = UI:Create("Frame", {
-                Name = "Content",
-                Size = UDim2.new(1, 0, 0, 0),
-                BackgroundTransparency = 1,
-                ClipsDescendants = true,
-                ZIndex = 14,
-                Parent = SectionFrame
-            })
-            
-            UI:Create("UIListLayout", {
-                Padding = UDim.new(0, 6),
-                SortOrder = Enum.SortOrder.LayoutOrder,
-                Parent = ContentContainer
-            })
-            
-            UI:Create("UIPadding", {
-                PaddingLeft = UDim.new(0, 8),
-                PaddingRight = UDim.new(0, 8),
-                PaddingTop = UDim.new(0, 8),
-                PaddingBottom = UDim.new(0, 8),
-                Parent = ContentContainer
-            })
-            
-            -- Локальные переменные для секции
-            local sectionElements = {}
-            local elementCount = 0
-            local expanded = defaultExpanded
-            
-            -- Функция пересчёта высоты содержимого
-            local function updateContentHeight()
-                local totalHeight = 0
-                for _, child in pairs(ContentContainer:GetChildren()) do
-                    if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
-                        if child:IsA("Frame") or child:IsA("TextButton") then
-                            totalHeight = totalHeight + child.Size.Y.Offset + 6
-                        end
-                    end
-                end
-                -- Устанавливаем высоту контейнера
-                ContentContainer.Size = UDim2.new(1, 0, 0, totalHeight)
-                return totalHeight
-            end
-            
-            -- Функция обновления размера всей секции
-            local function updateSectionSize()
-                local contentHeight = expanded and updateContentHeight() or 0
-                SectionFrame.Size = UDim2.new(1, -16, 0, 40 + contentHeight)
-                -- Обновляем CanvasSize таба
-                if Tab._refreshCanvas then
-                    Tab._refreshCanvas()
-                end
-            end
-            
-            -- Анимация поворота стрелки
-            local function animateArrow(exp)
-                local targetRotation = exp and 180 or 0
-                services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                    Rotation = targetRotation,
-                    TextColor3 = exp and theme.Accent or theme.TextSecondary
-                }):Play()
-            end
-            
-            -- Переключение состояния
-            local function setExpanded(exp, skipAnim)
-                expanded = exp
-                if expanded then
-                    ContentContainer.Visible = true
-                    updateContentHeight()
-                else
-                    ContentContainer.Visible = false
-                end
-                updateSectionSize()
-                if not skipAnim then
-                    animateArrow(expanded)
-                else
-                    Arrow.Rotation = expanded and 180 or 0
-                    Arrow.TextColor3 = expanded and theme.Accent or theme.TextSecondary
-                end
-            end
-            
-            -- Клик по заголовку
-            table.insert(WindowObj.Connections, Header.MouseButton1Click:Connect(function()
-                setExpanded(not expanded, false)
-            end))
-            
-            -- Анимации заголовка
-            table.insert(WindowObj.Connections, Header.MouseEnter:Connect(function()
-                services.TweenService:Create(Header, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.3,
-                    TextColor3 = theme.Accent
-                }):Play()
-            end))
-            
-            table.insert(WindowObj.Connections, Header.MouseLeave:Connect(function()
-                services.TweenService:Create(Header, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.5,
-                    TextColor3 = theme.Text
-                }):Play()
-            end))
-            
-            -- Объект секции с API, аналогичным Tab
-            local Section = {}
-            
-            function Section:Separator(text)
-                Section.ElementCount = Section.ElementCount + 1
-                
-                local SeparatorFrame = UI:Create("Frame", {
-                    Size = UDim2.new(1, -16, 0, 30),
-                    BackgroundTransparency = 1,
-                    ZIndex = 14,
-                    LayoutOrder = Section.ElementCount,
-                    Parent = Page
-                })
-                
-                local Line = UI:Create("Frame", {
-                    Size = UDim2.new(1, 0, 0, 1),
-                    Position = UDim2.new(0, 0, 0.5, 0),
-                    BackgroundColor3 = theme.Accent,
-                    BackgroundTransparency = 0.5,
-                ZIndex = 15,
-                Parent = SeparatorFrame
-            })
-            
-            if text then
-                local TextLabel = UI:Create("TextLabel", {
-                    Text = text,
-                    Size = UDim2.new(0, 0, 0, 20),
-                    Position = UDim2.new(0.5, 0, 0.5, -10),
-                    BackgroundColor3 = theme.Section,
-                    TextColor3 = theme.TextSecondary,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 11,
-                    ZIndex = 16,
-                    Parent = SeparatorFrame
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 4),
-                    Parent = TextLabel
-                })
-            end
-            
-            table.insert(Section.Elements, SeparatorFrame)
-            table.insert(WindowObj.Elements, SeparatorFrame)
-            updatePageSize()
-            return SeparatorFrame
-
-            -- ФУНКЦИЯ ЛЕЙБЛА (на уровне вкладки)
-            function Section:Label(text, size)
-                Section.ElementCount = Section.ElementCount + 1
-                
-                local fontSize = size or 13
-                
-                local LabelFrame = UI:Create("Frame", {
-                    Size = UDim2.new(1, -16, 0, 22),
-                    BackgroundTransparency = 1,
-                    ZIndex = 14,
-                    LayoutOrder = Section.ElementCount,
-                    Parent = Page
-                })
-                
-                UI:Create("TextLabel", {
-                    Text = text,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    BackgroundTransparency = 1,
-                    TextColor3 = theme.Text,
-                    Font = Enum.Font.Gotham,
-                    TextSize = fontSize,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 15,
-                    Parent = LabelFrame
-                })
-                
-                table.insert(Section.Elements, LabelFrame)
-                table.insert(WindowObj.Elements, LabelFrame)
-                updatePageSize()
-                return LabelFrame
-            end
-
-            -- ФУНКЦИЯ КНОПКИ (на уровне вкладки)
-            function Section:Button(text, callback, icon)
-                Section.ElementCount = Section.ElementCount + 1
-                
-                local Btn = UI:Create("TextButton", {
-                    Size = UDim2.new(1, -16, 0, 36),
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.5,
-                    Text = (icon or "•") .. "  " .. text,
-                    TextColor3 = theme.Text,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 13,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 14,
-                    LayoutOrder = Section.ElementCount,
-                    Parent = Page
-                })
-                
-                UI:Create("UIPadding", {
-                    PaddingLeft = UDim.new(0, 12),
-                    Parent = Btn
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 8),
-                    Parent = Btn
-                })
-                
-                local btnStroke = UI:Create("UIStroke", {
-                    Color = theme.Accent,
-                    Thickness = 1,
-                    Transparency = 0.8,
-                    Parent = Btn
-                })
-                
-                table.insert(WindowObj.Connections, Btn.MouseEnter:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.3,
-                        Size = UDim2.new(1, -12, 0, 38)
-                    }):Play()
-                    services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.6
-                    }):Play()
-                end))
-                
-                table.insert(WindowObj.Connections, Btn.MouseLeave:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.5,
-                        Size = UDim2.new(1, -16, 0, 36)
-                    }):Play()
-                    services.TweenService:Create(btnStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.8
-                    }):Play()
-                end))
-                
-                table.insert(WindowObj.Connections, Btn.MouseButton1Click:Connect(function()
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundTransparency = 0.2,
-                        Size = UDim2.new(1, -18, 0, 34)
-                    }):Play()
-                    task.wait(0.1)
-                    services.TweenService:Create(Btn, TweenInfo.new(0.1), {
-                        BackgroundTransparency = 0.3,
-                        Size = UDim2.new(1, -12, 0, 38)
-                    }):Play()
-                    
-                    if callback then
-                        local success, err = pcall(callback)
-                        if not success then
-                            warn("Button callback error:", err)
-                        end
-                    end
-                end))
-                
-                table.insert(Section.Elements, Btn)
-                table.insert(WindowObj.Elements, Btn)
-                updatePageSize()
-                return Btn
-            end
-
-            -- ФУНКЦИЯ ПЕРЕКЛЮЧАТЕЛЯ (на уровне вкладки)
-            function Section:Toggle(text, default, callback)
-                Section.ElementCount = Section.ElementCount + 1
-                
-                local state = default or false
-                
-                local ToggleFrame = UI:Create("TextButton", {
-                    Size = UDim2.new(1, -16, 0, 36),
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.5,
-                    Text = "  " .. text,
-                    TextColor3 = theme.Text,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 13,
-                    ZIndex = 14,
-                    LayoutOrder = Section.ElementCount,
-                    Parent = Page
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 8),
-                    Parent = ToggleFrame
-                })
-                
-                local frameStroke = UI:Create("UIStroke", {
-                    Color = theme.Accent,
-                    Thickness = 1,
-                    Transparency = 0.8,
-                    Parent = ToggleFrame
-                })
-                
-                local SliderTrack = UI:Create("Frame", {
-                    Size = UDim2.new(0, 48, 0, 20),
-                    Position = UDim2.new(1, -60, 0.5, -10),
-                    BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 90),
-                    ZIndex = 15,
-                    Parent = ToggleFrame
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(1, 0),
-                    Parent = SliderTrack
-                })
-                
-                local SliderDot = UI:Create("Frame", {
-                    Size = UDim2.new(0, 16, 0, 16),
-                    Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
-                    BackgroundColor3 = Color3.fromRGB(240, 240, 245),
-                    ZIndex = 16,
-                    Parent = SliderTrack
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(1, 0),
-                    Parent = SliderDot
-                })
-                
-                table.insert(WindowObj.Connections, ToggleFrame.MouseEnter:Connect(function()
-                    services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.4,
-                        Size = UDim2.new(1, -12, 0, 38)
-                    }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.6
-                    }):Play()
-                end))
-                
-                table.insert(WindowObj.Connections, ToggleFrame.MouseLeave:Connect(function()
-                    services.TweenService:Create(ToggleFrame, TweenInfo.new(0.15), {
-                        BackgroundTransparency = 0.5,
-                        Size = UDim2.new(1, -16, 0, 36)
-                    }):Play()
-                    services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                        Transparency = 0.8
-                    }):Play()
-                end))
-                
-                local function toggleState()
-                    state = not state
-                    
-                    if state then
-                        services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
-                            BackgroundColor3 = theme.Accent
-                        }):Play()
-                        services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
-                            Position = UDim2.new(1, -18, 0.5, -8)
-                        }):Play()
-                    else
-                        services.TweenService:Create(SliderTrack, TweenInfo.new(0.15), {
-                            BackgroundColor3 = Color3.fromRGB(80, 80, 90)
-                        }):Play()
-                        services.TweenService:Create(SliderDot, TweenInfo.new(0.15), {
-                            Position = UDim2.new(0, 2, 0.5, -8)
-                        }):Play()
-                    end
-                    
-                    if callback then
-                        local success, err = pcall(callback, state)
-                        if not success then
-                            warn("Toggle callback error:", err)
-                        end
-                    end
-                end
-                
-                table.insert(WindowObj.Connections, ToggleFrame.MouseButton1Click:Connect(toggleState))
-                
-                table.insert(Section.Elements, ToggleFrame)
-                table.insert(WindowObj.Elements, ToggleFrame)
-                updatePageSize()
-                
-                return {
-                    Set = function(val)
-                        if val ~= state then
-                            state = val
-                            if state then
-                                SliderTrack.BackgroundColor3 = theme.Accent
-                                SliderDot.Position = UDim2.new(1, -18, 0.5, -8)
-                            else
-                                SliderTrack.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
-                                SliderDot.Position = UDim2.new(0, 2, 0.5, -8)
-                            end
-                        end
-                    end,
-                    Get = function() return state end
-                }
-            end
-
-            -- ФУНКЦИЯ СЛАЙДЕРА (на уровне вкладки)
-            function Section:Slider(text, min, max, default, callback, showValue)
-                Section.ElementCount = Section.ElementCount + 1
-        
-                local currentValue = default
-                local isDragging = false
-                
-                local SliderFrame = UI:Create("TextButton", {
-                    Name = "Slider_" .. text,
-                    Size = UDim2.new(1, -16, 0, 60),
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.5,
-                    Text = "",
-                    AutoButtonColor = false,
-                    ZIndex = 14,
-                    LayoutOrder = Section.ElementCount,
-                    Parent = Page
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 8),
-                    Parent = SliderFrame
-                })
-                
-                local Label = UI:Create("TextLabel", {
-                    Text = "  " .. text .. (showValue and (": " .. default) or ""),
-                    Size = UDim2.new(1, 0, 0, 22),
-                    BackgroundTransparency = 1,
-                    TextColor3 = theme.Text,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 12,
-                    ZIndex = 15,
-                    Parent = SliderFrame
-                })
-
-                local ValueLabel = UI:Create("TextLabel", {
-                    Text = tostring(default),
-                    Size = UDim2.new(0, 36, 0, 22),
-                    Position = UDim2.new(1, -40, 0, 0),
-                    BackgroundTransparency = 1,
-                    TextColor3 = theme.Accent,
-                    Font = Enum.Font.GothamMedium,
-                    TextSize = 12,
-                    ZIndex = 15,
-                    Parent = SliderFrame
-                })
-
-                local Bar = UI:Create("Frame", {
-                    Size = UDim2.new(1, -28, 0, 5),
-                    Position = UDim2.new(0, 14, 1, -20),
-                    BackgroundColor3 = Color3.fromRGB(70, 70, 80),
-                    ZIndex = 15,
-                    Parent = SliderFrame
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(1, 0),
-                    Parent = Bar
-                })
-                
-                local Fill = UI:Create("Frame", {
-                    Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
-                    BackgroundColor3 = theme.Accent,
-                    ZIndex = 16,
-                    Parent = Bar
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(1, 0),
-                    Parent = Fill
-                })
-                
-                local SliderDot = UI:Create("Frame", {
-                    Size = UDim2.new(0, 14, 0, 14),
-                    Position = UDim2.new((default - min) / (max - min), -7, 0.5, -7),
-                    BackgroundColor3 = Color3.fromRGB(240, 240, 245),
-                    ZIndex = 17,
-                    Parent = Bar
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(1, 0),
-                    Parent = SliderDot
-                })
-
-                local function updateSlider(input)
-                    if not input then return end
-                    
-                    local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                    local val = math.floor(min + (max - min) * pos)
-                    
-                    if val ~= currentValue then
-                        currentValue = val
-                        
-                        Fill.Size = UDim2.new(pos, 0, 1, 0)
-                        SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
-                        ValueLabel.Text = tostring(val)
-                        
-                        if showValue then
-                            Label.Text = "  " .. text .. ": " .. val
-                        end
-                        
-                        if callback then
-                            local success, err = pcall(callback, val)
-                            if not success then
-                                warn("Slider callback error:", err)
-                            end
-                        end
-                    end
-                end
-
-                table.insert(WindowObj.Connections, Bar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        isDragging = true
-                        updateSlider(input)
-                        
-                        local connection
-                        connection = services.UIS.InputChanged:Connect(function(input)
-                            if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                                updateSlider(input)
-                            end
-                        end)
-                        
-                        table.insert(WindowObj.Connections, services.UIS.InputEnded:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                                isDragging = false
-                                if connection then
-                                    connection:Disconnect()
-                                end
-                            end
-                        end))
-                    end
-                end))
-                
-                table.insert(Section.Elements, SliderFrame)
-                table.insert(WindowObj.Elements, SliderFrame)
-                updatePageSize()
-                
-                return {
-                    Set = function(val)
-                        val = math.clamp(val, min, max)
-                        currentValue = val
-                        local pos = (val - min) / (max - min)
-                        Fill.Size = UDim2.new(pos, 0, 1, 0)
-                        SliderDot.Position = UDim2.new(pos, -7, 0.5, -7)
-                        ValueLabel.Text = tostring(val)
-                        if showValue then
-                            Label.Text = "  " .. text .. ": " .. val
-                        end
-                    end,
-                    Get = function()
-                        return currentValue
-                    end
-                }
-            end
-
-            -- ФУНКЦИЯ DROPDOWN (на уровне вкладки)
-            function Section:Dropdown(text, options, default, callback)
-                Tab.ElementCount = Tab.ElementCount + 1
-                
-                local selected = default or options[1]
-                local isOpen = false
-                local dropdownContainer
-                local dropdownOptions = {}
-                
-                local DropFrame = UI:Create("Frame", {
-                    Name = "Dropdown_" .. text,
-                    Size = UDim2.new(1, -16, 0, 36),
-                    BackgroundColor3 = theme.Element,
-                    BackgroundTransparency = 0.5,
-                    ZIndex = 14,
-                    LayoutOrder = Tab.ElementCount,
-                    Parent = Page
-                })
-                
-                UI:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 8),
-                    Parent = DropFrame
-                })
-                
-                local frameStroke = UI:Create("UIStroke", {
-                    Color = theme.Accent,
-                    Thickness = 1,
-                    Transparency = 0.8,
-                    Parent = DropFrame
-                })
-                
-                local DropBtn = UI:Create("TextButton", {
-                    Name = "DropBtn",
-                    Size = UDim2.new(1, 0, 0, 36),
-                    BackgroundTransparency = 1,
-                    Text = "  " .. text .. ": " .. selected,
-                    TextColor3 = theme.Text,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 13,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 15,
-                    Parent = DropFrame
-                })
-                
-                local Arrow = UI:Create("TextLabel", {
-                    Text = "▼",
-                    Size = UDim2.new(0, 20, 1, 0),
-                    Position = UDim2.new(1, -25, 0, 0),
-                    BackgroundTransparency = 1,
-                    TextColor3 = theme.TextSecondary,
-                    Font = Enum.Font.GothamMedium,
-                    TextSize = 12,
-                    ZIndex = 15,
-                    Parent = DropFrame
-                })
-                
-                local function refreshOptions()
-                    if dropdownContainer then
-                        dropdownContainer:Destroy()
-                        dropdownContainer = nil
-                    end
-                end
-                
-                local function createDropdownContainer()
-                    refreshOptions()
-                    
-                    local dropAbsPos = DropFrame.AbsolutePosition
-                    local dropAbsSize = DropFrame.AbsoluteSize
-                    local viewportSize = workspace.CurrentCamera.ViewportSize
-                    
-                    dropdownContainer = UI:Create("Frame", {
-                        Name = "DropdownContainer_" .. text,
-                        BackgroundColor3 = theme.Element,
-                        BackgroundTransparency = 0.1,
-                        BorderSizePixel = 0,
-                        ZIndex = 1000,
-                        Parent = ScreenGui
-                    })
-                    
-                    local relativeX = dropAbsPos.X
-                    local relativeY = dropAbsPos.Y + dropAbsSize.Y + 5
-                    
-                    if relativeY + 180 > viewportSize.Y then
-                        relativeY = dropAbsPos.Y - 180 - 5
-                    end
-                    
-                    relativeY = math.clamp(relativeY, 10, viewportSize.Y - 180 - 10)
-                    
-                    dropdownContainer.Position = UDim2.new(0, relativeX, 0, relativeY)
-                    dropdownContainer.Size = UDim2.new(0, dropAbsSize.X, 0, 0)
-                    
-                    UI:Create("UICorner", {
-                        CornerRadius = UDim.new(0, 8),
-                        Parent = dropdownContainer
-                    })
-                    
-                    UI:Create("UIStroke", {
-                        Color = theme.Accent,
-                        Thickness = 1,
-                        Transparency = 0.5,
-                        Parent = dropdownContainer
-                    })
-                    
-                    createShadow(dropdownContainer, theme.Shadow, 0.3, 6)
-                    
-                    local OptionsList = UI:Create("ScrollingFrame", {
-                        Name = "OptionsList",
-                        Size = UDim2.new(1, -8, 1, -8),
-                        Position = UDim2.new(0, 4, 0, 4),
-                        BackgroundTransparency = 1,
-                        BorderSizePixel = 0,
-                        ScrollBarThickness = 4,
-                        ScrollBarImageColor3 = theme.Accent,
-                        CanvasSize = UDim2.new(0, 0, 0, #options * 32),
-                        ZIndex = 1001,
-                        Parent = dropdownContainer
-                    })
-                    
-                    UI:Create("UIListLayout", {
-                        Padding = UDim.new(0, 2),
-                        SortOrder = Enum.SortOrder.LayoutOrder,
-                        Parent = OptionsList
-                    })
-                    
-                    dropdownOptions = {}
-                    for i, option in ipairs(options) do
-                        local OptionBtn = UI:Create("TextButton", {
-                            Name = "Option_" .. option,
-                            Size = UDim2.new(1, 0, 0, 28),
-                            LayoutOrder = i,
-                            BackgroundColor3 = theme.Element,
-                            BackgroundTransparency = option == selected and 0.3 or 0.6,
-                            Text = option,
-                            TextColor3 = option == selected and theme.Accent or theme.TextSecondary,
-                            Font = Enum.Font.Gotham,
-                            TextSize = 12,
-                            TextXAlignment = Enum.TextXAlignment.Left,
-                            ZIndex = 1002,
-                            Parent = OptionsList
-                        })
-                        
-                        UI:Create("UIPadding", {
-                            PaddingLeft = UDim.new(0, 10),
-                            Parent = OptionBtn
-                        })
-                        
-                        UI:Create("UICorner", {
-                            CornerRadius = UDim.new(0, 6),
-                            Parent = OptionBtn
-                        })
-                        
-                        table.insert(WindowObj.Connections, OptionBtn.MouseEnter:Connect(function()
-                            if option ~= selected then
-                                services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                    BackgroundTransparency = 0.4,
-                                    TextColor3 = theme.Text
-                                }):Play()
-                            end
-                        end))
-                        
-                        table.insert(WindowObj.Connections, OptionBtn.MouseLeave:Connect(function()
-                            if option ~= selected then
-                                services.TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
-                                    BackgroundTransparency = 0.6,
-                                    TextColor3 = theme.TextSecondary
-                                }):Play()
-                            end
-                        end))
-                        
-                        table.insert(WindowObj.Connections, OptionBtn.MouseButton1Click:Connect(function()
-                            selected = option
-                            DropBtn.Text = "  " .. text .. ": " .. selected
-                            
-                            for _, btn in pairs(OptionsList:GetChildren()) do
-                                if btn:IsA("TextButton") then
-                                    if btn.Text == selected then
-                                        services.TweenService:Create(btn, TweenInfo.new(0.15), {
-                                            BackgroundTransparency = 0.3,
-                                            TextColor3 = theme.Accent
-                                        }):Play()
-                                    else
-                                        services.TweenService:Create(btn, TweenInfo.new(0.15), {
-                                            BackgroundTransparency = 0.6,
-                                            TextColor3 = theme.TextSecondary
-                                        }):Play()
-                                    end
-                                end
-                            end
-                            
-                            if callback then
-                                local success, err = pcall(callback, selected)
-                                if not success then
-                                    warn("Dropdown callback error:", err)
-                                end
-                            end
-                            
-                            toggleDropdown()
-                        end))
-                        
-                        table.insert(dropdownOptions, OptionBtn)
-                    end
-                end
-                
-                local function toggleDropdown()
-                    isOpen = not isOpen
-        
-                    if isOpen then
-                        for _, otherDropdown in pairs(WindowObj.OpenDropdowns) do
-                            if otherDropdown ~= DropFrame then
-                                otherDropdown.Close()
-                            end
-                        end
-                        
-                        createDropdownContainer()
-                        
-                        dropdownContainer.Visible = true
-                        services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
-                            Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 180)
-                        }):Play()
-                        
-                        services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                            Rotation = 180,
-                            TextColor3 = theme.Accent
-                        }):Play()
-                        
-                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                            BackgroundTransparency = 0.2,
-                            Size = UDim2.new(1, -12, 0, 38)
-                        }):Play()
-                        
-                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                            Transparency = 0.4
-                        }):Play()
-                        
-                        WindowObj.OpenDropdowns[DropFrame] = {
-                            Close = function()
-                                if isOpen then
-                                    toggleDropdown()
-                                end
-                            end
-                        }
-                    else
-                        if dropdownContainer then
-                            services.TweenService:Create(dropdownContainer, TweenInfo.new(0.2), {
-                                Size = UDim2.new(0, DropFrame.AbsoluteSize.X, 0, 0)
-                            }):Play()
-                            
-                            services.TweenService:Create(Arrow, TweenInfo.new(0.2), {
-                                Rotation = 0,
-                                TextColor3 = theme.TextSecondary
-                            }):Play()
-                            
-                            services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                                BackgroundTransparency = 0.5,
-                                Size = UDim2.new(1, -16, 0, 36)
-                            }):Play()
-                            
-                            services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                                Transparency = 0.8
-                            }):Play()
-                            
-                            task.wait(0.2)
-                            dropdownContainer:Destroy()
-                            dropdownContainer = nil
-                        end
-                        
-                        WindowObj.OpenDropdowns[DropFrame] = nil
-                    end
-                end
-                
-                table.insert(WindowObj.Connections, DropBtn.MouseEnter:Connect(function()
-                    if not isOpen then
-                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                            BackgroundTransparency = 0.4,
-                            Size = UDim2.new(1, -12, 0, 38)
-                        }):Play()
-                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                            Transparency = 0.6
-                        }):Play()
-                    end
-                end))
-                
-                table.insert(WindowObj.Connections, DropBtn.MouseLeave:Connect(function()
-                    if not isOpen then
-                        services.TweenService:Create(DropFrame, TweenInfo.new(0.15), {
-                            BackgroundTransparency = 0.5,
-                            Size = UDim2.new(1, -16, 0, 36)
-                        }):Play()
-                        services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {
-                            Transparency = 0.8
-                        }):Play()
-                    end
-                end))
-                
-                table.insert(WindowObj.Connections, DropBtn.MouseButton1Click:Connect(toggleDropdown))
-                
-                local function closeOnClickOutside(input)
-                    if isOpen and input.UserInputType == Enum.UserInputType.MouseButton1 and dropdownContainer then
-                        local mousePos = input.Position
-                        local dropAbsPos = DropFrame.AbsolutePosition
-                        local dropAbsSize = DropFrame.AbsoluteSize
-                        local containerAbsPos = dropdownContainer.AbsolutePosition
-                        local containerAbsSize = dropdownContainer.AbsoluteSize
-                        
-                        local clickedInsideDropdown = 
-                            mousePos.X >= dropAbsPos.X and mousePos.X <= dropAbsPos.X + dropAbsSize.X and
-                            mousePos.Y >= dropAbsPos.Y and mousePos.Y <= dropAbsPos.Y + dropAbsSize.Y
-                        
-                        local clickedInsideContainer = 
-                            containerAbsPos and 
-                            mousePos.X >= containerAbsPos.X and mousePos.X <= containerAbsPos.X + containerAbsSize.X and
-                            mousePos.Y >= containerAbsPos.Y and mousePos.Y <= containerAbsPos.Y + containerAbsSize.Y
-                        
-                        if not clickedInsideDropdown and not clickedInsideContainer then
-                            toggleDropdown()
-                        end
-                    end
-                end
-                
-                local closeConnection = services.UIS.InputBegan:Connect(closeOnClickOutside)
-                table.insert(WindowObj.Connections, closeConnection)
-                
-                table.insert(Section.Elements, DropFrame)
-                table.insert(WindowObj.Elements, DropFrame)
-                table.insert(Section.Dropdowns, DropFrame)
-                updatePageSize()
-                
-                local dropdownObj = {
-                    Set = function(value)
-                        local found = false
-                        for _, v in ipairs(options) do
-                            if v == value then
-                                found = true
-                                break
-                            end
-                        end
-                        
-                        if found then
-                            selected = value
-                            DropBtn.Text = "  " .. text .. ": " .. value
-                            
-                            if callback then
-                                pcall(callback, value)
-                            end
+            local function startListening()
+                if listeningConnection then listeningConnection:Disconnect() end
+                isListening = true
+                KeyButton.Text = "..."
+                KeyButton.TextColor3 = theme.Warning
+                services.TweenService:Create(KeyButton, TweenInfo.new(0.15), {BackgroundTransparency = 0.1}):Play()
+                listeningConnection = services.UIS.InputBegan:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        local newKey = input.KeyCode
+                        if newKey == Enum.KeyCode.Escape then
+                            currentKey = Enum.KeyCode.None
                         else
-                            warn("Dropdown: invalid value '" .. tostring(value) .. "'. Available:", options)
+                            currentKey = newKey
                         end
-                    end,
-                    Get = function()
-                        return selected
-                    end,
-                    GetOptions = function()
-                        return options
-                    end,
-                    AddOption = function(newOption)
-                        local exists = false
-                        for _, v in ipairs(options) do
-                            if v == newOption then
-                                exists = true
-                                break
-                            end
-                        end
-                        
-                        if not exists then
-                            table.insert(options, newOption)
-                        end
-                    end,
-                    RemoveOption = function(optionToRemove)
-                        for i, v in ipairs(options) do
-                            if v == optionToRemove then
-                                table.remove(options, i)
-                                if selected == optionToRemove then
-                                    selected = options[1] or ""
-                                    DropBtn.Text = "  " .. text .. ": " .. selected
-                                end
-                                break
-                            end
-                        end
-                    end,
-                    Refresh = function()
-                        refreshOptions()
-                    end,
-                    Destroy = function()
-                        if closeConnection then
-                            closeConnection:Disconnect()
-                        end
-                        if dropdownContainer then
-                            dropdownContainer:Destroy()
-                        end
-                        DropFrame:Destroy()
+                        updateKeyDisplay()
+                        stopListening()
                     end
-                }
-                
-                return dropdownObj
+                end)
             end
-            
-            -- Инициализация начального состояния
-            setExpanded(expanded, true)
-            
-            -- Добавляем методы управления секцией
-            Section.Expand = function() setExpanded(true, false) end
-            Section.Collapse = function() setExpanded(false, false) end
-            Section.Toggle = function() setExpanded(not expanded, false) end
-            Section.IsExpanded = function() return expanded end
-            Section.Destroy = function() SectionFrame:Destroy() end
-            
-            table.insert(Tab.Elements, SectionFrame)
-            table.insert(WindowObj.Elements, SectionFrame)
-            
-            return Section
+
+            local function stopListening()
+                if listeningConnection then
+                    listeningConnection:Disconnect()
+                    listeningConnection = nil
+                end
+                isListening = false
+                KeyButton.Text = currentKey.Name
+                KeyButton.TextColor3 = theme.Accent
+                services.TweenService:Create(KeyButton, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
+            end
+
+            KeyButton.MouseButton1Click:Connect(function()
+                if isListening then
+                    stopListening()
+                else
+                    startListening()
+                end
+            end)
+
+            local function globalClickHandler(input)
+                if isListening and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local mousePos = services.UIS:GetMouseLocation()
+                    local absPos = KeyButton.AbsolutePosition
+                    local absSize = KeyButton.AbsoluteSize
+                    if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
+                            mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
+                        stopListening()
+                    end
+                end
+            end
+            table.insert(WindowObj.Connections, services.UIS.InputBegan:Connect(globalClickHandler))
+
+            local gamePlayConnection = services.UIS.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                if not isListening and input.KeyCode == currentKey and currentKey ~= Enum.KeyCode.None then
+                    if callback then pcall(callback) end
+                end
+            end)
+            table.insert(WindowObj.Connections, gamePlayConnection)
+
+            local enter = BindFrame.MouseEnter:Connect(function()
+                services.TweenService:Create(BindFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.4, Size = UDim2.new(1, -12, 0, 38)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.6}):Play()
+            end)
+            local leave = BindFrame.MouseLeave:Connect(function()
+                services.TweenService:Create(BindFrame, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, Size = UDim2.new(1, -16, 0, 36)}):Play()
+                services.TweenService:Create(frameStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+            end)
+            table.insert(WindowObj.Connections, enter)
+            table.insert(WindowObj.Connections, leave)
+
+            table.insert(Tab.Elements, BindFrame)
+            table.insert(WindowObj.Elements, BindFrame)
+            updatePageSize()
+
+            return {
+                SetKey = function(newKey)
+                    if typeof(newKey) == "string" then newKey = Enum.KeyCode[newKey] end
+                    if newKey then
+                        currentKey = newKey
+                        updateKeyDisplay()
+                    end
+                end,
+                GetKey = function() return currentKey end,
+                IsListening = function() return isListening end,
+                StopListening = stopListening
+            }
         end
-
-        -- Обновление размера страницы при добавлении/удалении детей
-        Page.ChildAdded:Connect(function()
-            task.wait(0.01)
-            updatePageSize()
-        end)
-        Page.ChildRemoved:Connect(function()
-            task.wait(0.01)
-            updatePageSize()
-        end)
-
-        task.spawn(function()
-            task.wait(0.1)
-            updatePageSize()
-        end)
-
-        -- Добавляем вкладку в список
-        table.insert(WindowObj.Tabs, Tab)
         
-        -- Активируем первую вкладку
-        if #WindowObj.Tabs == 1 then
-            activateTab()
-        end
+        -- Авто-выбор первой вкладки
+        table.insert(WindowObj.Tabs, Tab)
+        if #WindowObj.Tabs == 1 then activateTab() end
 
         return Tab
     end
-
-    --#region ФУНКЦИЯ СМЕНЫ ТЕМЫ
+    
+    -- ======================== ОСТАЛЬНЫЕ МЕТОДЫ ОКНА ========================
     function WindowObj:ChangeTheme(newThemeName)
         local newTheme = GeminiLib.Themes[newThemeName]
         if not newTheme then return end
-        
         WindowObj.Theme = newTheme
-        
         Main.BackgroundColor3 = newTheme.Main
         if TopBar then TopBar.BackgroundColor3 = newTheme.Section end
         if Title then Title.TextColor3 = newTheme.Text end
-        
         local ShadowFrame = Main:FindFirstChild("Shadow") or Main:FindFirstChild("DropShadow")
         if ShadowFrame and ShadowFrame:IsA("ImageLabel") then
             ShadowFrame.ImageColor3 = newTheme.Shadow
             ShadowFrame.ImageTransparency = 1 - (newTheme.ShadowAlpha or 0.4)
         end
-
         for _, element in pairs(WindowObj.Elements) do
             pcall(function()
                 if element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("TextBox") then
@@ -2558,31 +900,20 @@ function GeminiLib:CreateWindow(title, themeName)
                     element.BackgroundColor3 = newTheme.Section
                 end
                 local stroke = element:FindFirstChildOfClass("UIStroke")
-                if stroke then
-                    stroke.Color = newTheme.Accent
-                end
+                if stroke then stroke.Color = newTheme.Accent end
                 local AccentPart = element:FindFirstChild("AccentPart") or element:FindFirstChild("Fill")
                 if AccentPart then
-                    if AccentPart:IsA("Frame") then
-                        AccentPart.BackgroundColor3 = newTheme.Accent
-                    elseif AccentPart:IsA("ImageLabel") then
-                        AccentPart.ImageColor3 = newTheme.Accent
-                    end
+                    if AccentPart:IsA("Frame") then AccentPart.BackgroundColor3 = newTheme.Accent
+                    elseif AccentPart:IsA("ImageLabel") then AccentPart.ImageColor3 = newTheme.Accent end
                 end
                 local SubText = element:FindFirstChild("SubText") or element:FindFirstChild("Description")
-                if SubText and SubText:IsA("TextLabel") then
-                    SubText.TextColor3 = newTheme.TextSecondary
-                end
+                if SubText and SubText:IsA("TextLabel") then SubText.TextColor3 = newTheme.TextSecondary end
             end)
         end
     end
 
-    -- ФУНКЦИЯ ПЛАВАЮЩЕЙ КНОПКИ
     function WindowObj:CreateFloatingButton()
-        if WindowObj.FloatingButton then
-            WindowObj.FloatingButton:Destroy()
-        end
-        
+        if WindowObj.FloatingButton then WindowObj.FloatingButton:Destroy() end
         local FloatingButton = Instance.new("TextButton")
         FloatingButton.Name = "FloatingToggleButton"
         FloatingButton.Size = UDim2.new(0, 50, 0, 50)
@@ -2593,16 +924,13 @@ function GeminiLib:CreateWindow(title, themeName)
         FloatingButton.TextColor3 = WindowObj.Theme.Text
         FloatingButton.Font = Enum.Font.LuckiestGuy
         FloatingButton.Parent = ScreenGui
-        
         local UICorner = Instance.new("UICorner")
         UICorner.CornerRadius = UDim.new(0, 8)
         UICorner.Parent = FloatingButton
-        
         local UIStroke = Instance.new("UIStroke")
         UIStroke.Color = WindowObj.Theme.Accent
         UIStroke.Thickness = 2
         UIStroke.Parent = FloatingButton
-        
         local dragging, dragInput, dragStart, startPos
         local function update(input)
             local delta = input.Position - dragStart
@@ -2610,74 +938,45 @@ function GeminiLib:CreateWindow(title, themeName)
             local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, ScreenGui.AbsoluteSize.Y - FloatingButton.AbsoluteSize.Y)
             FloatingButton.Position = UDim2.new(0, newX, 0, newY)
         end
-        
         FloatingButton.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPos = FloatingButton.Position
+                dragging = true; dragStart = input.Position; startPos = FloatingButton.Position
                 input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
+                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
                 end)
             end
         end)
-        
         FloatingButton.InputChanged:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                 dragInput = input
             end
         end)
-        
         services.UIS.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
+            if input == dragInput and dragging then update(input) end
         end)
-        
-        table.insert(WindowObj.Connections, FloatingButton.MouseButton1Click:Connect(function()
-            WindowObj:ToggleVisibility()
-        end))
-        
+        table.insert(WindowObj.Connections, FloatingButton.MouseButton1Click:Connect(function() WindowObj:ToggleVisibility() end))
         table.insert(WindowObj.Connections, FloatingButton.MouseEnter:Connect(function()
-            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {
-                Size = UDim2.new(0, 55, 0, 55),
-                BackgroundTransparency = 0.2
-            }):Play()
+            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 55, 0, 55), BackgroundTransparency = 0.2}):Play()
         end))
-        
         table.insert(WindowObj.Connections, FloatingButton.MouseLeave:Connect(function()
-            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {
-                Size = UDim2.new(0, 50, 0, 50),
-                BackgroundTransparency = 0
-            }):Play()
+            services.TweenService:Create(FloatingButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 50, 0, 50), BackgroundTransparency = 0}):Play()
         end))
-        
         WindowObj.FloatingButton = FloatingButton
         return FloatingButton
     end
 
     function WindowObj:ToggleVisibility()
         if Main.Visible then
-            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {
-                Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 1.5, 0)
-            }):Play()
-            if WindowObj.FloatingButton then
-                WindowObj.FloatingButton.Text = "🔅"
-            end
+            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 1.5, 0)}):Play()
+            if WindowObj.FloatingButton then WindowObj.FloatingButton.Text = "🔅" end
             stopStatsUpdate()
             task.wait(0.3)
             Main.Visible = false
         else
             Main.Visible = true
             Main.Position = UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 1.5, 0)
-            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {
-                Position = WindowObj.OriginalPosition or UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)
-            }):Play()
-            if WindowObj.FloatingButton then
-                WindowObj.FloatingButton.Text = "💠"
-            end
+            services.TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {Position = WindowObj.OriginalPosition or UDim2.new(0.5, -GeminiLib.Config.WindowWidth/2, 0.5, -GeminiLib.Config.WindowHeight/2)}):Play()
+            if WindowObj.FloatingButton then WindowObj.FloatingButton.Text = "💠" end
             startStatsUpdate()
         end
     end
@@ -2685,59 +984,44 @@ function GeminiLib:CreateWindow(title, themeName)
     function WindowObj:Destroy()
         stopStatsUpdate()
         for _, connection in pairs(WindowObj.Connections) do
-            if connection then
-                pcall(function() connection:Disconnect() end)
-            end
+            if connection then pcall(function() connection:Disconnect() end) end
         end
         for _, dropdown in pairs(WindowObj.OpenDropdowns) do
-            if dropdown.Close then
-                pcall(dropdown.Close)
-            end
+            if dropdown.Close then pcall(dropdown.Close) end
         end
-        if WindowObj.FloatingButton then
-            WindowObj.FloatingButton:Destroy()
-        end
+        if WindowObj.FloatingButton then WindowObj.FloatingButton:Destroy() end
         ScreenGui:Destroy()
-        for k in pairs(WindowObj) do
-            WindowObj[k] = nil
-        end
+        for k in pairs(WindowObj) do WindowObj[k] = nil end
     end
-    
+
     task.wait(0.1)
     WindowObj:CreateFloatingButton()
-
     return WindowObj
 end
 
--- Функция создания уведомления
+-- Глобальная функция уведомления
 function GeminiLib:CreateNotification(notificationData)
     notificationData = notificationData or {}
     local title = notificationData.Title or "Notification"
     local text = notificationData.Text or "No text provided"
     local duration = notificationData.Duration or 5
-    
-    local NotificationsGui = game:GetService("CoreGui"):FindFirstChild("GeminiNotifications") 
-        or Instance.new("ScreenGui")
+    local NotificationsGui = game:GetService("CoreGui"):FindFirstChild("GeminiNotifications") or Instance.new("ScreenGui")
     NotificationsGui.Name = "GeminiNotifications"
     NotificationsGui.Parent = game:GetService("CoreGui")
     NotificationsGui.ResetOnSpawn = false
-    
     local notificationFrame = Instance.new("Frame")
     notificationFrame.Name = "Notification"
     notificationFrame.Size = UDim2.new(0, 300, 0, 80)
     notificationFrame.Position = UDim2.new(1, -320, 1, -100)
     notificationFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     notificationFrame.BorderSizePixel = 0
-    
     local uiCorner = Instance.new("UICorner")
     uiCorner.CornerRadius = UDim.new(0, 8)
     uiCorner.Parent = notificationFrame
-    
     local uiStroke = Instance.new("UIStroke")
     uiStroke.Color = Color3.fromRGB(80, 170, 255)
     uiStroke.Thickness = 2
     uiStroke.Parent = notificationFrame
-    
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "Title"
     titleLabel.Text = title
@@ -2748,7 +1032,6 @@ function GeminiLib:CreateNotification(notificationData)
     titleLabel.TextSize = 14
     titleLabel.BackgroundTransparency = 1
     titleLabel.Parent = notificationFrame
-    
     local textLabel = Instance.new("TextLabel")
     textLabel.Name = "Text"
     textLabel.Text = text
@@ -2760,18 +1043,11 @@ function GeminiLib:CreateNotification(notificationData)
     textLabel.TextWrapped = true
     textLabel.BackgroundTransparency = 1
     textLabel.Parent = notificationFrame
-    
     notificationFrame.Parent = NotificationsGui
-    
     notificationFrame.Position = UDim2.new(1, 320, 1, -100)
-    game:GetService("TweenService"):Create(notificationFrame, TweenInfo.new(0.3), {
-        Position = UDim2.new(1, -320, 1, -100)
-    }):Play()
-    
+    game:GetService("TweenService"):Create(notificationFrame, TweenInfo.new(0.3), {Position = UDim2.new(1, -320, 1, -100)}):Play()
     task.delay(duration, function()
-        game:GetService("TweenService"):Create(notificationFrame, TweenInfo.new(0.3), {
-            Position = UDim2.new(1, 320, 1, -100)
-        }):Play()
+        game:GetService("TweenService"):Create(notificationFrame, TweenInfo.new(0.3), {Position = UDim2.new(1, 320, 1, -100)}):Play()
         task.wait(0.3)
         notificationFrame:Destroy()
     end)
