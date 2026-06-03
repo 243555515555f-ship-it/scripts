@@ -18,8 +18,6 @@ draggable(menu.bg)
 local tabholder = menu.bg.bg.bg.bg.main.group
 local tabviewer = menu.bg.bg.bg.bg.tabbuttons
 
-
-
 inputService.InputEnded:Connect(function(key)
     if key.KeyCode == Enum.KeyCode.RightShift then
         menu.Enabled = not menu.Enabled
