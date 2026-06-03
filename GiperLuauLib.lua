@@ -632,7 +632,7 @@ function library:addTab(name)
         end
         function group:addSlider(args,sub)
             if not args.flag or not args.max then return warn("⚠️ incorrect arguments ⚠️") end
-            if not sub then sub = "" end
+            if not sub then sub = "bananas" end
             groupbox.Size += UDim2.new(0, 0, 0, 30)
 
             local slider = Instance.new("Frame")
